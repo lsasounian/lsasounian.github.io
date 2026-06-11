@@ -1,463 +1,121 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>A2A Protocol — Documentação</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg:        #0d0f14;
-      --surface:   #13161e;
-      --border:    #1e2330;
-      --accent:    #4f9eff;
-      --accent2:   #a78bfa;
-      --success:   #34d399;
-      --warn:      #fbbf24;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --code-bg:   #0a0c10;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A2A Protocol — Documentação</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
+<style>
+/* ── HERO BADGES ── */
+.hero-badges {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── HORIZONTAL TASK LIFECYCLE FLOW ── */
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #06090f;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  margin: 24px 0;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+.flow-row::before { display: none; }
+.flow-node {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.flow-node .node-title {
+  font-family: var(--mono);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.flow-node .node-sub {
+  font-size: .7rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.flow-node.gateway {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+}
+.flow-node.gateway .node-title { color: var(--blue); }
+.flow-node.agent {
+  border-color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 8%, transparent);
+}
+.flow-node.agent .node-title { color: var(--purple); }
+.flow-arrow {
+  font-family: var(--mono);
+  color: var(--muted);
+  padding: 0 12px;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
 
-    html { scroll-behavior: smooth; }
+/* ── STEP LIST (numbered circle items) ── */
+.steps { list-style: none; padding: 0; margin-bottom: 16px; }
+.steps li {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.step-num {
+  font-family: var(--mono);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-content strong {
+  display: block;
+  color: var(--text);
+  font-size: .9rem;
+  margin-bottom: 4px;
+}
+.step-content p {
+  font-size: .85rem;
+  margin: 0;
+}
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.7;
-      font-size: 15px;
-    }
-
-    /* ── SIDEBAR ── */
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0;
-      width: 240px;
-      height: 100vh;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      padding: 2rem 1.25rem;
-      overflow-y: auto;
-      z-index: 100;
-    }
-
-    .sidebar-logo {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: var(--accent);
-      letter-spacing: -0.02em;
-      margin-bottom: 2rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .sidebar-logo span {
-      color: var(--accent2);
-    }
-
-    .back-link {
-      display: block;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.7rem;
-      color: var(--muted);
-      text-decoration: none;
-      margin-bottom: 1rem;
-      transition: color 0.15s;
-    }
-
-    .back-link:hover { color: var(--accent); }
-
-    .nav-section {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin: 1.5rem 0 0.5rem;
-    }
-
-    .nav-section:first-of-type { margin-top: 0; }
-
-    .sidebar nav a {
-      display: block;
-      padding: 0.35rem 0.75rem;
-      border-radius: 6px;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.85rem;
-      transition: all 0.15s;
-      border-left: 2px solid transparent;
-    }
-
-    .sidebar nav a:hover {
-      color: var(--text);
-      background: var(--border);
-      border-left-color: var(--accent);
-    }
-
-    .sidebar nav a.active {
-      color: var(--accent);
-      background: rgba(79, 158, 255, 0.08);
-      border-left-color: var(--accent);
-    }
-
-    /* ── MAIN ── */
-    .main {
-      margin-left: 240px;
-      padding: 3rem 3.5rem;
-      max-width: 940px;
-    }
-
-    /* ── HERO ── */
-    .hero {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 2.5rem;
-      margin-bottom: 3rem;
-    }
-
-    .hero-eyebrow {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--accent);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-
-    .hero h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: 2.8rem;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      line-height: 1.1;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #e2e8f0 0%, #4f9eff 60%, #a78bfa 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero p {
-      color: var(--muted);
-      font-size: 1rem;
-      max-width: 560px;
-      line-height: 1.7;
-    }
-
-    .hero-badges {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1.25rem;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.7rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: 4px;
-      border: 1px solid;
-    }
-
-    .badge-blue  { border-color: var(--accent);  color: var(--accent);  background: rgba(79,158,255,0.08); }
-    .badge-purple{ border-color: var(--accent2); color: var(--accent2); background: rgba(167,139,250,0.08);}
-    .badge-green { border-color: var(--success); color: var(--success); background: rgba(52,211,153,0.08); }
-
-    /* ── SECTION ── */
-    section {
-      margin-bottom: 3.5rem;
-      scroll-margin-top: 2rem;
-    }
-
-    .section-label {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.65rem;
-      color: var(--accent2);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 0.5rem;
-    }
-
-    h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.6rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--text);
-      margin-bottom: 1rem;
-    }
-
-    h3 {
-      font-family: 'Inter', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text);
-      margin: 1.5rem 0 0.5rem;
-    }
-
-    p { color: #94a3b8; margin-bottom: 0.75rem; }
-
-    /* ── CALLOUT ── */
-    .callout {
-      border-left: 3px solid var(--accent);
-      background: rgba(79,158,255,0.06);
-      padding: 0.9rem 1.2rem;
-      border-radius: 0 8px 8px 0;
-      margin: 1.25rem 0;
-      font-size: 0.9rem;
-      color: #93c5fd;
-    }
-
-    .callout.warn {
-      border-color: var(--warn);
-      background: rgba(251,191,36,0.06);
-      color: #fde68a;
-    }
-
-    .callout.success {
-      border-color: var(--success);
-      background: rgba(52,211,153,0.06);
-      color: #6ee7b7;
-    }
-
-    /* ── CODE ── */
-    pre {
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem 1.5rem;
-      overflow-x: auto;
-      margin: 1rem 0 1.5rem;
-      position: relative;
-    }
-
-    pre .lang-tag {
-      position: absolute;
-      top: 0.6rem;
-      right: 0.9rem;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.65rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    code {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.82rem;
-      color: #c4d8ff;
-      line-height: 1.6;
-    }
-
-    p code, li code {
-      background: rgba(79,158,255,0.1);
-      color: var(--accent);
-      padding: 0.1em 0.4em;
-      border-radius: 4px;
-      font-size: 0.8rem;
-    }
-
-    /* syntax colors */
-    .kw  { color: #a78bfa; }
-    .fn  { color: #60a5fa; }
-    .st  { color: #34d399; }
-    .cm  { color: #475569; font-style: italic; }
-    .nm  { color: #fbbf24; }
-    .op  { color: #94a3b8; }
-
-    /* ── FLOW DIAGRAM ── */
-    .flow {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.5rem;
-      margin: 1rem 0 1.5rem;
-      overflow-x: auto;
-      flex-wrap: nowrap;
-    }
-
-    .flow-node {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.6rem 1rem;
-      text-align: center;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .flow-node .node-title {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    .flow-node .node-sub {
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-top: 0.15rem;
-    }
-
-    .flow-node.gateway {
-      border-color: var(--accent);
-      background: rgba(79,158,255,0.08);
-    }
-
-    .flow-node.agent {
-      border-color: var(--accent2);
-      background: rgba(167,139,250,0.08);
-    }
-
-    .flow-node.agent .node-title { color: var(--accent2); }
-
-    .flow-arrow {
-      font-family: 'IBM Plex Mono', monospace;
-      color: var(--muted);
-      padding: 0 0.5rem;
-      font-size: 1rem;
-      flex-shrink: 0;
-    }
-
-    /* ── TABLE ── */
-    .table-wrap { overflow-x: auto; margin: 1rem 0 1.5rem; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-
-    thead th {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      padding: 0.6rem 1rem;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-
-    tbody td {
-      padding: 0.65rem 1rem;
-      border-bottom: 1px solid var(--border);
-      color: #94a3b8;
-      vertical-align: top;
-    }
-
-    tbody tr:hover td { background: rgba(255,255,255,0.02); }
-
-    td:first-child { color: var(--text); font-weight: 500; }
-
-    /* ── STEP LIST ── */
-    .steps { list-style: none; padding: 0; }
-    .steps li {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .step-num {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--accent);
-      background: rgba(79,158,255,0.1);
-      border: 1px solid rgba(79,158,255,0.25);
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 0.15rem;
-    }
-
-    .step-content strong {
-      display: block;
-      color: var(--text);
-      font-size: 0.9rem;
-      margin-bottom: 0.2rem;
-    }
-
-    .step-content p {
-      font-size: 0.85rem;
-      margin: 0;
-    }
-
-    /* ── GRID ── */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin: 1rem 0 1.5rem;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.1rem 1.25rem;
-      transition: border-color 0.15s;
-    }
-
-    .card:hover { border-color: var(--accent); }
-
-    .card-icon {
-      font-size: 1.3rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .card h4 {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 0.3rem;
-    }
-
-    .card p {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin: 0;
-      line-height: 1.5;
-    }
-
-    /* ── DIVIDER ── */
-    .divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 2.5rem 0;
-    }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .main { margin-left: 0; padding: 2rem 1.25rem; }
-      .hero h1 { font-size: 2rem; }
-      .flow { flex-direction: column; }
-      .flow-arrow { transform: rotate(90deg); }
-    }
-  </style>
+@media (max-width: 768px) {
+  .flow-row { flex-direction: column; align-items: stretch; }
+  .flow-arrow { transform: rotate(90deg); padding: 8px 0; }
+}
+</style>
 </head>
 <body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
   <a href="../index.html" class="back-link">← DevDocs</a>
-  <div class="sidebar-logo">A2A <span>Protocol</span></div>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">A2A</span>
+    <span class="doc-title">Protocol Guide</span>
+  </a>
   <nav>
     <div class="nav-section">Fundamentos</div>
     <a href="#overview">Visão Geral</a>
@@ -482,23 +140,22 @@
   </nav>
 </aside>
 
-<!-- MAIN -->
 <main class="main">
+<div class="wrapper">
 
-  <!-- HERO -->
-  <div class="hero">
-    <div class="hero-eyebrow">// Documentação Técnica</div>
-    <h1>A2A Protocol</h1>
-    <p>Guia completo do protocolo Agent-to-Agent — do funcionamento interno à integração com LangGraph e API Gateway de produção.</p>
+  <header class="doc-header">
+    <div class="doc-num">// Documentação Técnica</div>
+    <h1>A2A <span class="accent">Protocol</span></h1>
+    <p class="doc-lead">Guia completo do protocolo Agent-to-Agent — do funcionamento interno à integração com LangGraph e API Gateway de produção.</p>
     <div class="hero-badges">
-      <span class="badge badge-blue">HTTP + JSON-RPC 2.0</span>
-      <span class="badge badge-purple">LangGraph</span>
-      <span class="badge badge-green">Linux Foundation</span>
+      <span class="pill blue">HTTP + JSON-RPC 2.0</span>
+      <span class="pill purple">LangGraph</span>
+      <span class="pill green">Linux Foundation</span>
     </div>
-  </div>
+  </header>
 
   <!-- VISÃO GERAL -->
-  <section id="overview">
+  <section class="section" id="overview">
     <div class="section-label">01 — Fundamentos</div>
     <h2>O que é o A2A?</h2>
     <p>O <strong>Agent-to-Agent (A2A)</strong> é um protocolo aberto criado pelo Google em abril de 2025 e posteriormente transferido para a Linux Foundation. Ele padroniza a comunicação entre agentes de IA de diferentes frameworks e fornecedores, sem que nenhum agente precise expor seu estado interno, memória ou lógica.</p>
@@ -510,34 +167,32 @@
     <h3>Problema que resolve</h3>
     <p>Sem um padrão, cada par de agentes exigia um conector customizado. O A2A cria uma linguagem comum — permitindo que um agente do LangGraph colabore com um do CrewAI, Semantic Kernel ou qualquer framework compatível.</p>
 
-    <div class="card-grid">
-      <div class="card">
-        <div class="card-icon">📋</div>
-        <h4>Agent Card</h4>
+    <div class="grid-2">
+      <div class="info-card blue">
+        <div class="info-label">Agent Card</div>
+        <div class="info-title">📋 Descoberta</div>
         <p>JSON publicado em <code>/.well-known/agent.json</code> descrevendo capacidades, endpoint e autenticação do agente.</p>
       </div>
-      <div class="card">
-        <div class="card-icon">📦</div>
-        <h4>Task</h4>
+      <div class="info-card purple">
+        <div class="info-label">Task</div>
+        <div class="info-title">📦 Unidade de trabalho</div>
         <p>Unidade fundamental de trabalho, com lifecycle próprio e ID único. Pode ser síncrona ou assíncrona.</p>
       </div>
-      <div class="card">
-        <div class="card-icon">💬</div>
-        <h4>Message</h4>
+      <div class="info-card green">
+        <div class="info-label">Message</div>
+        <div class="info-title">💬 Comunicação</div>
         <p>Turno de comunicação entre cliente e agente remoto, composto por Parts (Text, File, Data).</p>
       </div>
-      <div class="card">
-        <div class="card-icon">📤</div>
-        <h4>Artifact</h4>
+      <div class="info-card amber">
+        <div class="info-label">Artifact</div>
+        <div class="info-title">📤 Saída</div>
         <p>Saída tangível gerada pelo agente: documento, dataset, imagem — entregue em chunks via SSE.</p>
       </div>
     </div>
   </section>
 
-  <hr class="divider" />
-
   <!-- CONCEITOS -->
-  <section id="conceitos">
+  <section class="section" id="conceitos">
     <div class="section-label">02 — Conceitos-chave</div>
     <h2>Primitivas do protocolo</h2>
 
@@ -580,15 +235,13 @@
     <p>Todo o tráfego A2A usa <strong>HTTP + JSON-RPC 2.0</strong> como base. Para respostas em tempo real, o protocolo usa <strong>Server-Sent Events (SSE)</strong>. A partir da v0.3, há suporte opcional a <strong>gRPC</strong> para deployments de alta performance.</p>
   </section>
 
-  <hr class="divider" />
-
   <!-- CICLO -->
-  <section id="ciclo">
+  <section class="section" id="ciclo">
     <div class="section-label">03 — Lifecycle</div>
     <h2>Ciclo de uma Task</h2>
     <p>Cada task percorre um estado bem definido. O <code>contextId</code> agrupa tasks relacionadas ao longo de múltiplas interações.</p>
 
-    <div class="flow">
+    <div class="flow-row">
       <div class="flow-node"><div class="node-title">submitted</div><div class="node-sub">Task criada</div></div>
       <div class="flow-arrow">→</div>
       <div class="flow-node"><div class="node-title">working</div><div class="node-sub">Processando</div></div>
@@ -600,39 +253,47 @@
       <div class="flow-node"><div class="node-title">completed / failed / canceled</div><div class="node-sub">Estado final</div></div>
     </div>
 
-    <div class="callout warn">
+    <div class="callout amber">
       Na <strong>primeira mensagem</strong>, omita <code>contextId</code> e <code>taskId</code> — o servidor os gera e retorna. Em todas as mensagens subsequentes, inclua-os para manter a continuidade da conversa.
     </div>
   </section>
 
-  <hr class="divider" />
-
   <!-- LANGGRAPH -->
-  <section id="langgraph">
+  <section class="section" id="langgraph">
     <div class="section-label">04 — LangGraph</div>
     <h2>Integração com LangGraph</h2>
     <p>O LangGraph Server expõe o endpoint A2A automaticamente em <code>/a2a/{assistant_id}</code> quando você roda via <code>langgraph dev</code> ou faz deploy em produção. Não é necessário implementar o protocolo manualmente.</p>
 
-    <div class="callout success">
+    <div class="callout green">
       O LangSmith implementa suporte A2A nativo. O endpoint fica disponível automaticamente no Agent Server em <code>/a2a/&lt;assistant_id&gt;</code>.
     </div>
 
     <h3>Iniciando os servidores</h3>
-    <pre><code><span class="cm"># Terminal 1 — Agente A</span>
-<span class="fn">langgraph</span> dev <span class="op">--port</span> <span class="nm">2024</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">bash</span>
+      </div>
+      <pre><code><span class="cm"># Terminal 1 — Agente A</span>
+<span class="fn">langgraph</span> dev <span class="op">--port</span> <span class="nb">2024</span>
 
 <span class="cm"># Terminal 2 — Agente B</span>
-<span class="fn">langgraph</span> dev <span class="op">--port</span> <span class="nm">2025</span>
-<span class="lang-tag">bash</span></code></pre>
+<span class="fn">langgraph</span> dev <span class="op">--port</span> <span class="nb">2025</span></code></pre>
+    </div>
   </section>
 
   <!-- LANGGRAPH CODE -->
-  <section id="langgraph-code">
+  <section class="section" id="langgraph-code">
     <div class="section-label">05 — Código</div>
     <h2>Definindo o agente</h2>
     <p>Cada agente é um <code>StateGraph</code> do LangGraph. O servidor expõe automaticamente o endpoint A2A.</p>
 
-    <pre><code><span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, MessagesState
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, MessagesState
 <span class="kw">from</span> langchain_anthropic <span class="kw">import</span> ChatAnthropic
 
 <span class="cm"># Instancia o LLM</span>
@@ -649,17 +310,22 @@ builder.<span class="fn">add_node</span>(<span class="st">"agent"</span>, call_m
 builder.<span class="fn">set_entry_point</span>(<span class="st">"agent"</span>)
 builder.<span class="fn">set_finish_point</span>(<span class="st">"agent"</span>)
 
-graph = builder.<span class="fn">compile</span>()
-<span class="lang-tag">python</span></code></pre>
+graph = builder.<span class="fn">compile</span>()</code></pre>
+    </div>
   </section>
 
   <!-- ORQUESTRADOR -->
-  <section id="orquestrador">
+  <section class="section" id="orquestrador">
     <div class="section-label">06 — Orquestrador</div>
     <h2>Comunicação A2A entre agentes</h2>
     <p>O orquestrador envia mensagens JSON-RPC 2.0 para o endpoint de cada agente e mantém o <code>contextId</code> ao longo das rodadas.</p>
 
-    <pre><code><span class="kw">import</span> asyncio, aiohttp, uuid
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">import</span> asyncio, aiohttp, uuid
 
 <span class="kw">async def</span> <span class="fn">send_message</span>(session, url, message,
                          context_id=<span class="kw">None</span>, task_id=<span class="kw">None</span>):
@@ -680,7 +346,7 @@ graph = builder.<span class="fn">compile</span>()
     <span class="kw">async with</span> session.<span class="fn">post</span>(url, json=payload) <span class="kw">as</span> resp:
         data = <span class="kw">await</span> resp.<span class="fn">json</span>()
         result  = data[<span class="st">"result"</span>]
-        text    = result[<span class="st">"artifacts"</span>][<span class="nm">0</span>][<span class="st">"parts"</span>][<span class="nm">0</span>][<span class="st">"text"</span>]
+        text    = result[<span class="st">"artifacts"</span>][<span class="nb">0</span>][<span class="st">"parts"</span>][<span class="nb">0</span>][<span class="st">"text"</span>]
         <span class="kw">return</span> text, result.<span class="fn">get</span>(<span class="st">"contextId"</span>), result.<span class="fn">get</span>(<span class="st">"id"</span>)
 
 <span class="kw">async def</span> <span class="fn">run_conversation</span>():
@@ -690,25 +356,23 @@ graph = builder.<span class="fn">compile</span>()
     context_id = task_id = <span class="kw">None</span>
 
     <span class="kw">async with</span> aiohttp.<span class="fn">ClientSession</span>() <span class="kw">as</span> session:
-        <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">3</span>):
+        <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="nb">3</span>):
             message, context_id, task_id = <span class="kw">await</span> <span class="fn">send_message</span>(
                 session, agent_a, message, context_id, task_id)
             message, context_id, task_id = <span class="kw">await</span> <span class="fn">send_message</span>(
                 session, agent_b, message, context_id, task_id)
 
-asyncio.<span class="fn">run</span>(<span class="fn">run_conversation</span>())
-<span class="lang-tag">python</span></code></pre>
+asyncio.<span class="fn">run</span>(<span class="fn">run_conversation</span>())</code></pre>
+    </div>
   </section>
 
-  <hr class="divider" />
-
   <!-- GATEWAY ARCH -->
-  <section id="gateway-arch">
+  <section class="section" id="gateway-arch">
     <div class="section-label">07 — API Gateway</div>
     <h2>Arquitetura com Gateway</h2>
     <p>Como A2A usa HTTP puro, um API gateway é o ponto natural de controle para todo o tráfego entre agentes — autenticação, roteamento, rate limiting e observabilidade.</p>
 
-    <div class="flow">
+    <div class="flow-row">
       <div class="flow-node"><div class="node-title">Orquestrador</div><div class="node-sub">Client Agent</div></div>
       <div class="flow-arrow">→</div>
       <div class="flow-node gateway"><div class="node-title">API Gateway</div><div class="node-sub">Auth · Rate Limit · Logs</div></div>
@@ -719,27 +383,32 @@ asyncio.<span class="fn">run</span>(<span class="fn">run_conversation</span>())
     </div>
 
     <h3>Configuração Kong (YAML)</h3>
-    <pre><code><span class="nm">services</span>:
-  <span class="op">-</span> <span class="nm">name</span>: agente-a
-    <span class="nm">url</span>: <span class="st">http://langgraph-agent-a:2024</span>
-    <span class="nm">routes</span>:
-      <span class="op">-</span> <span class="nm">name</span>: a2a-agente-a
-        <span class="nm">paths</span>: [<span class="st">"/agentes/a"</span>]
-        <span class="nm">strip_path</span>: <span class="kw">true</span>
-    <span class="nm">plugins</span>:
-      <span class="op">-</span> <span class="nm">name</span>: jwt
-        <span class="nm">config</span>:
-          <span class="nm">key_claim_name</span>: iss
-          <span class="nm">claims_to_verify</span>: [exp]
-      <span class="op">-</span> <span class="nm">name</span>: rate-limiting
-        <span class="nm">config</span>:
-          <span class="nm">minute</span>: <span class="nm">60</span>
-          <span class="nm">policy</span>: local
-<span class="lang-tag">yaml</span></code></pre>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">yaml</span>
+      </div>
+      <pre><code><span class="tp">services</span>:
+  <span class="op">-</span> <span class="tp">name</span>: agente-a
+    <span class="tp">url</span>: <span class="st">http://langgraph-agent-a:2024</span>
+    <span class="tp">routes</span>:
+      <span class="op">-</span> <span class="tp">name</span>: a2a-agente-a
+        <span class="tp">paths</span>: [<span class="st">"/agentes/a"</span>]
+        <span class="tp">strip_path</span>: <span class="kw">true</span>
+    <span class="tp">plugins</span>:
+      <span class="op">-</span> <span class="tp">name</span>: jwt
+        <span class="tp">config</span>:
+          <span class="tp">key_claim_name</span>: iss
+          <span class="tp">claims_to_verify</span>: [exp]
+      <span class="op">-</span> <span class="tp">name</span>: rate-limiting
+        <span class="tp">config</span>:
+          <span class="tp">minute</span>: <span class="nb">60</span>
+          <span class="tp">policy</span>: local</code></pre>
+    </div>
   </section>
 
   <!-- AUTH -->
-  <section id="auth">
+  <section class="section" id="auth">
     <div class="section-label">08 — Autenticação</div>
     <h2>Autenticação no Gateway</h2>
     <p>O Agent Card declara os esquemas de auth suportados, no mesmo formato do OpenAPI. O gateway valida as credenciais antes de encaminhar ao agente.</p>
@@ -765,39 +434,49 @@ asyncio.<span class="fn">run</span>(<span class="fn">run_conversation</span>())
   </section>
 
   <!-- SSE -->
-  <section id="sse">
+  <section class="section" id="sse">
     <div class="section-label">09 — Streaming</div>
     <h2>Configurando SSE no Gateway</h2>
     <p>O A2A usa Server-Sent Events para respostas em streaming. O gateway <strong>não pode fazer buffering</strong> das respostas, caso contrário o cliente só recebe a resposta completa ao final.</p>
 
     <h3>NGINX</h3>
-    <pre><code>location /agentes/ {
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">nginx</span>
+      </div>
+      <pre><code>location /agentes/ {
     proxy_pass         http://langgraph_upstream;
 
     <span class="cm"># Desabilita buffering — essencial para SSE</span>
     proxy_buffering    off;
     proxy_cache        off;
-    proxy_read_timeout <span class="nm">300s</span>;
+    proxy_read_timeout <span class="nb">300s</span>;
 
     <span class="cm"># Headers para SSE</span>
     proxy_set_header   Connection <span class="st">''</span>;
-    proxy_http_version <span class="nm">1.1</span>;
+    proxy_http_version <span class="nb">1.1</span>;
     chunked_transfer_encoding on;
-}
-<span class="lang-tag">nginx</span></code></pre>
+}</code></pre>
+    </div>
 
-    <div class="callout warn">
+    <div class="callout amber">
       No <strong>AWS API Gateway</strong>, use <strong>HTTP APIs</strong> (não REST APIs) — elas suportam streaming nativo. REST APIs têm timeout de 29s, insuficiente para tasks longas.
     </div>
   </section>
 
   <!-- GATEWAY CODE -->
-  <section id="gateway-code">
+  <section class="section" id="gateway-code">
     <div class="section-label">10 — Implementação</div>
     <h2>Proxy A2A com FastAPI</h2>
     <p>Um gateway leve que combina autenticação JWT, roteamento dinâmico por agente e proxy com suporte a SSE.</p>
 
-    <pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, Request, HTTPException
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, Request, HTTPException
 <span class="kw">from</span> fastapi.responses <span class="kw">import</span> StreamingResponse
 <span class="kw">import</span> httpx, jwt
 
@@ -808,18 +487,18 @@ AGENTES = {
     <span class="st">"executor"</span>:   <span class="st">"http://agente-executor:2025/a2a/assistente-xyz"</span>,
 }
 
-<span class="kw">@app.post</span>(<span class="st">"/a2a/{agente}"</span>)
+<span class="dc">@app.post</span>(<span class="st">"/a2a/{agente}"</span>)
 <span class="kw">async def</span> <span class="fn">proxy_a2a</span>(agente: <span class="fn">str</span>, request: Request):
     <span class="cm"># 1. Autenticação JWT</span>
     token = request.headers.<span class="fn">get</span>(<span class="st">"Authorization"</span>, <span class="st">""</span>).<span class="fn">replace</span>(<span class="st">"Bearer "</span>, <span class="st">""</span>)
     <span class="kw">try</span>:
         payload = jwt.<span class="fn">decode</span>(token, SECRET_KEY, algorithms=[<span class="st">"HS256"</span>])
     <span class="kw">except</span> jwt.InvalidTokenError:
-        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">401</span>, detail=<span class="st">"Token inválido"</span>)
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nb">401</span>, detail=<span class="st">"Token inválido"</span>)
 
     <span class="cm"># 2. Roteamento</span>
     <span class="kw">if</span> agente <span class="kw">not in</span> AGENTES:
-        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">404</span>, detail=<span class="st">"Agente não encontrado"</span>)
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nb">404</span>, detail=<span class="st">"Agente não encontrado"</span>)
 
     <span class="cm"># 3. Proxy com suporte a SSE</span>
     body = <span class="kw">await</span> request.<span class="fn">json</span>()
@@ -830,17 +509,22 @@ AGENTES = {
                 <span class="kw">async for</span> chunk <span class="kw">in</span> r.<span class="fn">aiter_bytes</span>():
                     <span class="kw">yield</span> chunk
 
-    <span class="kw">return</span> <span class="fn">StreamingResponse</span>(<span class="fn">stream</span>(), media_type=<span class="st">"text/event-stream"</span>)
-<span class="lang-tag">python</span></code></pre>
+    <span class="kw">return</span> <span class="fn">StreamingResponse</span>(<span class="fn">stream</span>(), media_type=<span class="st">"text/event-stream"</span>)</code></pre>
+    </div>
   </section>
 
   <!-- OBSERVABILITY -->
-  <section id="observability">
+  <section class="section" id="observability">
     <div class="section-label">11 — Observabilidade</div>
     <h2>Logging e rastreamento</h2>
     <p>O campo <code>contextId</code> é o identificador de sessão do A2A — use-o para correlacionar todas as mensagens de uma conversa nos seus logs.</p>
 
-    <pre><code><span class="kw">async def</span> <span class="fn">a2a_middleware</span>(request, call_next):
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">async def</span> <span class="fn">a2a_middleware</span>(request, call_next):
     body = <span class="kw">await</span> request.<span class="fn">json</span>()
 
     <span class="cm"># Extrai metadados do JSON-RPC</span>
@@ -859,14 +543,12 @@ AGENTES = {
         <span class="st">"timestamp"</span>: datetime.<span class="fn">utcnow</span>().<span class="fn">isoformat</span>(),
     })
 
-    <span class="kw">return await</span> <span class="fn">call_next</span>(request)
-<span class="lang-tag">python</span></code></pre>
+    <span class="kw">return await</span> <span class="fn">call_next</span>(request)</code></pre>
+    </div>
   </section>
 
-  <hr class="divider" />
-
   <!-- COMPARATIVO -->
-  <section id="comparativo">
+  <section class="section" id="comparativo">
     <div class="section-label">12 — Referência</div>
     <h2>A2A vs MCP</h2>
     <p>Os dois protocolos são complementares — um agente usa MCP para acessar ferramentas e A2A para delegar subtarefas a outros agentes.</p>
@@ -889,7 +571,7 @@ AGENTES = {
   </section>
 
   <!-- RESUMO -->
-  <section id="resumo">
+  <section class="section" id="resumo">
     <div class="section-label">13 — Resumo</div>
     <h2>O que o Gateway entrega para A2A</h2>
 
@@ -932,6 +614,12 @@ AGENTES = {
     </ul>
   </section>
 
+  <div class="doc-footer">
+    <a href="../index.html">← Voltar para DevDocs</a>
+    <span>A2A Protocol</span>
+  </div>
+
+</div>
 </main>
 
 <script>
