@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>A2A AWS — Documentação</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0d1117;--surface:#161b22;--border:#30363d;--border2:#21262d;
+    --text:#e6edf3;--muted:#7d8590;--dim:#c9d1d9;
+    --green:#3fb950;--blue:#58a6ff;--red:#ff7b72;
+    --purple:#d2a8ff;--cyan:#79c0ff;--str:#a5d6ff;--comment:#6e7681;--ln:#3b4048;
+  }
+  body{font-family:'JetBrains Mono','Fira Code','Courier New',monospace;background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* ── Sidebar nav ── */
+  #sidebar{
+    position:fixed;top:0;left:0;width:220px;height:100vh;
+    background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;overflow-y:auto;z-index:100;
+  }
+  #sidebar .logo{padding:20px 16px 14px;border-bottom:1px solid var(--border)}
+  #sidebar .logo .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);margin-right:8px}
+  #sidebar .logo h2{font-size:13px;color:var(--text);font-weight:700;letter-spacing:-.01em}
+  #sidebar .logo p{font-size:11px;color:var(--muted);margin-top:3px}
+  .nav-section{padding:10px 0}
+  .nav-label{font-size:10px;color:var(--muted);letter-spacing:.08em;padding:6px 16px 4px;text-transform:uppercase}
+  .nav-item{display:block;padding:7px 16px;font-size:12px;color:var(--muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit;border-left:2px solid transparent;transition:all .15s}
+  .nav-item:hover{color:var(--text);background:rgba(255,255,255,.04)}
+  .nav-item.active{color:var(--text);background:rgba(88,166,255,.08);border-left-color:var(--blue)}
+
+  /* ── Main ── */
+  #main{margin-left:220px;min-height:100vh}
+  .page{display:none;flex-direction:column}
+  .page.active{display:flex}
+
+  /* ── Page header ── */
+  .page-header{
+    background:linear-gradient(135deg,#161b22 0%,#1c2128 100%);
+    border-bottom:1px solid var(--border);
+    padding:24px 32px 0;
+    position:sticky;top:0;z-index:10;
+  }
+  .page-header .badge{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .page-header .badge .dot{width:8px;height:8px;border-radius:50%}
+  .page-header .badge span{font-size:11px;color:var(--muted);letter-spacing:.05em}
+  .page-header h1{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.02em;margin-bottom:3px}
+  .page-header p{font-size:12px;color:var(--muted);margin-bottom:18px}
+
+  /* ── Tabs ── */
+  .tabs{display:flex;flex-wrap:wrap;gap:0}
+  .tab{
+    background:transparent;color:var(--muted);
+    border:1px solid transparent;border-bottom:1px solid transparent;
+    padding:8px 16px;cursor:pointer;font-size:12px;font-family:inherit;
+    border-radius:6px 6px 0 0;transition:color .15s;white-space:nowrap;
+  }
+  .tab.active{
+    background:var(--bg);color:var(--text);
+    border-color:var(--border);border-bottom-color:var(--bg);
+    margin-bottom:-1px;
+  }
+  .tab:hover:not(.active){color:var(--dim)}
+
+  /* ── Content ── */
+  .page-content{padding:24px 32px;max-width:980px}
+  .panel{display:none}.panel.active{display:block}
+  pre.plain{
+    font-size:12.5px;line-height:1.75;color:var(--dim);
+    white-space:pre-wrap;word-break:break-word;
+    font-family:inherit;
+  }
+  pre.code-block{
+    font-size:12.5px;line-height:1.75;
+    white-space:pre-wrap;word-break:break-word;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:8px;padding:20px;font-family:inherit;
+    overflow-x:auto;
+  }
+  .line{display:flex}
+  .ln{color:var(--ln);user-select:none;min-width:36px;text-align:right;padding-right:14px;flex-shrink:0}
+
+  /* ── Badges ── */
+  .badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .badge-pill{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 14px;font-size:12px}
+  .badge-pill .k{color:var(--muted)}
+  .badge-pill .v{color:var(--blue)}
+  .badge-pill .v.ok{color:var(--green)}
+
+  /* ── Comparison table ── */
+  .cmp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  .cmp-table th{text-align:left;padding:8px 12px;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600}
+  .cmp-table td{padding:8px 12px;border-bottom:1px solid var(--border2);color:var(--dim);vertical-align:top}
+  .cmp-table tr:last-child td{border-bottom:none}
+  .cmp-table .feature{color:var(--text);font-weight:500}
+  .tag-sigv4{color:var(--green)}.tag-jwt{color:var(--blue)}
+
+  /* ── Section card ── */
+  .section-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:16px}
+  .section-card h3{font-size:13px;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .section-card h3 .num{background:var(--blue);color:#0d1117;border-radius:4px;padding:1px 7px;font-size:11px}
+  .section-card p,.section-card li{font-size:12px;color:var(--dim);line-height:1.7}
+  .section-card ul{padding-left:18px}
+  .section-card .check{color:var(--green)}.section-card .cross{color:var(--red)}
+
+  @media(max-width:640px){
+    #sidebar{width:100%;height:auto;position:relative}
+    #main{margin-left:0}
+    .page-content{padding:16px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="logo">
+    <div><span class="dot"></span></div>
+    <h2>A2A AWS Docs</h2>
+    <p>Agent-to-Agent Patterns</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Padrão 1 — SigV4</div>
+    <button class="nav-item active" onclick="showPage('p1-arch',this)">Arquitetura</button>
+    <button class="nav-item" onclick="showPage('p1-tf',this)">Terraform</button>
+    <button class="nav-item" onclick="showPage('p1-lc',this)">LangChain / LangGraph</button>
+    <button class="nav-item" onclick="showPage('p1-ca',this)">Cross-Account</button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Padrão 2 — Bearer JWT</div>
+    <button class="nav-item" onclick="showPage('p2-arch',this)">Arquitetura</button>
+    <button class="nav-item" onclick="showPage('p2-tf',this)">Terraform</button>
+    <button class="nav-item" onclick="showPage('p2-sup',this)">Python — Supervisor</button>
+    <button class="nav-item" onclick="showPage('p2-agent',this)">Python — Agent</button>
+    <button class="nav-item" onclick="showPage('p2-cmp',this)">Comparativo</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════════════ -->
+<main id="main">
+
+<!-- ─────────────────────────────────────────────
+     P1 — ARQUITETURA (SigV4)
+───────────────────────────────────────────── -->
+<section class="page active" id="p1-arch">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><span>PADRÃO 1 · AWS IAM SigV4</span></div>
+    <h1>A2A via API Gateway — SigV4</h1>
+    <p>Cross-account · IAM Resource Policy · LangGraph supervisor pattern</p>
+  </div>
+  <div class="page-content">
+    <pre class="plain">
+┌─────────────────────────────────────────────────────────────────┐
+│                     CONTA A (Supervisor)                        │
+│                                                                 │
+│  ┌──────────────┐     MCP Central     ┌──────────────────────┐ │
+│  │  Supervisor  │ ──────────────────► │   MCP Server (hub)   │ │
+│  │  LangGraph   │                     └──────────┬───────────┘ │
+│  └──────────────┘                                │             │
+│                                                  │ HTTP/HTTPS  │
+└──────────────────────────────────────────────────┼─────────────┘
+                                                   │
+          ┌────────────────────────────────────────┤
+          │                                        │
+          ▼                                        ▼
+┌─────────────────────┐               ┌────────────────────────┐
+│   CONTA B           │               │   CONTA C              │
+│                     │               │                        │
+│  ┌───────────────┐  │               │  ┌──────────────────┐  │
+│  │  API Gateway  │  │               │  │   API Gateway    │  │
+│  │  (Regional)   │  │               │  │   (Regional)     │  │
+│  └──────┬────────┘  │               │  └────────┬─────────┘  │
+│         │           │               │           │            │
+│  ┌──────▼────────┐  │               │  ┌────────▼─────────┐  │
+│  │  Lambda/ECS   │  │               │  │   Lambda/ECS     │  │
+│  │  Agent B      │  │               │  │   Agent C        │  │
+│  │  (LangGraph)  │  │               │  │   (LangGraph)    │  │
+│  └───────────────┘  │               │  └──────────────────┘  │
+└─────────────────────┘               └────────────────────────┘
+
+Autenticação: IAM SigV4 (cross-account role assumption) ou API Key + VPC Link</pre>
+
+    <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
+      <div class="section-card">
+        <h3><span class="num">1</span>Supervisor assume cross-account role via STS</h3>
+        <p>O Supervisor (Conta A) chama <code>sts.assume_role()</code> com o ARN de uma role na Conta B. Recebe credenciais temporárias (AccessKey + SecretKey + SessionToken) válidas por até 1h.</p>
+      </div>
+      <div class="section-card">
+        <h3><span class="num">2</span>Request assinado com SigV4</h3>
+        <p>Com as credenciais temporárias, o request HTTP POST para o API Gateway é assinado via <code>botocore.auth.SigV4Auth</code>. O API Gateway valida a assinatura contra a Resource Policy.</p>
+      </div>
+      <div class="section-card">
+        <h3><span class="num">3</span>Resource Policy restringe acesso por conta</h3>
+        <p>A policy do API Gateway permite <code>execute-api:Invoke</code> apenas para o root da Conta A. Qualquer outro caller recebe 403.</p>
+      </div>
+    </div>
+
+    <div class="badges">
+      <div class="badge-pill"><span class="k">Auth: </span><span class="v ok">IAM SigV4</span></div>
+      <div class="badge-pill"><span class="k">Invocation: </span><span class="v">HTTP POST</span></div>
+      <div class="badge-pill"><span class="k">Pattern: </span><span class="v">Tool wrapping</span></div>
+      <div class="badge-pill"><span class="k">State: </span><span class="v">Redis refs no payload</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────
+     P1 — TERRAFORM (SigV4)
+───────────────────────────────────────────── -->
+<section class="page" id="p1-tf">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><span>PADRÃO 1 · TERRAFORM</span></div>
+    <h1>Terraform — REST API + SigV4</h1>
+    <p>aws_api_gateway_rest_api · authorization = AWS_IAM · cross-account IAM roles</p>
+  </div>
+  <div class="page-content">
+    <pre class="code-block" id="p1-tf-code"></pre>
+    <div class="badges">
+      <div class="badge-pill"><span class="k">API GW: </span><span class="v">REST API v1</span></div>
+      <div class="badge-pill"><span class="k">Auth method: </span><span class="v ok">AWS_IAM</span></div>
+      <div class="badge-pill"><span class="k">Cross-account: </span><span class="v">Resource Policy</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────
+     P1 — LANGCHAIN (SigV4)
+───────────────────────────────────────────── -->
+<section class="page" id="p1-lc">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><span>PADRÃO 1 · PYTHON</span></div>
+    <h1>LangChain / LangGraph — Supervisor</h1>
+    <p>SigV4Auth · ToolNode · StateGraph · Lambda handler do Agent</p>
+  </div>
+  <div class="page-content">
+    <pre class="code-block" id="p1-lc-code"></pre>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────
+     P1 — CROSS-ACCOUNT
+───────────────────────────────────────────── -->
+<section class="page" id="p1-ca">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--green);box-shadow:0 0 6px var(--green)"></div><span>PADRÃO 1 · REFERÊNCIA</span></div>
+    <h1>Opções de Auth Cross-Account</h1>
+    <p>SigV4 · API Key · VPC Link · payloads recomendados</p>
+  </div>
+  <div class="page-content">
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">
+      <div class="section-card">
+        <h3><span class="num">1</span>AWS_IAM + SigV4 — recomendado para setup interno</h3>
+        <ul>
+          <li>Supervisor assume cross-account role via STS</li>
+          <li>Assina requests com credenciais temporárias</li>
+          <li>API Gateway valida via Resource Policy</li>
+          <li class="check">✓ Zero segredos trafegando, auditável via CloudTrail</li>
+        </ul>
+      </div>
+      <div class="section-card">
+        <h3><span class="num">2</span>API Key + Custom Authorizer — alternativa simples</h3>
+        <ul>
+          <li>API Gateway usa API Key armazenada no Secrets Manager</li>
+          <li>Supervisor lê o secret e passa no header <code>x-api-key</code></li>
+          <li class="cross">✗ Requer rotação de segredos</li>
+        </ul>
+      </div>
+      <div class="section-card">
+        <h3><span class="num">3</span>VPC Link + PrivateLink — sem tráfego pela internet</h3>
+        <ul>
+          <li>NLB na Conta B exposto via PrivateLink</li>
+          <li>Conta A cria Interface VPC Endpoint</li>
+          <li>API Gateway usa VPC Link → tráfego totalmente privado</li>
+          <li class="cross">✗ Custo adicional de PrivateLink</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h3>Payload recomendado — Request Supervisor → Agent</h3>
+      <pre class="code-block" style="margin-top:10px" id="p1-payload-req"></pre>
+    </div>
+    <div class="section-card" style="margin-top:14px">
+      <h3>Payload recomendado — Response Agent → Supervisor</h3>
+      <pre class="code-block" style="margin-top:10px" id="p1-payload-res"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────
+     P2 — ARQUITETURA (Bearer JWT)
+───────────────────────────────────────────── -->
+<section class="page" id="p2-arch">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--blue);box-shadow:0 0 6px var(--blue)"></div><span>PADRÃO 2 · BEARER JWT</span></div>
+    <h1>A2A via Bearer JWT — IdP Externo</h1>
+    <p>HTTP API · JWT Authorizer nativo · client_credentials (M2M) · sem SigV4</p>
+  </div>
+  <div class="page-content">
+    <pre class="plain">
+┌─────────────────────────────────────────────────────────────────────┐
+│                      CONTA A (Supervisor)                           │
+│                                                                     │
+│  ┌─────────────────────┐         ┌──────────────────────────────┐  │
+│  │   Supervisor        │         │   Token Cache (Redis/memória)│  │
+│  │   LangGraph         │◄───────►│   access_token + expiry      │  │
+│  └──────────┬──────────┘         └──────────────────────────────┘  │
+│             │                                                       │
+│             │ 1. POST /oauth/token (client_credentials)             │
+│             ▼                                                       │
+│  ┌──────────────────────┐                                          │
+│  │   IdP Externo        │                                          │
+│  │  (Okta / Auth0)      │                                          │
+│  │  client_id + secret  │                                          │
+│  │  → JWT (RS256)       │                                          │
+│  └──────────────────────┘                                          │
+└──────────────────────┬──────────────────────────────────────────────┘
+                       │
+                       │ 2. POST /invoke
+                       │    Authorization: Bearer &lt;JWT&gt;
+                       │    (sem SigV4, sem STS)
+                       ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                    CONTA B (Specialist Agent)                        │
+│                                                                      │
+│  ┌────────────────────────┐                                         │
+│  │   API Gateway HTTP API │                                         │
+│  │   JWT Authorizer       │  3. Valida JWT contra JWKS do IdP      │
+│  │   ├─ issuer: IdP URL   │     (sem Lambda, nativo no API GW)     │
+│  │   ├─ audience: agent-b │                                         │
+│  │   └─ jwks_uri: auto    │                                         │
+│  └──────────┬─────────────┘                                         │
+│             │ 4. Token válido → forward para Lambda                 │
+│             ▼                                                        │
+│  ┌──────────────────────┐                                           │
+│  │   Lambda / ECS       │                                           │
+│  │   Agent B (LangGraph)│                                           │
+│  └──────────────────────┘                                           │
+└──────────────────────────────────────────────────────────────────────┘</pre>
+
+    <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
+      <div class="section-card">
+        <h3>Vantagens vs SigV4</h3>
+        <ul>
+          <li class="check">✓ Sem boto3/botocore no caminho crítico de auth</li>
+          <li class="check">✓ Sem STS AssumeRole cross-account</li>
+          <li class="check">✓ Token cacheável — IdP só é chamado quando expira</li>
+          <li class="check">✓ API Gateway HTTP API valida JWKS nativamente</li>
+          <li class="check">✓ Funciona para agents fora da AWS (on-prem, outro cloud)</li>
+          <li class="cross">✗ Requer client_id/secret no Supervisor (Secrets Manager)</li>
+          <li class="cross">✗ HTTP API não tem WAF nativo — usar CloudFront se necessário</li>
+        </ul>
+      </div>
+      <div class="section-card">
+        <h3>JWKS URI por IdP</h3>
+        <pre class="plain" style="margin-top:8px">Okta:    https://{tenant}.okta.com/oauth2/default/.well-known/keys
+Auth0:   https://{tenant}.auth0.com/.well-known/jwks.json
+Cognito: https://cognito-idp.{region}.amazonaws.com/{pool_id}/.well-known/jwks.json
+
+API Gateway descobre automaticamente via {issuer}/.well-known/openid-configuration</pre>
+      </div>
+    </div>
+
+    <div class="badges">
+      <div class="badge-pill"><span class="k">Auth: </span><span class="v">Bearer JWT</span></div>
+      <div class="badge-pill"><span class="k">API GW: </span><span class="v">HTTP API v2</span></div>
+      <div class="badge-pill"><span class="k">Authorizer: </span><span class="v">JWT (nativo)</span></div>
+      <div class="badge-pill"><span class="k">Flow: </span><span class="v">client_credentials</span></div>
+      <div class="badge-pill"><span class="k">Cache: </span><span class="v">Redis / memória</span></div>
+      <div class="badge-pill"><span class="k">SigV4: </span><span class="v ok">removido ✓</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────
+     P2 — TERRAFORM (Bearer JWT)
+───────────────────────────────────────────── -->
+<section class="page" id="p2-tf">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--blue);box-shadow:0 0 6px var(--blue)"></div><span>PADRÃO 2 · TERRAFORM</span></div>
+    <h1>Terraform — HTTP API + JWT Authorizer</h1>
+    <p>aws_apigatewayv2_api · aws_apigatewayv2_authorizer · Secrets Manager</p>
+  </div>
+  <div class="page-content">
+    <pre class="code-block" id="p2-tf-code"></pre>
+    <div class="badges">
+      <div class="badge-pill"><span class="k">API GW: </span><span class="v">HTTP API v2</span></div>
+      <div class="badge-pill"><span class="k">Auth: </span><span class="v">JWT (nativo)</span></div>
+      <div class="badge-pill"><span class="k">Deploy: </span><span class="v">auto_deploy</span></div>
+      <div class="badge-pill"><span class="k">Secrets: </span><span class="v">Secrets Manager</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────
+     P2 — SUPERVISOR (Bearer JWT)
+───────────────────────────────────────────── -->
+<section class="page" id="p2-sup">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--blue);box-shadow:0 0 6px var(--blue)"></div><span>PADRÃO 2 · PYTHON</span></div>
+    <h1>Python — Supervisor com IdPTokenManager</h1>
+    <p>client_credentials · token cache · LangGraph tools · sem SigV4</p>
+  </div>
+  <div class="page-content">
+    <pre class="code-block" id="p2-sup-code"></pre>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────
+     P2 — AGENT (Bearer JWT)
+───────────────────────────────────────────── -->
+<section class="page" id="p2-agent">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--blue);box-shadow:0 0 6px var(--blue)"></div><span>PADRÃO 2 · PYTHON</span></div>
+    <h1>Python — Lambda Handler do Agent</h1>
+    <p>JWT claims via requestContext · defense in depth · audience check</p>
+  </div>
+  <div class="page-content">
+    <pre class="code-block" id="p2-agent-code"></pre>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────
+     P2 — COMPARATIVO
+───────────────────────────────────────────── -->
+<section class="page" id="p2-cmp">
+  <div class="page-header">
+    <div class="badge"><div class="dot" style="background:var(--purple);box-shadow:0 0 6px var(--purple)"></div><span>COMPARATIVO</span></div>
+    <h1>SigV4 vs Bearer JWT</h1>
+    <p>Quando usar cada padrão · tradeoffs · fluxo de token M2M</p>
+  </div>
+  <div class="page-content">
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th>Característica</th>
+          <th class="tag-sigv4">SigV4 + STS</th>
+          <th class="tag-jwt">Bearer JWT (IdP)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="feature">Mecanismo auth</td><td>AssumeRole cross-account</td><td>client_credentials flow</td></tr>
+        <tr><td class="feature">Assinar request</td><td>SigV4 (botocore)</td><td>Authorization: Bearer</td></tr>
+        <tr><td class="feature">Dependência AWS</td><td>boto3, botocore, STS API</td><td>só requests</td></tr>
+        <tr><td class="feature">Latência auth</td><td>~100ms (STS quando expirar)</td><td>~200ms (IdP, cacheado)</td></tr>
+        <tr><td class="feature">Cache de credencial</td><td>Automático (botocore)</td><td>Manual (Redis / memória)</td></tr>
+        <tr><td class="feature">Rotação de segredo</td><td>IAM role (sem secret)</td><td>client_secret (Secrets Mgr)</td></tr>
+        <tr><td class="feature">Funciona fora da AWS</td><td style="color:var(--red)">Não (precisa de role)</td><td style="color:var(--green)">Sim (qualquer runtime)</td></tr>
+        <tr><td class="feature">Auditoria</td><td>CloudTrail (AssumeRole)</td><td>IdP logs + CloudWatch</td></tr>
+        <tr><td class="feature">Tipo API Gateway</td><td>REST API ou HTTP API</td><td>HTTP API (JWT Authorizer)</td></tr>
+        <tr><td class="feature">Lambda Authorizer</td><td>Não necessário</td><td>Não necessário (nativo)</td></tr>
+        <tr><td class="feature">Complexidade Terraform</td><td>Alta (Resource Policy + roles)</td><td>Baixa (1 recurso JWT)</td></tr>
+        <tr><td class="feature">Ideal para</td><td>Tudo dentro da AWS, setup interno</td><td>Multi-cloud, externos, simplificar auth</td></tr>
+      </tbody>
+    </table>
+
+    <div class="section-card" style="margin-top:24px">
+      <h3>Fluxo de token — client_credentials (M2M)</h3>
+      <pre class="plain" style="margin-top:12px">
+Supervisor                    IdP (Okta/Auth0)          Agent (API GW)
+    │                               │                        │
+    │── POST /oauth/token ─────────►│                        │
+    │   client_id + secret          │                        │
+    │   grant_type=client_creds     │                        │
+    │◄─ access_token (JWT, ~1h) ───│                        │
+    │                               │                        │
+    │── POST /invoke ───────────────────────────────────────►│
+    │   Authorization: Bearer JWT   │                        │
+    │                               │                        │
+    │                               │◄── valida JWKS ───────│
+    │                               │    (cache 5min)        │
+    │                               │─── 200 OK ────────────►│
+    │◄─ response ──────────────────────────────────────────│
+    │                               │                        │</pre>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── Navigation ──────────────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Syntax highlighter ──────────────────────────────────────────
+function highlight(code, lang) {
+  const lines = code.split('\n');
+  return lines.map((line, i) => {
+    let color = '#c9d1d9';
+    const t = line.trim();
+
+    if (lang === 'hcl') {
+      if (t.startsWith('#')) color = '#6e7681';
+      else if (/^(resource|variable|output|locals|data|module|provider)\b/.test(t)) color = '#ff7b72';
+      else if (/^\s+\w[\w_]*\s*=/.test(line)) color = '#79c0ff';
+      else if (/"[^"]*"/.test(line) && !t.startsWith('#')) color = '#a5d6ff';
+    } else if (lang === 'python') {
+      if (t.startsWith('#')) color = '#6e7681';
+      else if (/^(def |class |import |from |async def )/.test(t)) color = '#ff7b72';
+      else if (/^@\w+/.test(t)) color = '#d2a8ff';
+      else if (/^\s*(return|if|else|elif|for|while|try|except|with|raise)\b/.test(line)) color = '#ff7b72';
+      else if (/"[^"]*"|'[^']*'/.test(line)) color = '#a5d6ff';
+      else if (/\b(True|False|None)\b/.test(line)) color = '#79c0ff';
+    } else if (lang === 'json') {
+      if (/"[^"]*"\s*:/.test(line)) color = '#79c0ff';
+      else if (/"[^"]*"/.test(line)) color = '#a5d6ff';
+      else if (/\b(true|false|null)\b/.test(line)) color = '#ff7b72';
+    }
+
+    const num = String(i+1).padStart(4,' ');
+    const esc = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<span class="line"><span class="ln">${num}</span><span style="color:${color}">${esc}</span></span>`;
+  }).join('\n');
+}
+
+// ── Code content ────────────────────────────────────────────────
+const codes = {
+
+'p1-tf-code': {lang:'hcl', code:`# ─────────────────────────────────────────────
+# CONTA B — Specialist Agent (exemplo genérico)
+# ─────────────────────────────────────────────
+
+# ── API Gateway REST API ──────────────────────
+resource "aws_api_gateway_rest_api" "agent_api" {
+  name        = "specialist-agent-b"
+  description = "A2A endpoint for Specialist Agent B"
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+}
+
+resource "aws_api_gateway_resource" "invoke" {
+  rest_api_id = aws_api_gateway_rest_api.agent_api.id
+  parent_id   = aws_api_gateway_rest_api.agent_api.root_resource_id
+  path_part   = "invoke"
+}
+
+resource "aws_api_gateway_method" "post_invoke" {
+  rest_api_id   = aws_api_gateway_rest_api.agent_api.id
+  resource_id   = aws_api_gateway_resource.invoke.id
+  http_method   = "POST"
+  authorization = "AWS_IAM"   # SigV4 — sem API Key exposta
+}
+
+resource "aws_api_gateway_integration" "lambda_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.agent_api.id
+  resource_id             = aws_api_gateway_resource.invoke.id
+  http_method             = aws_api_gateway_method.post_invoke.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.agent.invoke_arn
+}
+
+resource "aws_api_gateway_deployment" "prod" {
+  depends_on  = [aws_api_gateway_integration.lambda_integration]
+  rest_api_id = aws_api_gateway_rest_api.agent_api.id
+  stage_name  = "prod"
+}
+
+# ── Resource Policy: só deixa a Conta A chamar ──
+resource "aws_api_gateway_rest_api_policy" "allow_supervisor_account" {
+  rest_api_id = aws_api_gateway_rest_api.agent_api.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::ACCOUNT_A_ID:root"
+        }
+        Action   = "execute-api:Invoke"
+        Resource = "\${aws_api_gateway_rest_api.agent_api.execution_arn}/*"
+      }
+    ]
+  })
+}
+
+# ── Lambda do Agent B ────────────────────────
+resource "aws_lambda_function" "agent" {
+  function_name = "specialist-agent-b"
+  role          = aws_iam_role.lambda_exec.arn
+  runtime       = "python3.12"
+  handler       = "handler.lambda_handler"
+  filename      = "agent_b.zip"
+
+  environment {
+    variables = {
+      AGENT_NAME          = "specialist-b"
+      OPENAI_API_KEY      = var.openai_api_key
+      OPENSEARCH_ENDPOINT = var.opensearch_endpoint
+    }
+  }
+}
+
+# ── IAM Role da Lambda ───────────────────────
+resource "aws_iam_role" "lambda_exec" {
+  name = "agent-b-lambda-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+# ─────────────────────────────────────────────
+# CONTA A — Cross-Account Role para o Supervisor
+# ─────────────────────────────────────────────
+resource "aws_iam_role" "supervisor_invoker" {
+  name = "a2a-supervisor-invoker"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = {
+        AWS = "arn:aws:iam::ACCOUNT_A_ID:role/supervisor-task-role"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "invoke_agents" {
+  name = "invoke-remote-agents"
+  role = aws_iam_role.supervisor_invoker.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "execute-api:Invoke"
+        Resource = [
+          "arn:aws:execute-api:us-east-1:ACCOUNT_B_ID:*/prod/POST/invoke",
+          "arn:aws:execute-api:us-east-1:ACCOUNT_C_ID:*/prod/POST/invoke",
+        ]
+      }
+    ]
+  })
+}`},
+
+'p1-lc-code': {lang:'python', code:`# ──────────────────────────────────────────────────────────
+# Lado do Supervisor (Conta A) — consumindo os agents via A2A
+# ──────────────────────────────────────────────────────────
+import json, boto3, requests
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from botocore.credentials import Credentials
+from langchain_core.tools import tool
+from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode
+from typing import TypedDict, Annotated
+import operator
+
+# ── Helper: chama API Gateway com SigV4 ──────────────────
+def call_agent_endpoint(
+    endpoint_url: str,
+    payload: dict,
+    region: str = "us-east-1",
+    role_arn: str | None = None,
+) -> dict:
+    """
+    Faz POST autenticado via SigV4.
+    Se role_arn for passado, assume a cross-account role primeiro.
+    """
+    session = boto3.Session()
+
+    if role_arn:
+        sts = session.client("sts")
+        assumed = sts.assume_role(
+            RoleArn=role_arn,
+            RoleSessionName="supervisor-a2a-call",
+        )["Credentials"]
+        creds = Credentials(
+            access_key=assumed["AccessKeyId"],
+            secret_key=assumed["SecretAccessKey"],
+            token=assumed["SessionToken"],
+        )
+    else:
+        creds = session.get_credentials().get_frozen_credentials()
+        creds = Credentials(creds.access_key, creds.secret_key, creds.token)
+
+    body    = json.dumps(payload)
+    request = AWSRequest(
+        method="POST",
+        url=endpoint_url,
+        data=body,
+        headers={"Content-Type": "application/json"},
+    )
+    SigV4Auth(creds, "execute-api", region).add_auth(request)
+
+    resp = requests.post(
+        endpoint_url,
+        data=body,
+        headers=dict(request.headers),
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+# ── Config dos agentes remotos ────────────────────────────
+REMOTE_AGENTS = {
+    "agent_b": {
+        "url":      "https://API_ID_B.execute-api.us-east-1.amazonaws.com/prod/invoke",
+        "role_arn": "arn:aws:iam::ACCOUNT_B_ID:role/a2a-supervisor-invoker",
+    },
+    "agent_c": {
+        "url":      "https://API_ID_C.execute-api.us-east-1.amazonaws.com/prod/invoke",
+        "role_arn": "arn:aws:iam::ACCOUNT_C_ID:role/a2a-supervisor-invoker",
+    },
+}
+
+
+# ── LangChain Tools wrapping os agents remotos ───────────
+@tool
+def invoke_agent_b(task: str, context: dict = {}) -> str:
+    """Invoca o Specialist Agent B para tarefas de domínio X."""
+    result = call_agent_endpoint(
+        endpoint_url=REMOTE_AGENTS["agent_b"]["url"],
+        payload={"task": task, "context": context},
+        role_arn=REMOTE_AGENTS["agent_b"]["role_arn"],
+    )
+    return result.get("output", str(result))
+
+
+@tool
+def invoke_agent_c(task: str, context: dict = {}) -> str:
+    """Invoca o Specialist Agent C para tarefas de domínio Y."""
+    result = call_agent_endpoint(
+        endpoint_url=REMOTE_AGENTS["agent_c"]["url"],
+        payload={"task": task, "context": context},
+        role_arn=REMOTE_AGENTS["agent_c"]["role_arn"],
+    )
+    return result.get("output", str(result))
+
+
+# ── LangGraph Supervisor ──────────────────────────────────
+class SupervisorState(TypedDict):
+    messages: Annotated[list, operator.add]
+
+from langchain_openai import ChatOpenAI
+
+tools     = [invoke_agent_b, invoke_agent_c]
+llm       = ChatOpenAI(model="gpt-4o", temperature=0).bind_tools(tools)
+tool_node = ToolNode(tools)
+
+def supervisor_node(state: SupervisorState):
+    return {"messages": [llm.invoke(state["messages"])]}
+
+def should_continue(state: SupervisorState):
+    last = state["messages"][-1]
+    return "tools" if getattr(last, "tool_calls", None) else END
+
+graph = StateGraph(SupervisorState)
+graph.add_node("supervisor", supervisor_node)
+graph.add_node("tools", tool_node)
+graph.set_entry_point("supervisor")
+graph.add_conditional_edges("supervisor", should_continue)
+graph.add_edge("tools", "supervisor")
+app = graph.compile()
+
+
+# ── Lambda handler do Agent B (Conta B) ──────────────────
+import os
+from langchain_core.messages import HumanMessage, SystemMessage
+
+def lambda_handler(event, context):
+    try:
+        body   = json.loads(event.get("body", "{}"))
+        task   = body["task"]
+        ctx    = body.get("context", {})
+
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0,
+            openai_api_key=os.environ["OPENAI_API_KEY"],
+        )
+        messages = [
+            SystemMessage(content="Você é o Specialist Agent B, especializado em domínio X."),
+            HumanMessage(content=f"Task: {task}\\nContext: {json.dumps(ctx)}"),
+        ]
+        result = llm.invoke(messages)
+
+        return {
+            "statusCode": 200,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({
+                "agent":    "agent_b",
+                "output":   result.content,
+                "metadata": {"tokens": result.usage_metadata},
+            }),
+        }
+    except Exception as e:
+        return {"statusCode": 500, "body": json.dumps({"error": str(e)})}`},
+
+'p2-tf-code': {lang:'hcl', code:`# ──────────────────────────────────────────────────────────────────
+# CONTA B — API Gateway HTTP API com JWT Authorizer nativo
+# ──────────────────────────────────────────────────────────────────
+# NOTA: HTTP API (v2) — não REST API (v1)
+# JWT Authorizer é nativo no HTTP API, sem Lambda Authorizer extra
+
+variable "idp_issuer" {
+  description = "Issuer URL do IdP. Ex: https://your-tenant.okta.com/oauth2/default"
+  type        = string
+}
+
+variable "idp_audience" {
+  description = "Audience esperado no JWT. Ex: api://agent-b"
+  type        = string
+}
+
+# ── HTTP API ────────────────────────────────────────────────────────
+resource "aws_apigatewayv2_api" "agent_api" {
+  name          = "specialist-agent-b"
+  protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_origins = ["*"]
+    allow_methods = ["POST", "OPTIONS"]
+    allow_headers = ["Authorization", "Content-Type"]
+  }
+}
+
+# ── JWT Authorizer (valida contra JWKS do IdP automaticamente) ─────
+resource "aws_apigatewayv2_authorizer" "jwt_auth" {
+  api_id           = aws_apigatewayv2_api.agent_api.id
+  authorizer_type  = "JWT"
+  identity_sources = ["\$request.header.Authorization"]
+  name             = "idp-jwt-authorizer"
+
+  jwt_configuration {
+    issuer   = var.idp_issuer
+    # API GW busca JWKS em {issuer}/.well-known/jwks.json automaticamente
+    audience = [var.idp_audience]
+  }
+}
+
+# ── Rota POST /invoke protegida ────────────────────────────────────
+resource "aws_apigatewayv2_route" "invoke" {
+  api_id             = aws_apigatewayv2_api.agent_api.id
+  route_key          = "POST /invoke"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt_auth.id
+  target             = "integrations/\${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# ── Integração Lambda ──────────────────────────────────────────────
+resource "aws_apigatewayv2_integration" "lambda" {
+  api_id                 = aws_apigatewayv2_api.agent_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.agent.invoke_arn
+  payload_format_version = "2.0"
+}
+
+# ── Stage (auto-deploy) ────────────────────────────────────────────
+resource "aws_apigatewayv2_stage" "prod" {
+  api_id      = aws_apigatewayv2_api.agent_api.id
+  name        = "prod"
+  auto_deploy = true
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_logs.arn
+    format = jsonencode({
+      requestId      = "\$context.requestId"
+      sourceIp       = "\$context.identity.sourceIp"
+      httpMethod     = "\$context.httpMethod"
+      routeKey       = "\$context.routeKey"
+      status         = "\$context.status"
+      authorizeError = "\$context.authorizer.error"
+      jwtClaims      = "\$context.authorizer.claims"
+    })
+  }
+}
+
+resource "aws_cloudwatch_log_group" "api_logs" {
+  name              = "/aws/apigw/specialist-agent-b"
+  retention_in_days = 7
+}
+
+# ── Lambda permission ──────────────────────────────────────────────
+resource "aws_lambda_permission" "apigw" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.agent.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "\${aws_apigatewayv2_api.agent_api.execution_arn}/*/*"
+}
+
+# ── Lambda do Agent ────────────────────────────────────────────────
+resource "aws_lambda_function" "agent" {
+  function_name = "specialist-agent-b"
+  role          = aws_iam_role.lambda_exec.arn
+  runtime       = "python3.12"
+  handler       = "handler.lambda_handler"
+  filename      = "agent_b.zip"
+  timeout       = 60
+
+  environment {
+    variables = {
+      AGENT_NAME        = "specialist-b"
+      OPENAI_API_KEY    = data.aws_secretsmanager_secret_version.openai.secret_string
+      EXPECTED_AUDIENCE = var.idp_audience
+      EXPECTED_ISSUER   = var.idp_issuer
+    }
+  }
+}
+
+# ── Secrets Manager — client_id/secret do Supervisor (Conta A) ────
+resource "aws_secretsmanager_secret" "idp_creds" {
+  provider = aws.account_a
+  name     = "a2a/idp/agent-b"
+}
+
+resource "aws_secretsmanager_secret_version" "idp_creds" {
+  provider  = aws.account_a
+  secret_id = aws_secretsmanager_secret.idp_creds.id
+  secret_string = jsonencode({
+    client_id     = "<client_id_do_IdP>"
+    client_secret = "<client_secret_do_IdP>"
+    token_url     = "\${var.idp_issuer}/v1/token"
+    audience      = var.idp_audience
+  })
+}
+
+output "agent_b_endpoint" {
+  value = "\${aws_apigatewayv2_stage.prod.invoke_url}/invoke"
+}`},
+
+'p2-sup-code': {lang:'python', code:`# ──────────────────────────────────────────────────────────────────
+# Supervisor (Conta A) — Bearer token com cache + LangGraph tools
+# ──────────────────────────────────────────────────────────────────
+import time, json, threading
+import boto3, requests
+from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode
+from typing import TypedDict, Annotated
+import operator
+
+
+# ── Token Manager — busca e cacheia JWT do IdP ────────────────────
+class IdPTokenManager:
+    """
+    Faz client_credentials flow contra o IdP.
+    Cacheia o token em memória; renova automaticamente antes de expirar.
+    Em produção: usar Redis (ElastiCache) para cache compartilhado.
+    """
+
+    def __init__(self, secret_name: str, region: str = "us-east-1"):
+        self._lock   = threading.Lock()
+        self._token  = None
+        self._expiry = 0.0
+        self._creds  = self._load_secret(secret_name, region)
+
+    def _load_secret(self, name: str, region: str) -> dict:
+        client = boto3.client("secretsmanager", region_name=region)
+        raw = client.get_secret_value(SecretId=name)["SecretString"]
+        return json.loads(raw)
+
+    def get_token(self) -> str:
+        with self._lock:
+            # Renova 60s antes de expirar
+            if time.time() < self._expiry - 60 and self._token:
+                return self._token
+
+            resp = requests.post(
+                self._creds["token_url"],
+                data={
+                    "grant_type":    "client_credentials",
+                    "client_id":     self._creds["client_id"],
+                    "client_secret": self._creds["client_secret"],
+                    "audience":      self._creds["audience"],  # Auth0
+                    # Okta usa "scope" em vez de "audience":
+                    # "scope": "agent:invoke",
+                },
+                timeout=10,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            self._token  = data["access_token"]
+            self._expiry = time.time() + data.get("expires_in", 3600)
+            return self._token
+
+
+# ── Uma instância por agent (cada um tem seu client_id/audience) ──
+_token_managers: dict[str, IdPTokenManager] = {}
+
+def get_token_manager(agent_id: str) -> IdPTokenManager:
+    if agent_id not in _token_managers:
+        _token_managers[agent_id] = IdPTokenManager(
+            secret_name=f"a2a/idp/{agent_id}"
+        )
+    return _token_managers[agent_id]
+
+
+# ── Helper de chamada HTTP ─────────────────────────────────────────
+def call_agent(agent_id: str, endpoint_url: str, payload: dict) -> dict:
+    token = get_token_manager(agent_id).get_token()
+
+    resp = requests.post(
+        endpoint_url,
+        json=payload,
+        headers={
+            "Authorization":  f"Bearer {token}",
+            "Content-Type":   "application/json",
+            "X-Agent-Caller": "supervisor",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+# ── Config ─────────────────────────────────────────────────────────
+AGENTS = {
+    "agent_b": "https://API_ID_B.execute-api.us-east-1.amazonaws.com/prod/invoke",
+    "agent_c": "https://API_ID_C.execute-api.us-east-1.amazonaws.com/prod/invoke",
+}
+
+
+# ── LangChain Tools ────────────────────────────────────────────────
+@tool
+def invoke_agent_b(task: str, context: dict = {}) -> str:
+    """Invoca o Specialist Agent B para tarefas de domínio X."""
+    result = call_agent("agent-b", AGENTS["agent_b"], {
+        "task": task, "context": context,
+    })
+    return result.get("output", str(result))
+
+
+@tool
+def invoke_agent_c(task: str, context: dict = {}) -> str:
+    """Invoca o Specialist Agent C para tarefas de domínio Y."""
+    result = call_agent("agent-c", AGENTS["agent_c"], {
+        "task": task, "context": context,
+    })
+    return result.get("output", str(result))
+
+
+# ── LangGraph Supervisor ──────────────────────────────────────────
+class SupervisorState(TypedDict):
+    messages: Annotated[list, operator.add]
+
+tools     = [invoke_agent_b, invoke_agent_c]
+llm       = ChatOpenAI(model="gpt-4o", temperature=0).bind_tools(tools)
+tool_node = ToolNode(tools)
+
+def supervisor_node(state: SupervisorState):
+    return {"messages": [llm.invoke(state["messages"])]}
+
+def should_continue(state: SupervisorState):
+    last = state["messages"][-1]
+    return "tools" if getattr(last, "tool_calls", None) else END
+
+graph = StateGraph(SupervisorState)
+graph.add_node("supervisor", supervisor_node)
+graph.add_node("tools", tool_node)
+graph.set_entry_point("supervisor")
+graph.add_conditional_edges("supervisor", should_continue)
+graph.add_edge("tools", "supervisor")
+app = graph.compile()`},
+
+'p2-agent-code': {lang:'python', code:`# ──────────────────────────────────────────────────────────────────
+# Agent B — Lambda handler (Conta B)
+# API GW já validou o JWT antes de chegar aqui.
+# Claims chegam em event["requestContext"]["authorizer"]["jwt"]["claims"]
+# ──────────────────────────────────────────────────────────────────
+import json, os
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
+
+
+def lambda_handler(event, context):
+    # ── Claims do JWT (já validados pelo API GW) ──────────────────
+    auth_ctx = event.get("requestContext", {}).get("authorizer", {}).get("jwt", {})
+    claims   = auth_ctx.get("claims", {})
+
+    caller   = claims.get("sub", "unknown")   # client_id do Supervisor
+    audience = claims.get("aud", "")
+    scope    = claims.get("scope", "")
+
+    # Verificação extra de audience (defense in depth)
+    expected_aud = os.environ["EXPECTED_AUDIENCE"]
+    aud_list = audience if isinstance(audience, list) else [audience]
+    if expected_aud not in aud_list:
+        return _error(403, f"Invalid audience: {audience}")
+
+    # ── Payload ───────────────────────────────────────────────────
+    try:
+        body = json.loads(event.get("body", "{}"))
+        task = body["task"]
+        ctx  = body.get("context", {})
+    except (KeyError, json.JSONDecodeError) as e:
+        return _error(400, f"Bad request: {e}")
+
+    # ── Agent logic ───────────────────────────────────────────────
+    try:
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0,
+            openai_api_key=os.environ["OPENAI_API_KEY"],
+        )
+
+        messages = [
+            SystemMessage(content=(
+                "Você é o Specialist Agent B, especializado em domínio X. "
+                f"Caller: {caller}"
+            )),
+            HumanMessage(content=f"Task: {task}\\nContext: {json.dumps(ctx)}"),
+        ]
+
+        result = llm.invoke(messages)
+
+        return {
+            "statusCode": 200,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({
+                "agent":  "agent_b",
+                "output": result.content,
+                "caller": caller,   # auditoria
+            }),
+        }
+
+    except Exception as e:
+        return _error(500, str(e))
+
+
+def _error(status: int, msg: str) -> dict:
+    return {
+        "statusCode": status,
+        "body": json.dumps({"error": msg}),
+    }
+
+
+# ──────────────────────────────────────────────────────────────────
+# Estrutura do event (HTTP API payload format 2.0)
+# ──────────────────────────────────────────────────────────────────
+#
+# {
+#   "routeKey": "POST /invoke",
+#   "body": '{"task": "...", "context": {...}}',
+#   "requestContext": {
+#     "authorizer": {
+#       "jwt": {
+#         "claims": {
+#           "sub":   "supervisor-client-id",
+#           "iss":   "https://your-tenant.okta.com/oauth2/default",
+#           "aud":   "api://agent-b",
+#           "exp":   1749000000,
+#           "scope": "agent:invoke"
+#         },
+#         "scopes": ["agent:invoke"]
+#       }
+#     }
+#   }
+# }`},
+
+};
+
+// ── Payloads JSON ──────────────────────────────────────────────
+const payloadReq = `{
+  "task": "Analise os dados de vendas do Q1",
+  "context": {
+    "session_id": "sess_abc123",
+    "redis_keys": ["wm:sess_abc123:sales_data"],
+    "user_id": "user_42"
+  },
+  "metadata": {
+    "trace_id": "trace_xyz",
+    "caller": "supervisor",
+    "timestamp": "2026-06-04T10:00:00Z"
+  }
+}`;
+
+const payloadRes = `{
+  "agent": "sales-analyst",
+  "output": "Análise completa: ...",
+  "artifacts": {
+    "stored_key": "wm:sess_abc123:sales_analysis"
+  },
+  "metadata": {
+    "model": "gpt-4o-mini",
+    "latency_ms": 1240
+  }
+}`;
+
+// ── Render all code blocks ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  for (const [id, {lang, code}] of Object.entries(codes)) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = highlight(code, lang);
+  }
+  const req = document.getElementById('p1-payload-req');
+  if (req) req.innerHTML = highlight(payloadReq, 'json');
+  const res = document.getElementById('p1-payload-res');
+  if (res) res.innerHTML = highlight(payloadRes, 'json');
+});
+</script>
+</body>
+</html>
