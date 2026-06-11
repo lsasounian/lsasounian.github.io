@@ -1,598 +1,193 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>04 — Redis & DynamoDB Memory | Multi-Agent Systems</title>
-  <style>
-    :root {
-      --bg:        #0e1117;
-      --surface:   #161b27;
-      --surface2:  #1c2333;
-      --border:    #2a3347;
-      --accent:    #4f8ef7;
-      --accent2:   #a78bfa;
-      --green:     #34d399;
-      --yellow:    #fbbf24;
-      --red:       #f87171;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --code-bg:   #131720;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>04 — Redis & DynamoDB Memory | Multi-Agent Systems</title>
+<link rel="stylesheet" href="../../assets/css/theme.css" />
+<style>
+:root { --accent: var(--cyan); --accent-dim: #103a44; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── MEMORY LAYERS ── */
+.memory-layers { display: flex; flex-direction: column; gap: 0; margin: 32px 0; }
+.mem-layer {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center; gap: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: var(--card);
+  transition: background .2s;
+}
+.mem-layer:first-child { border-radius: 10px 10px 0 0; }
+.mem-layer:last-child  { border-bottom: 1px solid var(--border); border-radius: 0 0 10px 10px; }
+.mem-layer:hover { background: #ffffff06; }
+.mem-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.mem-info h4 { font-weight: 600; font-size: .95rem; margin-bottom: 4px; color: var(--text); }
+.mem-info p { font-size: .83rem; color: var(--muted); line-height: 1.5; margin: 0; }
+.mem-ttl {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--accent); white-space: nowrap;
+  text-align: right;
+}
+.mem-ttl span { font-weight: 400; color: var(--muted); }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      font-size: 15px;
-      line-height: 1.7;
-    }
+.mem-layer.l1 .mem-icon { background: color-mix(in srgb, var(--blue) 10%, transparent); }
+.mem-layer.l2 .mem-icon { background: color-mix(in srgb, var(--green) 10%, transparent); }
+.mem-layer.l3 .mem-icon { background: color-mix(in srgb, var(--amber) 10%, transparent); }
+.mem-layer.l4 .mem-icon { background: color-mix(in srgb, var(--purple) 10%, transparent); }
 
-    /* ── NAV ── */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(14,17,23,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      height: 52px;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    nav a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 13px;
-      transition: color .15s;
-    }
-    nav a:hover { color: var(--text); }
-    nav .sep { color: var(--border); }
-    nav .current {
-      color: var(--accent);
-      font-weight: 600;
-      font-size: 13px;
-    }
+/* ── REDIS CLUSTER CARDS ── */
+.cluster-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+.cluster-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+.cluster-card .cluster-icon { font-size: 1.4rem; margin-bottom: 10px; }
+.cluster-card h4 { font-size: .95rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.cluster-card .cluster-ttl {
+  font-family: var(--mono); font-size: 10px;
+  font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+.cluster-card ul { list-style: none; display: flex; flex-direction: column; gap: 6px; padding-left: 0; margin-bottom: 0; }
+.cluster-card ul li {
+  font-size: .82rem; color: var(--muted);
+  line-height: 1.5; margin-bottom: 0;
+}
+.cluster-card ul li::before { content: "→ "; color: var(--accent); }
 
-    /* ── LAYOUT ── */
-    .layout {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      min-height: calc(100vh - 52px);
-    }
+/* ── DYNAMODB SCHEMA BOX ── */
+.schema-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 24px 0;
+}
+.schema-header {
+  background: var(--surface);
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.schema-header .table-name {
+  font-weight: 700;
+  font-size: .85rem;
+  font-family: var(--mono);
+  color: var(--accent);
+}
+.schema-header .schema-tag {
+  font-family: var(--mono); font-size: 10px;
+  font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted);
+}
+.schema-body { padding: 20px; }
+.key-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: .85rem;
+}
+.key-row:last-child { margin-bottom: 0; }
+.key-label {
+  font-family: var(--mono); font-size: 10px;
+  font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); min-width: 28px;
+}
+.key-value { font-family: var(--mono); color: var(--text); }
+.key-desc  { color: var(--muted); font-size: .8rem; }
 
-    /* ── SIDEBAR ── */
-    aside {
-      border-right: 1px solid var(--border);
-      padding: 2rem 1.25rem;
-      position: sticky;
-      top: 52px;
-      height: calc(100vh - 52px);
-      overflow-y: auto;
-    }
-    aside h3 {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 1rem;
-    }
-    aside ul { list-style: none; display: flex; flex-direction: column; gap: .25rem; }
-    aside a {
-      display: block;
-      font-size: 12.5px;
-      color: var(--muted);
-      text-decoration: none;
-      padding: .35rem .75rem;
-      border-radius: 6px;
-      transition: all .15s;
-    }
-    aside a:hover { color: var(--text); background: var(--surface); }
-
-    /* ── MAIN ── */
-    main {
-      max-width: 860px;
-      padding: 4rem 3rem 6rem;
-    }
-
-    /* ── HERO ── */
-    .topic-label {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 1.25rem;
-    }
-    h1 {
-      font-size: 2.6rem;
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -.02em;
-      margin-bottom: 1.25rem;
-    }
-    h1 em { font-style: normal; color: var(--accent); }
-    .lead {
-      color: var(--muted);
-      font-size: 15.5px;
-      line-height: 1.8;
-      max-width: 640px;
-      margin-bottom: 3.5rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 2.5rem;
-    }
-
-    /* ── SECTIONS ── */
-    .section { margin-bottom: 4rem; }
-    .section-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: .75rem;
-    }
-    h2 {
-      font-size: 1.45rem;
-      font-weight: 700;
-      margin-bottom: 1.25rem;
-      letter-spacing: -.01em;
-    }
-    h2 em { font-style: normal; color: var(--accent); }
-    h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin: 1.75rem 0 .75rem;
-      color: var(--text);
-    }
-    p { color: var(--muted); margin-bottom: 1rem; line-height: 1.8; }
-    strong { color: var(--text); font-weight: 600; }
-
-    /* ── CALLOUT ── */
-    .callout {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      margin: 1.5rem 0;
-      font-size: 13.5px;
-      color: var(--muted);
-    }
-    .callout strong { color: var(--text); }
-    .callout.warning { border-left-color: var(--yellow); }
-    .callout.danger  { border-left-color: var(--red); }
-    .callout.success { border-left-color: var(--green); }
-
-    /* ── CODE ── */
-    .code-block {
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin: 1.5rem 0;
-      overflow: hidden;
-    }
-    .code-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: .6rem 1rem;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .code-lang {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .code-filename {
-      font-size: 11.5px;
-      color: var(--accent);
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    }
-    pre {
-      padding: 1.25rem 1.4rem;
-      overflow-x: auto;
-      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-      font-size: 12.5px;
-      line-height: 1.75;
-      color: #c9d1d9;
-    }
-    code { font-family: inherit; }
-
-    /* inline code */
-    p code, li code, td code {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: .1em .4em;
-      font-size: .88em;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--accent2);
-    }
-
-    /* ── CARDS — clusters Redis ── */
-    .cluster-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-    .cluster-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem;
-    }
-    .cluster-card .icon {
-      font-size: 1.4rem;
-      margin-bottom: .6rem;
-    }
-    .cluster-card h4 {
-      font-size: .85rem;
-      font-weight: 700;
-      margin-bottom: .3rem;
-      color: var(--text);
-    }
-    .cluster-card .cluster-ttl {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .06em;
-      color: var(--accent);
-      margin-bottom: .6rem;
-    }
-    .cluster-card ul {
-      list-style: none;
-      font-size: 12px;
-      color: var(--muted);
-      display: flex;
-      flex-direction: column;
-      gap: .3rem;
-    }
-    .cluster-card ul li::before { content: "→ "; color: var(--accent); }
-
-    /* ── TABLE ── */
-    .table-wrap { overflow-x: auto; margin: 1.5rem 0; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    thead tr { border-bottom: 2px solid var(--border); }
-    th {
-      text-align: left;
-      padding: .6rem 1rem;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    td {
-      padding: .65rem 1rem;
-      color: var(--muted);
-      border-bottom: 1px solid var(--border);
-      vertical-align: top;
-    }
-    td:first-child { color: var(--text); font-weight: 500; }
-    tr:last-child td { border-bottom: none; }
-    .badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .06em;
-      padding: .15em .5em;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
-    .badge-blue   { background: rgba(79,142,247,.15); color: var(--accent); }
-    .badge-purple { background: rgba(167,139,250,.15); color: var(--accent2); }
-    .badge-green  { background: rgba(52,211,153,.15);  color: var(--green); }
-    .badge-yellow { background: rgba(251,191,36,.15);  color: var(--yellow); }
-    .badge-red    { background: rgba(248,113,113,.15); color: var(--red); }
-
-    /* ── DYNAMO SCHEMA ── */
-    .schema-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 1.5rem 0;
-    }
-    .schema-header {
-      background: var(--surface2);
-      padding: .75rem 1.25rem;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: .75rem;
-    }
-    .schema-header .table-name {
-      font-weight: 700;
-      font-size: 13.5px;
-      font-family: monospace;
-      color: var(--accent);
-    }
-    .schema-header .tag {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .schema-body { padding: 1.25rem; }
-    .key-row {
-      display: flex;
-      gap: .75rem;
-      align-items: baseline;
-      margin-bottom: .5rem;
-      font-size: 13px;
-    }
-    .key-label {
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--accent2);
-      min-width: 28px;
-    }
-    .key-value { font-family: monospace; color: var(--text); }
-    .key-desc  { color: var(--muted); font-size: 12px; }
-
-    /* ── FLOW ── */
-    .flow {
-      position: relative;
-      margin: 1.5rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .flow-step {
-      display: flex;
-      gap: 1.25rem;
-      position: relative;
-    }
-    .flow-step + .flow-step { margin-top: 0; }
-    .flow-left {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 36px;
-      flex-shrink: 0;
-    }
-    .flow-num {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--surface2);
-      border: 2px solid var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--accent);
-      flex-shrink: 0;
-      position: relative;
-      z-index: 1;
-    }
-    .flow-line {
-      width: 2px;
-      flex: 1;
-      background: var(--border);
-      min-height: 24px;
-    }
-    .flow-step:last-child .flow-line { display: none; }
-    .flow-content {
-      padding: .4rem 0 1.5rem;
-    }
-    .flow-title {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--text);
-      margin-bottom: .25rem;
-    }
-    .flow-desc {
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .flow-desc code {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: .1em .4em;
-      font-size: .85em;
-      font-family: monospace;
-      color: var(--accent2);
-    }
-
-    /* ── MEMORY LAYERS ── */
-    .mem-layers {
-      display: flex;
-      flex-direction: column;
-      gap: .75rem;
-      margin: 1.5rem 0;
-    }
-    .mem-layer {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      display: grid;
-      grid-template-columns: 2rem 1fr auto;
-      gap: 1rem;
-      align-items: center;
-    }
-    .mem-layer .mem-icon { font-size: 1.25rem; }
-    .mem-layer .mem-info h4 {
-      font-size: 13.5px;
-      font-weight: 600;
-      margin-bottom: .2rem;
-      color: var(--text);
-    }
-    .mem-layer .mem-info p {
-      font-size: 12px;
-      color: var(--muted);
-      margin: 0;
-    }
-    .mem-layer .mem-ttl {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--accent);
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    /* ── TAGS ── */
-    .tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .5rem;
-      margin-top: 3rem;
-      padding-top: 2rem;
-      border-top: 1px solid var(--border);
-    }
-    .tag {
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: .3em .75em;
-      color: var(--muted);
-    }
-
-    /* ── PAGINATION ── */
-    .pagination {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 4rem;
-      padding-top: 2rem;
-      border-top: 1px solid var(--border);
-      font-size: 13px;
-    }
-    .pagination a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .pagination a:hover { text-decoration: underline; }
-    .pagination .current-label {
-      color: var(--muted);
-      font-family: monospace;
-      font-size: 12px;
-    }
-
-    /* ── ARCHITECTURE DIAGRAM ── */
-    .arch-diagram {
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.5rem;
-      overflow-x: auto;
-      margin: 1.5rem 0;
-    }
-    .arch-diagram pre {
-      padding: 0;
-      font-size: 12px;
-      line-height: 1.6;
-      color: #8b9ab5;
-    }
-
-    /* scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    @media (max-width: 768px) {
-      .layout { grid-template-columns: 1fr; }
-      aside { display: none; }
-      main { padding: 2rem 1.25rem 4rem; }
-      h1 { font-size: 1.9rem; }
-      .cluster-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+@media (max-width: 860px) {
+  .cluster-grid { grid-template-columns: 1fr; }
+  .mem-layer { grid-template-columns: 44px 1fr; }
+  .mem-ttl { display: none; }
+}
+</style>
 </head>
 <body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
 
-<!-- NAV -->
-<nav>
-  <a href="https://lsasounian.github.io/index.html">← DevDocs</a>
-  <span class="sep">›</span>
-  <a href="https://lsasounian.github.io/docs/langchain/index.html">Multi-Agent Systems</a>
-  <span class="sep">›</span>
-  <span class="current">04 Redis &amp; DynamoDB Memory</span>
-</nav>
+<aside class="sidebar">
+  <a href="../../index.html" class="back-link">← DevDocs</a>
+  <a href="index.html" class="sidebar-logo">
+    <span class="doc-tag">04</span>
+    <span class="doc-title">Redis &amp; DynamoDB</span>
+  </a>
+  <nav>
+    <div class="nav-section">Arquitetura</div>
+    <a href="#visao-geral">Visão Geral</a>
+    <a href="#memory-layers">Memory Layers</a>
+    <a href="#redis-clusters">Redis Clusters</a>
 
-<div class="layout">
+    <div class="nav-section">Redis — Key Schemas</div>
+    <a href="#redis-sessions">redis-sessions</a>
+    <a href="#redis-threads">redis-threads</a>
+    <a href="#redis-memory">redis-memory</a>
 
-  <!-- SIDEBAR -->
-  <aside>
-    <h3>Seções</h3>
-    <ul>
-      <li><a href="#visao-geral">Visão Geral</a></li>
-      <li><a href="#memory-layers">Memory Layers</a></li>
-      <li><a href="#redis-clusters">Redis Clusters</a></li>
-      <li><a href="#redis-sessions">redis-sessions</a></li>
-      <li><a href="#redis-threads">redis-threads</a></li>
-      <li><a href="#redis-memory">redis-memory</a></li>
-      <li><a href="#dynamo">DynamoDB</a></li>
-      <li><a href="#dynamo-history">ConversationHistory</a></li>
-      <li><a href="#dynamo-prefs">UserPreferences</a></li>
-      <li><a href="#dynamo-session">SessionIndex</a></li>
-      <li><a href="#codigo">Código</a></li>
-      <li><a href="#redis-clients">Redis Clients</a></li>
-      <li><a href="#session-store">Session Store</a></li>
-      <li><a href="#checkpointer">Checkpointer</a></li>
-      <li><a href="#memory-store">Memory Store</a></li>
-      <li><a href="#dynamo-repo">DynamoDB Repo</a></li>
-      <li><a href="#context-enricher">Context Enricher</a></li>
-      <li><a href="#graph">StateGraph</a></li>
-      <li><a href="#archiver">Thread Archiver</a></li>
-      <li><a href="#entrypoint">Entrypoint</a></li>
-      <li><a href="#fluxo">Fluxo Completo</a></li>
-      <li><a href="#ttl-table">Tabela de TTLs</a></li>
-    </ul>
-  </aside>
+    <div class="nav-section">DynamoDB</div>
+    <a href="#dynamo">Tabelas e Índices</a>
+    <a href="#dynamo-history">ConversationHistory</a>
+    <a href="#dynamo-prefs">UserPreferences</a>
+    <a href="#dynamo-session">SessionIndex</a>
 
-  <!-- MAIN -->
-  <main>
+    <div class="nav-section">Implementação</div>
+    <a href="#codigo">Visão Geral</a>
+    <a href="#redis-clients">Redis Clients</a>
+    <a href="#session-store">Session Store</a>
+    <a href="#checkpointer">Checkpointer</a>
+    <a href="#memory-store">Memory Store</a>
+    <a href="#dynamo-repo">DynamoDB Repo</a>
+    <a href="#context-enricher">Context Enricher</a>
+    <a href="#graph">StateGraph</a>
+    <a href="#archiver">Thread Archiver</a>
+    <a href="#entrypoint">Entrypoint</a>
 
-    <!-- HERO -->
-    <div class="topic-label">Tópico 04</div>
-    <h1>Redis &amp; DynamoDB<br><em>Memory Architecture</em></h1>
-    <p class="lead">
-      Três clusters Redis com responsabilidades isoladas. DynamoDB como primário para histórico e preferências.
-      Short-term memory restrita ao ciclo de vida da thread. Long-term memory inferida pelo LLM e persistida
-      entre sessões. O Supervisor como único dono do estado — agentes recebem contexto via MCP payload.
-    </p>
+    <div class="nav-section">Resumo</div>
+    <a href="#fluxo">Fluxo Completo</a>
+    <a href="#ttl-table">Tabela de TTLs</a>
+  </nav>
+</aside>
 
-    <!-- VISÃO GERAL -->
-    <div class="section" id="visao-geral">
-      <div class="section-label">Seção 01</div>
-      <h2>Visão Geral da <em>Arquitetura</em></h2>
+<main class="main">
+<div class="wrapper">
 
-      <p>
-        Todo o estado vive exclusivamente na <strong>Conta Supervisora</strong>. Os agentes especialistas
-        e os BFFs são stateless — recebem contexto enriquecido no payload MCP e devolvem resultados.
-        Isso elimina acoplamento de estado entre contas e torna cada agente trivialmente escalável.
-      </p>
+  <header class="doc-header">
+    <div class="doc-num">Tópico 04</div>
+    <h1>Redis &amp; DynamoDB<br/><em>Memory Architecture</em></h1>
+    <p class="doc-lead">Três clusters Redis com responsabilidades isoladas. DynamoDB como primário para histórico e preferências. Short-term memory restrita ao ciclo de vida da thread. Long-term memory inferida pelo LLM e persistida entre sessões. O Supervisor como único dono do estado — agentes recebem contexto via MCP payload.</p>
+  </header>
 
-      <div class="arch-diagram">
-        <pre>
+  <!-- SEÇÃO 1: VISÃO GERAL -->
+  <section class="section" id="visao-geral">
+    <div class="section-label">Arquitetura</div>
+    <h2>Visão Geral da <em>Arquitetura</em></h2>
+
+    <p>Todo o estado vive exclusivamente na <strong>Conta Supervisora</strong>. Os agentes especialistas e os BFFs são stateless — recebem contexto enriquecido no payload MCP e devolvem resultados. Isso elimina acoplamento de estado entre contas e torna cada agente trivialmente escalável.</p>
+
+    <div class="diagram">
+      <pre>
 ┌──────────────────────────── Supervisor Account ────────────────────────────────┐
 │                                                                                 │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────────────────┐   │
-│  │  redis-sessions  │  │  redis-threads   │  │       redis-memory         │   │
+│  │  <span class="hi">redis-sessions</span>  │  │  <span class="hi2">redis-threads</span>   │  │       <span class="hi3">redis-memory</span>         │   │
 │  │                  │  │                  │  │                            │   │
 │  │  Session Store   │  │  LangGraph       │  │  UserPreferences cache     │   │
 │  │  User mapping    │  │  Checkpointer    │  │  LTM Summaries cache       │   │
@@ -602,7 +197,7 @@
 │           └────────────────────┴──────────────────────────────┘                │
 │                                           │                                    │
 │                              ┌────────────▼──────────────┐                    │
-│                              │         DynamoDB           │                    │
+│                              │         <span class="hi4">DynamoDB</span>           │                    │
 │                              │  ConversationHistory       │                    │
 │                              │  UserPreferences           │                    │
 │                              │  SessionIndex              │                    │
@@ -622,819 +217,813 @@
    │  stateless — recebe     │       │  stateless — recebe      │
    │  contexto via MCP       │       │  contexto via MCP        │
    └─────────────────────────┘       └─────────────────────────┘</pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 2: MEMORY LAYERS -->
+  <section class="section" id="memory-layers">
+    <div class="section-label">Arquitetura</div>
+    <h2><em>Memory Layers</em> — Short-term vs Long-term</h2>
+
+    <p>A distinção entre short-term e long-term não é arbitrária — ela mapeia diretamente para o <strong>ciclo de vida dos dados</strong> e onde eles vivem.</p>
+
+    <div class="memory-layers">
+      <div class="mem-layer l1">
+        <div class="mem-icon">⚡</div>
+        <div class="mem-info">
+          <h4>Short-term Memory — Thread State</h4>
+          <p>Contexto da conversa ativa. Mensagens, tool calls, estado LangGraph. Vive em <code>redis-threads</code>. Morre com a thread — arquivado antes de expirar.</p>
+        </div>
+        <div class="mem-ttl">30 min<br/><span>sliding</span></div>
+      </div>
+      <div class="mem-layer l2">
+        <div class="mem-icon">🔄</div>
+        <div class="mem-info">
+          <h4>Short-term Memory — Sessão</h4>
+          <p>Mapeamento session_id ↔ user_id. Garante que múltiplas threads de uma sessão compartilhem o mesmo usuário. Vive em <code>redis-sessions</code>.</p>
+        </div>
+        <div class="mem-ttl">2 h<br/><span>sliding</span></div>
+      </div>
+      <div class="mem-layer l3">
+        <div class="mem-icon">🧠</div>
+        <div class="mem-info">
+          <h4>Long-term Memory — Session Summaries</h4>
+          <p>Resumos gerados por LLM ao encerrar cada sessão. Descrevem o que foi discutido, tópicos e sentimento. Usados para enriquecer contexto de sessões futuras.</p>
+        </div>
+        <div class="mem-ttl">Permanente<br/><span>DynamoDB</span></div>
+      </div>
+      <div class="mem-layer l4">
+        <div class="mem-icon">👤</div>
+        <div class="mem-info">
+          <h4>Long-term Memory — UserPreferences</h4>
+          <p>Fatos inferidos automaticamente pelo supervisor sobre o usuário — idioma, estilo de resposta, plano, segmento, último problema. 3 níveis: preferências simples, summaries e fatos estruturados.</p>
+        </div>
+        <div class="mem-ttl">Permanente<br/><span>DynamoDB</span></div>
       </div>
     </div>
 
-    <!-- MEMORY LAYERS -->
-    <div class="section" id="memory-layers">
-      <div class="section-label">Seção 02</div>
-      <h2><em>Memory Layers</em> — Short-term vs Long-term</h2>
+    <div class="callout">
+      <strong>Write-through para UserPreferences:</strong> DynamoDB é sempre escrito primeiro (primário). Redis é o cache de leitura rápida — populado automaticamente no primeiro acesso (<em>read-through</em>) e invalidado por evento na escrita.
+    </div>
+  </section>
 
-      <p>
-        A distinção entre short-term e long-term não é arbitrária — ela mapeia diretamente para o
-        <strong>ciclo de vida dos dados</strong> e onde eles vivem.
-      </p>
+  <!-- SEÇÃO 3: REDIS CLUSTERS -->
+  <section class="section" id="redis-clusters">
+    <div class="section-label">Arquitetura</div>
+    <h2>Os Três <em>Clusters Redis</em></h2>
 
-      <div class="mem-layers">
-        <div class="mem-layer">
-          <div class="mem-icon">⚡</div>
-          <div class="mem-info">
-            <h4>Short-term Memory — Thread State</h4>
-            <p>Contexto da conversa ativa. Mensagens, tool calls, estado LangGraph. Vive em <code>redis-threads</code>. Morre com a thread — arquivado antes de expirar.</p>
-          </div>
-          <div class="mem-ttl">30 min<br><span style="font-weight:400;color:var(--muted)">sliding</span></div>
-        </div>
-        <div class="mem-layer">
-          <div class="mem-icon">🔄</div>
-          <div class="mem-info">
-            <h4>Short-term Memory — Sessão</h4>
-            <p>Mapeamento session_id ↔ user_id. Garante que múltiplas threads de uma sessão compartilhem o mesmo usuário. Vive em <code>redis-sessions</code>.</p>
-          </div>
-          <div class="mem-ttl">2 h<br><span style="font-weight:400;color:var(--muted)">sliding</span></div>
-        </div>
-        <div class="mem-layer">
-          <div class="mem-icon">🧠</div>
-          <div class="mem-info">
-            <h4>Long-term Memory — Session Summaries</h4>
-            <p>Resumos gerados por LLM ao encerrar cada sessão. Descrevem o que foi discutido, tópicos e sentimento. Usados para enriquecer contexto de sessões futuras.</p>
-          </div>
-          <div class="mem-ttl">Permanente<br><span style="font-weight:400;color:var(--muted)">DynamoDB</span></div>
-        </div>
-        <div class="mem-layer">
-          <div class="mem-icon">👤</div>
-          <div class="mem-info">
-            <h4>Long-term Memory — UserPreferences</h4>
-            <p>Fatos inferidos automaticamente pelo supervisor sobre o usuário — idioma, estilo de resposta, plano, segmento, último problema. 3 níveis: preferências simples, summaries e fatos estruturados.</p>
-          </div>
-          <div class="mem-ttl">Permanente<br><span style="font-weight:400;color:var(--muted)">DynamoDB</span></div>
-        </div>
+    <p>Clusters separados permitem TTL policies, scaling e políticas de eviction independentes. Um único cluster com prefixos seria mais barato, mas não permite configurar <code>maxmemory-policy</code> diferente por função — e aqui isso importa: <code>redis-memory</code> não pode usar <code>allkeys-lru</code> porque preferências não têm TTL.</p>
+
+    <div class="cluster-grid">
+      <div class="cluster-card">
+        <div class="cluster-icon">🔑</div>
+        <h4>redis-sessions</h4>
+        <div class="cluster-ttl">TTL: 2h sliding</div>
+        <ul>
+          <li>Session hash</li>
+          <li>session → user mapping</li>
+          <li>user → active session</li>
+          <li>eviction: volatile-lru</li>
+        </ul>
       </div>
-
-      <div class="callout">
-        <strong>Write-through para UserPreferences:</strong> DynamoDB é sempre escrito primeiro (primário).
-        Redis é o cache de leitura rápida — populado automaticamente no primeiro acesso
-        (<em>read-through</em>) e invalidado por evento na escrita.
+      <div class="cluster-card">
+        <div class="cluster-icon">🧵</div>
+        <h4>redis-threads</h4>
+        <div class="cluster-ttl">TTL: 30min sliding</div>
+        <ul>
+          <li>LangGraph checkpoint</li>
+          <li>Thread state hash</li>
+          <li>Messages list</li>
+          <li>eviction: volatile-lru</li>
+        </ul>
+      </div>
+      <div class="cluster-card">
+        <div class="cluster-icon">💾</div>
+        <h4>redis-memory</h4>
+        <div class="cluster-ttl">TTL: event-driven</div>
+        <ul>
+          <li>UserPreferences cache</li>
+          <li>LTM summaries list</li>
+          <li>Working memory (30min)</li>
+          <li>eviction: volatile-lru</li>
+        </ul>
       </div>
     </div>
+  </section>
 
-    <!-- REDIS CLUSTERS -->
-    <div class="section" id="redis-clusters">
-      <div class="section-label">Seção 03</div>
-      <h2>Os Três <em>Clusters Redis</em></h2>
+  <!-- SEÇÃO 4: REDIS-SESSIONS -->
+  <section class="section" id="redis-sessions">
+    <div class="section-label">Redis — Key Schemas</div>
+    <h2>Key Schema — <em>redis-sessions</em></h2>
 
-      <p>
-        Clusters separados permitem TTL policies, scaling e políticas de eviction independentes.
-        Um único cluster com prefixos seria mais barato, mas não permite configurar
-        <code>maxmemory-policy</code> diferente por função — e aqui isso importa:
-        <code>redis-memory</code> não pode usar <code>allkeys-lru</code> porque preferências não têm TTL.
-      </p>
-
-      <div class="cluster-grid">
-        <div class="cluster-card">
-          <div class="icon">🔑</div>
-          <h4>redis-sessions</h4>
-          <div class="cluster-ttl">TTL: 2h sliding</div>
-          <ul>
-            <li>Session hash</li>
-            <li>session → user mapping</li>
-            <li>user → active session</li>
-            <li>eviction: volatile-lru</li>
-          </ul>
-        </div>
-        <div class="cluster-card">
-          <div class="icon">🧵</div>
-          <h4>redis-threads</h4>
-          <div class="cluster-ttl">TTL: 30min sliding</div>
-          <ul>
-            <li>LangGraph checkpoint</li>
-            <li>Thread state hash</li>
-            <li>Messages list</li>
-            <li>eviction: volatile-lru</li>
-          </ul>
-        </div>
-        <div class="cluster-card">
-          <div class="icon">💾</div>
-          <h4>redis-memory</h4>
-          <div class="cluster-ttl">TTL: event-driven</div>
-          <ul>
-            <li>UserPreferences cache</li>
-            <li>LTM summaries list</li>
-            <li>Working memory (30min)</li>
-            <li>eviction: volatile-lru</li>
-          </ul>
-        </div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">redis — key schema</span>
       </div>
-    </div>
-
-    <!-- REDIS KEY SCHEMA -->
-    <div class="section" id="redis-sessions">
-      <div class="section-label">Seção 04</div>
-      <h2>Key Schema — <em>redis-sessions</em></h2>
-
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">redis</span>
-          <span class="code-filename">key schema</span>
-        </div>
-        <pre><code>session:{session_id}              → Hash    TTL: 2h sliding
+      <pre><code>session:{session_id}              → Hash    TTL: 2h sliding
 session:{session_id}:user         → String  TTL: 2h sliding   valor: user_id
 user:{user_id}:active_session     → String  TTL: 2h sliding   valor: session_id</code></pre>
-      </div>
-
-      <h3>Estrutura do Hash <code>session:{session_id}</code></h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">json</span>
-          <span class="code-filename">hash fields</span>
-        </div>
-        <pre><code>{
-  "session_id":  "sess_abc123",
-  "user_id":     "usr_xyz789",
-  "started_at":  "2025-01-15T10:00:00Z",
-  "last_active": "2025-01-15T10:45:00Z",
-  "status":      "active",
-  "metadata":    "{\"channel\": \"web\", \"ip\": \"...\"}"
-}</code></pre>
-      </div>
-
-      <div class="callout">
-        <strong>Sliding TTL:</strong> a cada leitura de sessão, o TTL é renovado via <code>EXPIRE</code>
-        em pipeline — sempre nas 3 chaves ao mesmo tempo para manter coerência.
-      </div>
     </div>
 
-    <div class="section" id="redis-threads">
-      <div class="section-label">Seção 05</div>
-      <h2>Key Schema — <em>redis-threads</em></h2>
+    <h3>Estrutura do Hash <code>session:{session_id}</code></h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">json — hash fields</span>
+      </div>
+      <pre><code>{
+  <span class="st">"session_id"</span>:  <span class="st">"sess_abc123"</span>,
+  <span class="st">"user_id"</span>:     <span class="st">"usr_xyz789"</span>,
+  <span class="st">"started_at"</span>:  <span class="st">"2025-01-15T10:00:00Z"</span>,
+  <span class="st">"last_active"</span>: <span class="st">"2025-01-15T10:45:00Z"</span>,
+  <span class="st">"status"</span>:      <span class="st">"active"</span>,
+  <span class="st">"metadata"</span>:    <span class="st">"{\"channel\": \"web\", \"ip\": \"...\"}"</span>
+}</code></pre>
+    </div>
 
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">redis</span>
-          <span class="code-filename">key schema</span>
-        </div>
-        <pre><code>thread:{thread_id}:state          → Hash    TTL: 30min sliding
+    <div class="callout">
+      <strong>Sliding TTL:</strong> a cada leitura de sessão, o TTL é renovado via <code>EXPIRE</code> em pipeline — sempre nas 3 chaves ao mesmo tempo para manter coerência.
+    </div>
+  </section>
+
+  <!-- SEÇÃO 5: REDIS-THREADS -->
+  <section class="section" id="redis-threads">
+    <div class="section-label">Redis — Key Schemas</div>
+    <h2>Key Schema — <em>redis-threads</em></h2>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">redis — key schema</span>
+      </div>
+      <pre><code>thread:{thread_id}:state          → Hash    TTL: 30min sliding
 thread:{thread_id}:messages       → List    TTL: 30min sliding
 thread:{thread_id}:checkpoint     → String  TTL: 30min sliding  JSON do LangGraph state
 session:{session_id}:current_thread → String TTL: 2h            valor: thread_id</code></pre>
-      </div>
-
-      <h3>Estrutura do Hash <code>thread:{thread_id}:state</code></h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">json</span>
-          <span class="code-filename">hash fields</span>
-        </div>
-        <pre><code>{
-  "thread_id":   "thrd_def456",
-  "session_id":  "sess_abc123",
-  "user_id":     "usr_xyz789",
-  "created_at":  "2025-01-15T10:05:00Z",
-  "last_active": "2025-01-15T10:40:00Z",
-  "status":      "active",
-  "agent_route": "billing_agent",
-  "turn_count":  "7"
-}</code></pre>
-      </div>
-
-      <div class="callout warning">
-        <strong>Regra crítica:</strong> o <code>ThreadArchiver</code> deve salvar no DynamoDB
-        <em>antes</em> do TTL expirar. Uma thread encerrada explicitamente dispara o archiver de
-        forma síncrona. Para inatividade, um processo separado (Lambda via EventBridge Scheduler)
-        varre threads com <code>last_active</code> &gt; 25min e dispara o arquivamento.
-      </div>
     </div>
 
-    <div class="section" id="redis-memory">
-      <div class="section-label">Seção 06</div>
-      <h2>Key Schema — <em>redis-memory</em></h2>
+    <h3>Estrutura do Hash <code>thread:{thread_id}:state</code></h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">json — hash fields</span>
+      </div>
+      <pre><code>{
+  <span class="st">"thread_id"</span>:   <span class="st">"thrd_def456"</span>,
+  <span class="st">"session_id"</span>:  <span class="st">"sess_abc123"</span>,
+  <span class="st">"user_id"</span>:     <span class="st">"usr_xyz789"</span>,
+  <span class="st">"created_at"</span>:  <span class="st">"2025-01-15T10:05:00Z"</span>,
+  <span class="st">"last_active"</span>: <span class="st">"2025-01-15T10:40:00Z"</span>,
+  <span class="st">"status"</span>:      <span class="st">"active"</span>,
+  <span class="st">"agent_route"</span>: <span class="st">"billing_agent"</span>,
+  <span class="st">"turn_count"</span>:  <span class="st">"7"</span>
+}</code></pre>
+    </div>
 
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">redis</span>
-          <span class="code-filename">key schema</span>
-        </div>
-        <pre><code>mem:pref:{user_id}                → Hash    sem TTL  (invalidação por write-through)
+    <div class="callout amber">
+      <strong>Regra crítica:</strong> o <code>ThreadArchiver</code> deve salvar no DynamoDB <em>antes</em> do TTL expirar. Uma thread encerrada explicitamente dispara o archiver de forma síncrona. Para inatividade, um processo separado (Lambda via EventBridge Scheduler) varre threads com <code>last_active</code> &gt; 25min e dispara o arquivamento.
+    </div>
+  </section>
+
+  <!-- SEÇÃO 6: REDIS-MEMORY -->
+  <section class="section" id="redis-memory">
+    <div class="section-label">Redis — Key Schemas</div>
+    <h2>Key Schema — <em>redis-memory</em></h2>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">redis — key schema</span>
+      </div>
+      <pre><code>mem:pref:{user_id}                → Hash    sem TTL  (invalidação por write-through)
 mem:ltm:{user_id}:summaries       → List    sem TTL  (LPUSH + LTRIM — top 10)
 mem:wm:{thread_id}                → Hash    TTL: 30min (mesma vida da thread)</code></pre>
-      </div>
+    </div>
 
-      <h3>Hash <code>mem:pref:{user_id}</code> — UserPreferences cache</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">json</span>
-          <span class="code-filename">hash fields</span>
-        </div>
-        <pre><code>{
-  "language":        "pt-BR",
-  "response_style":  "concise",
-  "segment":         "fintech",
-  "plan":            "enterprise",
-  "last_updated":    "2025-01-15T10:00:00Z",
-  "inferred_count":  "12"
+    <h3>Hash <code>mem:pref:{user_id}</code> — UserPreferences cache</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">json — hash fields</span>
+      </div>
+      <pre><code>{
+  <span class="st">"language"</span>:        <span class="st">"pt-BR"</span>,
+  <span class="st">"response_style"</span>:  <span class="st">"concise"</span>,
+  <span class="st">"segment"</span>:         <span class="st">"fintech"</span>,
+  <span class="st">"plan"</span>:            <span class="st">"enterprise"</span>,
+  <span class="st">"last_updated"</span>:    <span class="st">"2025-01-15T10:00:00Z"</span>,
+  <span class="st">"inferred_count"</span>:  <span class="st">"12"</span>
 }</code></pre>
-      </div>
+    </div>
 
-      <h3>Entry da List <code>mem:ltm:{user_id}:summaries</code> — JSON string</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">json</span>
-          <span class="code-filename">list entry (JSON string)</span>
-        </div>
-        <pre><code>{
-  "session_id": "sess_prev001",
-  "summary":    "Usuário perguntou sobre integração via API REST. Resolvido com sucesso.",
-  "topics":     ["api", "integration", "billing"],
-  "sentiment":  "positive",
-  "resolved":   true,
-  "created_at": "2025-01-14T15:30:00Z"
+    <h3>Entry da List <code>mem:ltm:{user_id}:summaries</code> — JSON string</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">json — list entry (JSON string)</span>
+      </div>
+      <pre><code>{
+  <span class="st">"session_id"</span>: <span class="st">"sess_prev001"</span>,
+  <span class="st">"summary"</span>:    <span class="st">"Usuário perguntou sobre integração via API REST. Resolvido com sucesso."</span>,
+  <span class="st">"topics"</span>:     [<span class="st">"api"</span>, <span class="st">"integration"</span>, <span class="st">"billing"</span>],
+  <span class="st">"sentiment"</span>:  <span class="st">"positive"</span>,
+  <span class="st">"resolved"</span>:   <span class="nb">true</span>,
+  <span class="st">"created_at"</span>: <span class="st">"2025-01-14T15:30:00Z"</span>
 }</code></pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 7: DYNAMODB TABELAS E ÍNDICES -->
+  <section class="section" id="dynamo">
+    <div class="section-label">DynamoDB</div>
+    <h2><em>DynamoDB</em> — Tabelas e Índices</h2>
+
+    <p>DynamoDB é o <strong>sistema de registro</strong> — Redis é o cache de execução. Toda escrita relevante passa pelo DynamoDB primeiro. A modelagem usa <code>PK = USER#{user_id}</code> para habilitar queries naturais por usuário, com SK composto para suportar múltiplos padrões de acesso na mesma tabela.</p>
+  </section>
+
+  <!-- SEÇÃO 8: CONVERSATIONHISTORY -->
+  <section class="section" id="dynamo-history">
+    <div class="section-label">DynamoDB</div>
+    <h2>Tabela <em>ConversationHistory</em></h2>
+
+    <div class="schema-box">
+      <div class="schema-header">
+        <span class="table-name">ConversationHistory</span>
+        <span class="schema-tag">TTL: 90 dias</span>
+      </div>
+      <div class="schema-body">
+        <div class="key-row">
+          <span class="key-label">PK</span>
+          <span class="key-value">USER#{user_id}</span>
+        </div>
+        <div class="key-row">
+          <span class="key-label">SK</span>
+          <span class="key-value">SESSION#{session_id}#MSG#{timestamp_iso}</span>
+          <span class="key-desc">— mensagens ordenadas por tempo</span>
+        </div>
+        <div class="key-row">
+          <span class="key-label">SK</span>
+          <span class="key-value">SUMMARY#{session_id}</span>
+          <span class="key-desc">— summary gerado pelo LLM ao encerrar</span>
+        </div>
       </div>
     </div>
 
-    <!-- DYNAMODB -->
-    <div class="section" id="dynamo">
-      <div class="section-label">Seção 07</div>
-      <h2><em>DynamoDB</em> — Tabelas e Índices</h2>
-
-      <p>
-        DynamoDB é o <strong>sistema de registro</strong> — Redis é o cache de execução.
-        Toda escrita relevante passa pelo DynamoDB primeiro. A modelagem usa
-        <code>PK = USER#{user_id}</code> para habilitar queries naturais por usuário,
-        com SK composto para suportar múltiplos padrões de acesso na mesma tabela.
-      </p>
+    <h3>GSIs</h3>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Índice</th>
+          <th>PK</th>
+          <th>SK</th>
+          <th>Caso de uso</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ThreadIndex</td>
+          <td><code>THREAD#{thread_id}</code></td>
+          <td><code>MSG#{timestamp}</code></td>
+          <td>Todas as mensagens de uma thread específica</td>
+        </tr>
+        <tr>
+          <td>SessionSummaryIndex</td>
+          <td><code>USER#{user_id}</code></td>
+          <td><code>SUMMARY#{session_id}</code></td>
+          <td>Últimos N summaries de um usuário (LTM fallback)</td>
+        </tr>
+      </tbody>
+    </table>
     </div>
 
-    <div class="section" id="dynamo-history">
-      <div class="section-label">Seção 08</div>
-      <h2>Tabela <em>ConversationHistory</em></h2>
-
-      <div class="schema-box">
-        <div class="schema-header">
-          <span class="table-name">ConversationHistory</span>
-          <span class="tag">TTL: 90 dias</span>
-        </div>
-        <div class="schema-body">
-          <div class="key-row">
-            <span class="key-label">PK</span>
-            <span class="key-value">USER#{user_id}</span>
-          </div>
-          <div class="key-row">
-            <span class="key-label">SK</span>
-            <span class="key-value">SESSION#{session_id}#MSG#{timestamp_iso}</span>
-            <span class="key-desc">— mensagens ordenadas por tempo</span>
-          </div>
-          <div class="key-row">
-            <span class="key-label">SK</span>
-            <span class="key-value">SUMMARY#{session_id}</span>
-            <span class="key-desc">— summary gerado pelo LLM ao encerrar</span>
-          </div>
-        </div>
+    <h3>Item — Mensagem</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">json — DynamoDB item</span>
       </div>
-
-      <h3>GSIs</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Índice</th>
-              <th>PK</th>
-              <th>SK</th>
-              <th>Caso de uso</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>ThreadIndex</td>
-              <td><code>THREAD#{thread_id}</code></td>
-              <td><code>MSG#{timestamp}</code></td>
-              <td>Todas as mensagens de uma thread específica</td>
-            </tr>
-            <tr>
-              <td>SessionSummaryIndex</td>
-              <td><code>USER#{user_id}</code></td>
-              <td><code>SUMMARY#{session_id}</code></td>
-              <td>Últimos N summaries de um usuário (LTM fallback)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Item — Mensagem</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">json</span>
-          <span class="code-filename">DynamoDB item</span>
-        </div>
-        <pre><code>{
-  "PK":          "USER#usr_xyz789",
-  "SK":          "SESSION#sess_abc123#MSG#2025-01-15T10:05:00.000Z",
-  "message_id":  "msg_001",
-  "thread_id":   "thrd_def456",
-  "role":        "user",
-  "content":     "Preciso entender minha fatura",
-  "agent_name":  null,
-  "token_count": 8,
-  "ttl":         1744924800
+      <pre><code>{
+  <span class="st">"PK"</span>:          <span class="st">"USER#usr_xyz789"</span>,
+  <span class="st">"SK"</span>:          <span class="st">"SESSION#sess_abc123#MSG#2025-01-15T10:05:00.000Z"</span>,
+  <span class="st">"message_id"</span>:  <span class="st">"msg_001"</span>,
+  <span class="st">"thread_id"</span>:   <span class="st">"thrd_def456"</span>,
+  <span class="st">"role"</span>:        <span class="st">"user"</span>,
+  <span class="st">"content"</span>:     <span class="st">"Preciso entender minha fatura"</span>,
+  <span class="st">"agent_name"</span>:  <span class="nb">null</span>,
+  <span class="st">"token_count"</span>: <span class="nb">8</span>,
+  <span class="st">"ttl"</span>:         <span class="nb">1744924800</span>
 }</code></pre>
-      </div>
+    </div>
 
-      <h3>Item — Session Summary</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">json</span>
-          <span class="code-filename">DynamoDB item</span>
-        </div>
-        <pre><code>{
-  "PK":         "USER#usr_xyz789",
-  "SK":         "SUMMARY#sess_abc123",
-  "session_id": "sess_abc123",
-  "summary":    "Usuário perguntou sobre integração via API REST. Resolvido.",
-  "topics":     ["api", "integration"],
-  "sentiment":  "positive",
-  "resolved":   true,
-  "turn_count": 7,
-  "started_at": "2025-01-15T10:00:00Z",
-  "ended_at":   "2025-01-15T10:50:00Z",
-  "ttl":        1744924800
+    <h3>Item — Session Summary</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">json — DynamoDB item</span>
+      </div>
+      <pre><code>{
+  <span class="st">"PK"</span>:         <span class="st">"USER#usr_xyz789"</span>,
+  <span class="st">"SK"</span>:         <span class="st">"SUMMARY#sess_abc123"</span>,
+  <span class="st">"session_id"</span>: <span class="st">"sess_abc123"</span>,
+  <span class="st">"summary"</span>:    <span class="st">"Usuário perguntou sobre integração via API REST. Resolvido."</span>,
+  <span class="st">"topics"</span>:     [<span class="st">"api"</span>, <span class="st">"integration"</span>],
+  <span class="st">"sentiment"</span>:  <span class="st">"positive"</span>,
+  <span class="st">"resolved"</span>:   <span class="nb">true</span>,
+  <span class="st">"turn_count"</span>: <span class="nb">7</span>,
+  <span class="st">"started_at"</span>: <span class="st">"2025-01-15T10:00:00Z"</span>,
+  <span class="st">"ended_at"</span>:   <span class="st">"2025-01-15T10:50:00Z"</span>,
+  <span class="st">"ttl"</span>:        <span class="nb">1744924800</span>
 }</code></pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 9: USERPREFERENCES -->
+  <section class="section" id="dynamo-prefs">
+    <div class="section-label">DynamoDB</div>
+    <h2>Tabela <em>UserPreferences</em></h2>
+
+    <p>Dados permanentes — sem TTL. Escrita por inferência do LLM ao encerrar sessão. Três níveis de granularidade coexistindo via SK diferente.</p>
+
+    <div class="schema-box">
+      <div class="schema-header">
+        <span class="table-name">UserPreferences</span>
+        <span class="schema-tag">Permanente — sem TTL</span>
+      </div>
+      <div class="schema-body">
+        <div class="key-row">
+          <span class="key-label">PK</span>
+          <span class="key-value">USER#{user_id}</span>
+        </div>
+        <div class="key-row">
+          <span class="key-label">SK</span>
+          <span class="key-value">PREF#PROFILE</span>
+          <span class="key-desc">— preferências gerais + nível 1</span>
+        </div>
+        <div class="key-row">
+          <span class="key-label">SK</span>
+          <span class="key-value">PREF#FACT#{fact_key}</span>
+          <span class="key-desc">— fatos estruturados nível 3 (plan, segment, last_issue…)</span>
+        </div>
       </div>
     </div>
 
-    <div class="section" id="dynamo-prefs">
-      <div class="section-label">Seção 09</div>
-      <h2>Tabela <em>UserPreferences</em></h2>
+    <h3>Os 3 níveis de Long-term Memory</h3>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Nível</th><th>Exemplos</th><th>Onde</th><th>Como é gerado</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="pill blue">Nível 1</span> Preferências simples</td>
+          <td><code>language: pt-BR</code>, <code>response_style: concise</code></td>
+          <td>PREF#PROFILE</td>
+          <td>LLM infere ao encerrar thread</td>
+        </tr>
+        <tr>
+          <td><span class="pill purple">Nível 2</span> Session summaries</td>
+          <td>"nas últimas 3 sessões perguntou sobre faturamento"</td>
+          <td>SUMMARY# (ConversationHistory)</td>
+          <td>LLM gera resumo estruturado da conversa completa</td>
+        </tr>
+        <tr>
+          <td><span class="pill green">Nível 3</span> Fatos estruturados</td>
+          <td><code>plan: enterprise</code>, <code>last_issue: webhook</code></td>
+          <td>PREF#FACT#{key}</td>
+          <td>LLM extrai fatos com confidence score</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
 
-      <p>Dados permanentes — sem TTL. Escrita por inferência do LLM ao encerrar sessão. Três níveis de granularidade coexistindo via SK diferente.</p>
+  <!-- SEÇÃO 10: SESSIONINDEX -->
+  <section class="section" id="dynamo-session">
+    <div class="section-label">DynamoDB</div>
+    <h2>Tabela <em>SessionIndex</em></h2>
 
-      <div class="schema-box">
-        <div class="schema-header">
-          <span class="table-name">UserPreferences</span>
-          <span class="tag">Permanente — sem TTL</span>
-        </div>
-        <div class="schema-body">
-          <div class="key-row">
-            <span class="key-label">PK</span>
-            <span class="key-value">USER#{user_id}</span>
-          </div>
-          <div class="key-row">
-            <span class="key-label">SK</span>
-            <span class="key-value">PREF#PROFILE</span>
-            <span class="key-desc">— preferências gerais + nível 1</span>
-          </div>
-          <div class="key-row">
-            <span class="key-label">SK</span>
-            <span class="key-value">PREF#FACT#{fact_key}</span>
-            <span class="key-desc">— fatos estruturados nível 3 (plan, segment, last_issue…)</span>
-          </div>
-        </div>
+    <div class="schema-box">
+      <div class="schema-header">
+        <span class="table-name">SessionIndex</span>
+        <span class="schema-tag">TTL: 90 dias</span>
       </div>
-
-      <h3>Os 3 níveis de Long-term Memory</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Nível</th><th>Exemplos</th><th>Onde</th><th>Como é gerado</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span class="badge badge-blue">Nível 1</span> Preferências simples</td>
-              <td><code>language: pt-BR</code>, <code>response_style: concise</code></td>
-              <td>PREF#PROFILE</td>
-              <td>LLM infere ao encerrar thread</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-purple">Nível 2</span> Session summaries</td>
-              <td>"nas últimas 3 sessões perguntou sobre faturamento"</td>
-              <td>SUMMARY# (ConversationHistory)</td>
-              <td>LLM gera resumo estruturado da conversa completa</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-green">Nível 3</span> Fatos estruturados</td>
-              <td><code>plan: enterprise</code>, <code>last_issue: webhook</code></td>
-              <td>PREF#FACT#{key}</td>
-              <td>LLM extrai fatos com confidence score</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="schema-body">
+        <div class="key-row">
+          <span class="key-label">PK</span>
+          <span class="key-value">USER#{user_id}</span>
+        </div>
+        <div class="key-row">
+          <span class="key-label">SK</span>
+          <span class="key-value">SESSION#{timestamp_iso}#{session_id}</span>
+          <span class="key-desc">— sessions ordenadas por data</span>
+        </div>
       </div>
     </div>
 
-    <div class="section" id="dynamo-session">
-      <div class="section-label">Seção 10</div>
-      <h2>Tabela <em>SessionIndex</em></h2>
+    <p>Permite listar todas as sessões de um usuário em ordem cronológica. O GSI <code>SessionStatusIndex</code> (<code>PK: STATUS#{status}</code>) habilita queries operacionais como "todas as sessões ativas agora" para monitoramento.</p>
+  </section>
 
-      <div class="schema-box">
-        <div class="schema-header">
-          <span class="table-name">SessionIndex</span>
-          <span class="tag">TTL: 90 dias</span>
-        </div>
-        <div class="schema-body">
-          <div class="key-row">
-            <span class="key-label">PK</span>
-            <span class="key-value">USER#{user_id}</span>
-          </div>
-          <div class="key-row">
-            <span class="key-label">SK</span>
-            <span class="key-value">SESSION#{timestamp_iso}#{session_id}</span>
-            <span class="key-desc">— sessions ordenadas por data</span>
-          </div>
-        </div>
+  <!-- SEÇÃO 11: CÓDIGO — VISÃO GERAL -->
+  <section class="section" id="codigo">
+    <div class="section-label">Implementação</div>
+    <h2>Implementação — <em>Código Python</em></h2>
+    <p>Todos os módulos abaixo são usados exclusivamente pelo Supervisor. Agentes remotos nunca importam nenhum desses módulos.</p>
+  </section>
+
+  <!-- REDIS CLIENTS -->
+  <section class="section" id="redis-clients">
+    <div class="section-label">Implementação</div>
+    <h3>Redis Clients — Singleton dos 3 clusters</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — infrastructure/redis_clients.py</span>
       </div>
+      <pre><code><span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
 
-      <p>
-        Permite listar todas as sessões de um usuário em ordem cronológica. O GSI
-        <code>SessionStatusIndex</code> (<code>PK: STATUS#{status}</code>) habilita
-        queries operacionais como "todas as sessões ativas agora" para monitoramento.
-      </p>
-    </div>
+<span class="kw">class</span> <span class="tp">RedisClients</span>:
+    <span class="st">"""Singleton para os 3 clusters Redis."""</span>
 
-    <!-- CÓDIGO -->
-    <div class="section" id="codigo">
-      <div class="section-label">Seção 11</div>
-      <h2>Implementação — <em>Código Python</em></h2>
-      <p>Todos os módulos abaixo são usados exclusivamente pelo Supervisor. Agentes remotos nunca importam nenhum desses módulos.</p>
-    </div>
-
-    <div class="section" id="redis-clients">
-      <h3>Redis Clients — Singleton dos 3 clusters</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">infrastructure/redis_clients.py</span>
-        </div>
-        <pre><code>import redis.asyncio as aioredis
-
-class RedisClients:
-    """Singleton para os 3 clusters Redis."""
-
-    def __init__(self, config: dict):
-        self.sessions = aioredis.Redis(
-            host=config["sessions"]["host"],
-            port=config["sessions"]["port"],
-            decode_responses=True,
-            ssl=True,
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, config: dict):
+        self.sessions = aioredis.<span class="fn">Redis</span>(
+            host=config[<span class="st">"sessions"</span>][<span class="st">"host"</span>],
+            port=config[<span class="st">"sessions"</span>][<span class="st">"port"</span>],
+            decode_responses=<span class="nb">True</span>,
+            ssl=<span class="nb">True</span>,
         )
-        self.threads = aioredis.Redis(
-            host=config["threads"]["host"],
-            port=config["threads"]["port"],
-            decode_responses=True,
-            ssl=True,
+        self.threads = aioredis.<span class="fn">Redis</span>(
+            host=config[<span class="st">"threads"</span>][<span class="st">"host"</span>],
+            port=config[<span class="st">"threads"</span>][<span class="st">"port"</span>],
+            decode_responses=<span class="nb">True</span>,
+            ssl=<span class="nb">True</span>,
         )
-        self.memory = aioredis.Redis(
-            host=config["memory"]["host"],
-            port=config["memory"]["port"],
-            decode_responses=True,
-            ssl=True,
+        self.memory = aioredis.<span class="fn">Redis</span>(
+            host=config[<span class="st">"memory"</span>][<span class="st">"host"</span>],
+            port=config[<span class="st">"memory"</span>][<span class="st">"port"</span>],
+            decode_responses=<span class="nb">True</span>,
+            ssl=<span class="nb">True</span>,
         )
 
-    async def close(self):
-        await self.sessions.aclose()
-        await self.threads.aclose()
-        await self.memory.aclose()</code></pre>
-      </div>
+    <span class="kw">async def</span> <span class="fn">close</span>(self):
+        <span class="kw">await</span> self.sessions.<span class="fn">aclose</span>()
+        <span class="kw">await</span> self.threads.<span class="fn">aclose</span>()
+        <span class="kw">await</span> self.memory.<span class="fn">aclose</span>()</code></pre>
     </div>
+  </section>
 
-    <div class="section" id="session-store">
-      <h3>Session Store</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">memory/session_store.py</span>
-        </div>
-        <pre><code>import json
-from datetime import datetime, timezone
-from typing import Optional
-from infrastructure.redis_clients import RedisClients
+  <!-- SESSION STORE -->
+  <section class="section" id="session-store">
+    <div class="section-label">Implementação</div>
+    <h3>Session Store</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — memory/session_store.py</span>
+      </div>
+      <pre><code><span class="kw">import</span> json
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+<span class="kw">from</span> infrastructure.redis_clients <span class="kw">import</span> RedisClients
 
-SESSION_TTL = 7200   # 2h
-THREAD_TTL  = 1800   # 30min
+SESSION_TTL = <span class="nb">7200</span>   <span class="cm"># 2h</span>
+THREAD_TTL  = <span class="nb">1800</span>   <span class="cm"># 30min</span>
 
-class SessionStore:
-    def __init__(self, redis: RedisClients):
+<span class="kw">class</span> <span class="tp">SessionStore</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis: RedisClients):
         self.r = redis.sessions
 
-    async def create_session(
+    <span class="kw">async def</span> <span class="fn">create_session</span>(
         self, session_id: str, user_id: str, metadata: dict = {}
     ) -> dict:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.<span class="fn">now</span>(timezone.utc).<span class="fn">isoformat</span>()
         session = {
-            "session_id":  session_id,
-            "user_id":     user_id,
-            "started_at":  now,
-            "last_active": now,
-            "status":      "active",
-            "metadata":    json.dumps(metadata),
+            <span class="st">"session_id"</span>:  session_id,
+            <span class="st">"user_id"</span>:     user_id,
+            <span class="st">"started_at"</span>:  now,
+            <span class="st">"last_active"</span>: now,
+            <span class="st">"status"</span>:      <span class="st">"active"</span>,
+            <span class="st">"metadata"</span>:    json.<span class="fn">dumps</span>(metadata),
         }
-        pipe = self.r.pipeline()
-        pipe.hset(f"session:{session_id}", mapping=session)
-        pipe.expire(f"session:{session_id}", SESSION_TTL)
-        pipe.set(f"session:{session_id}:user", user_id, ex=SESSION_TTL)
-        pipe.set(f"user:{user_id}:active_session", session_id, ex=SESSION_TTL)
-        await pipe.execute()
-        return session
+        pipe = self.r.<span class="fn">pipeline</span>()
+        pipe.<span class="fn">hset</span>(f<span class="st">"session:{session_id}"</span>, mapping=session)
+        pipe.<span class="fn">expire</span>(f<span class="st">"session:{session_id}"</span>, SESSION_TTL)
+        pipe.<span class="fn">set</span>(f<span class="st">"session:{session_id}:user"</span>, user_id, ex=SESSION_TTL)
+        pipe.<span class="fn">set</span>(f<span class="st">"user:{user_id}:active_session"</span>, session_id, ex=SESSION_TTL)
+        <span class="kw">await</span> pipe.<span class="fn">execute</span>()
+        <span class="kw">return</span> session
 
-    async def get_session(self, session_id: str) -> Optional[dict]:
-        session = await self.r.hgetall(f"session:{session_id}")
-        if not session:
-            return None
-        # Sliding TTL — renova nas 3 chaves ao mesmo tempo
-        pipe = self.r.pipeline()
-        pipe.expire(f"session:{session_id}", SESSION_TTL)
-        pipe.expire(f"session:{session_id}:user", SESSION_TTL)
-        user_id = session.get("user_id")
-        if user_id:
-            pipe.expire(f"user:{user_id}:active_session", SESSION_TTL)
-        await pipe.execute()
-        return session
+    <span class="kw">async def</span> <span class="fn">get_session</span>(self, session_id: str) -> Optional[dict]:
+        session = <span class="kw">await</span> self.r.<span class="fn">hgetall</span>(f<span class="st">"session:{session_id}"</span>)
+        <span class="kw">if not</span> session:
+            <span class="kw">return</span> <span class="nb">None</span>
+        <span class="cm"># Sliding TTL — renova nas 3 chaves ao mesmo tempo</span>
+        pipe = self.r.<span class="fn">pipeline</span>()
+        pipe.<span class="fn">expire</span>(f<span class="st">"session:{session_id}"</span>, SESSION_TTL)
+        pipe.<span class="fn">expire</span>(f<span class="st">"session:{session_id}:user"</span>, SESSION_TTL)
+        user_id = session.<span class="fn">get</span>(<span class="st">"user_id"</span>)
+        <span class="kw">if</span> user_id:
+            pipe.<span class="fn">expire</span>(f<span class="st">"user:{user_id}:active_session"</span>, SESSION_TTL)
+        <span class="kw">await</span> pipe.<span class="fn">execute</span>()
+        <span class="kw">return</span> session
 
-    async def get_active_session_for_user(self, user_id: str) -> Optional[str]:
-        return await self.r.get(f"user:{user_id}:active_session")
+    <span class="kw">async def</span> <span class="fn">get_active_session_for_user</span>(self, user_id: str) -> Optional[str]:
+        <span class="kw">return await</span> self.r.<span class="fn">get</span>(f<span class="st">"user:{user_id}:active_session"</span>)
 
-    async def touch_session(self, session_id: str) -> None:
-        now = datetime.now(timezone.utc).isoformat()
-        await self.r.hset(f"session:{session_id}", "last_active", now)
-        await self.r.expire(f"session:{session_id}", SESSION_TTL)
+    <span class="kw">async def</span> <span class="fn">touch_session</span>(self, session_id: str) -> <span class="nb">None</span>:
+        now = datetime.<span class="fn">now</span>(timezone.utc).<span class="fn">isoformat</span>()
+        <span class="kw">await</span> self.r.<span class="fn">hset</span>(f<span class="st">"session:{session_id}"</span>, <span class="st">"last_active"</span>, now)
+        <span class="kw">await</span> self.r.<span class="fn">expire</span>(f<span class="st">"session:{session_id}"</span>, SESSION_TTL)
 
-    async def close_session(self, session_id: str) -> None:
-        user_id = await self.r.get(f"session:{session_id}:user")
-        pipe = self.r.pipeline()
-        pipe.hset(f"session:{session_id}", "status", "closed")
-        pipe.expire(f"session:{session_id}", 300)  # mantém 5min para cleanup
-        if user_id:
-            pipe.delete(f"user:{user_id}:active_session")
-        await pipe.execute()</code></pre>
-      </div>
+    <span class="kw">async def</span> <span class="fn">close_session</span>(self, session_id: str) -> <span class="nb">None</span>:
+        user_id = <span class="kw">await</span> self.r.<span class="fn">get</span>(f<span class="st">"session:{session_id}:user"</span>)
+        pipe = self.r.<span class="fn">pipeline</span>()
+        pipe.<span class="fn">hset</span>(f<span class="st">"session:{session_id}"</span>, <span class="st">"status"</span>, <span class="st">"closed"</span>)
+        pipe.<span class="fn">expire</span>(f<span class="st">"session:{session_id}"</span>, <span class="nb">300</span>)  <span class="cm"># mantém 5min para cleanup</span>
+        <span class="kw">if</span> user_id:
+            pipe.<span class="fn">delete</span>(f<span class="st">"user:{user_id}:active_session"</span>)
+        <span class="kw">await</span> pipe.<span class="fn">execute</span>()</code></pre>
     </div>
+  </section>
 
-    <div class="section" id="checkpointer">
-      <h3>LangGraph Redis Checkpointer</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">memory/langgraph_checkpointer.py</span>
-        </div>
-        <pre><code>import json
-from typing import AsyncIterator
-from langchain_core.runnables import RunnableConfig
-from langgraph.checkpoint.base import (
+  <!-- CHECKPOINTER -->
+  <section class="section" id="checkpointer">
+    <div class="section-label">Implementação</div>
+    <h3>LangGraph Redis Checkpointer</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — memory/langgraph_checkpointer.py</span>
+      </div>
+      <pre><code><span class="kw">import</span> json
+<span class="kw">from</span> typing <span class="kw">import</span> AsyncIterator
+<span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> RunnableConfig
+<span class="kw">from</span> langgraph.checkpoint.base <span class="kw">import</span> (
     BaseCheckpointSaver, Checkpoint, CheckpointMetadata, CheckpointTuple
 )
-from infrastructure.redis_clients import RedisClients
+<span class="kw">from</span> infrastructure.redis_clients <span class="kw">import</span> RedisClients
 
-THREAD_TTL = 1800  # 30min
+THREAD_TTL = <span class="nb">1800</span>  <span class="cm"># 30min</span>
 
-class RedisCheckpointer(BaseCheckpointSaver):
-    """
+<span class="kw">class</span> <span class="tp">RedisCheckpointer</span>(BaseCheckpointSaver):
+    <span class="st">"""
     Checkpointer LangGraph usando redis-threads.
     Sliding TTL renovado a cada aput() — garante que o TTL
     reflita inatividade real, não tempo desde a criação.
-    """
+    """</span>
 
-    def __init__(self, redis: RedisClients):
-        super().__init__()
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis: RedisClients):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
         self.r = redis.threads
 
-    def _checkpoint_key(self, thread_id: str) -> str:
-        return f"thread:{thread_id}:checkpoint"
+    <span class="kw">def</span> <span class="fn">_checkpoint_key</span>(self, thread_id: str) -> str:
+        <span class="kw">return</span> f<span class="st">"thread:{thread_id}:checkpoint"</span>
 
-    def _meta_key(self, thread_id: str) -> str:
-        return f"thread:{thread_id}:state"
+    <span class="kw">def</span> <span class="fn">_meta_key</span>(self, thread_id: str) -> str:
+        <span class="kw">return</span> f<span class="st">"thread:{thread_id}:state"</span>
 
-    # interface sync — não utilizada
-    def get_tuple(self, config): raise NotImplementedError("Use async")
-    def list(self, config, **kw): raise NotImplementedError("Use async")
-    def put(self, config, checkpoint, metadata): raise NotImplementedError("Use async")
+    <span class="cm"># interface sync — não utilizada</span>
+    <span class="kw">def</span> <span class="fn">get_tuple</span>(self, config): <span class="kw">raise</span> <span class="fn">NotImplementedError</span>(<span class="st">"Use async"</span>)
+    <span class="kw">def</span> <span class="fn">list</span>(self, config, **kw): <span class="kw">raise</span> <span class="fn">NotImplementedError</span>(<span class="st">"Use async"</span>)
+    <span class="kw">def</span> <span class="fn">put</span>(self, config, checkpoint, metadata): <span class="kw">raise</span> <span class="fn">NotImplementedError</span>(<span class="st">"Use async"</span>)
 
-    async def aget_tuple(self, config: RunnableConfig):
-        thread_id = config["configurable"]["thread_id"]
-        raw = await self.r.get(self._checkpoint_key(thread_id))
-        if not raw:
-            return None
-        # Sliding TTL ao ler
-        await self.r.expire(self._checkpoint_key(thread_id), THREAD_TTL)
-        await self.r.expire(self._meta_key(thread_id), THREAD_TTL)
-        data = json.loads(raw)
-        return CheckpointTuple(
+    <span class="kw">async def</span> <span class="fn">aget_tuple</span>(self, config: RunnableConfig):
+        thread_id = config[<span class="st">"configurable"</span>][<span class="st">"thread_id"</span>]
+        raw = <span class="kw">await</span> self.r.<span class="fn">get</span>(self.<span class="fn">_checkpoint_key</span>(thread_id))
+        <span class="kw">if not</span> raw:
+            <span class="kw">return</span> <span class="nb">None</span>
+        <span class="cm"># Sliding TTL ao ler</span>
+        <span class="kw">await</span> self.r.<span class="fn">expire</span>(self.<span class="fn">_checkpoint_key</span>(thread_id), THREAD_TTL)
+        <span class="kw">await</span> self.r.<span class="fn">expire</span>(self.<span class="fn">_meta_key</span>(thread_id), THREAD_TTL)
+        data = json.<span class="fn">loads</span>(raw)
+        <span class="kw">return</span> <span class="fn">CheckpointTuple</span>(
             config=config,
-            checkpoint=data["checkpoint"],
-            metadata=data["metadata"],
-            parent_config=data.get("parent_config"),
+            checkpoint=data[<span class="st">"checkpoint"</span>],
+            metadata=data[<span class="st">"metadata"</span>],
+            parent_config=data.<span class="fn">get</span>(<span class="st">"parent_config"</span>),
         )
 
-    async def aput(
+    <span class="kw">async def</span> <span class="fn">aput</span>(
         self,
         config: RunnableConfig,
         checkpoint: Checkpoint,
         metadata: CheckpointMetadata,
     ) -> RunnableConfig:
-        thread_id = config["configurable"]["thread_id"]
-        import datetime as dt
-        data = json.dumps({
-            "checkpoint":    checkpoint,
-            "metadata":      metadata,
-            "parent_config": config,
+        thread_id = config[<span class="st">"configurable"</span>][<span class="st">"thread_id"</span>]
+        <span class="kw">import</span> datetime <span class="kw">as</span> dt
+        data = json.<span class="fn">dumps</span>({
+            <span class="st">"checkpoint"</span>:    checkpoint,
+            <span class="st">"metadata"</span>:      metadata,
+            <span class="st">"parent_config"</span>: config,
         })
-        pipe = self.r.pipeline()
-        pipe.set(self._checkpoint_key(thread_id), data, ex=THREAD_TTL)
-        pipe.hset(self._meta_key(thread_id), mapping={
-            "last_active": dt.datetime.now(dt.timezone.utc).isoformat(),
-            "turn_count":  str(metadata.get("step", 0)),
+        pipe = self.r.<span class="fn">pipeline</span>()
+        pipe.<span class="fn">set</span>(self.<span class="fn">_checkpoint_key</span>(thread_id), data, ex=THREAD_TTL)
+        pipe.<span class="fn">hset</span>(self.<span class="fn">_meta_key</span>(thread_id), mapping={
+            <span class="st">"last_active"</span>: dt.datetime.<span class="fn">now</span>(dt.timezone.utc).<span class="fn">isoformat</span>(),
+            <span class="st">"turn_count"</span>:  <span class="fn">str</span>(metadata.<span class="fn">get</span>(<span class="st">"step"</span>, <span class="nb">0</span>)),
         })
-        pipe.expire(self._meta_key(thread_id), THREAD_TTL)
-        await pipe.execute()
-        return config
+        pipe.<span class="fn">expire</span>(self.<span class="fn">_meta_key</span>(thread_id), THREAD_TTL)
+        <span class="kw">await</span> pipe.<span class="fn">execute</span>()
+        <span class="kw">return</span> config
 
-    async def alist(self, config: RunnableConfig, **kw) -> AsyncIterator:
-        result = await self.aget_tuple(config)
-        if result:
-            yield result</code></pre>
-      </div>
+    <span class="kw">async def</span> <span class="fn">alist</span>(self, config: RunnableConfig, **kw) -> AsyncIterator:
+        result = <span class="kw">await</span> self.<span class="fn">aget_tuple</span>(config)
+        <span class="kw">if</span> result:
+            <span class="kw">yield</span> result</code></pre>
     </div>
+  </section>
 
-    <div class="section" id="memory-store">
-      <h3>Memory Store — LTM + Working Memory</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">memory/memory_store.py</span>
-        </div>
-        <pre><code>import json
-from typing import Optional
-from infrastructure.redis_clients import RedisClients
+  <!-- MEMORY STORE -->
+  <section class="section" id="memory-store">
+    <div class="section-label">Implementação</div>
+    <h3>Memory Store — LTM + Working Memory</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — memory/memory_store.py</span>
+      </div>
+      <pre><code><span class="kw">import</span> json
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+<span class="kw">from</span> infrastructure.redis_clients <span class="kw">import</span> RedisClients
 
-WM_TTL            = 1800  # Working memory: 30min
-MAX_LTM_SUMMARIES = 10    # Top 10 sessões no cache
+WM_TTL            = <span class="nb">1800</span>  <span class="cm"># Working memory: 30min</span>
+MAX_LTM_SUMMARIES = <span class="nb">10</span>    <span class="cm"># Top 10 sessões no cache</span>
 
-class MemoryStore:
-    def __init__(self, redis: RedisClients):
+<span class="kw">class</span> <span class="tp">MemoryStore</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis: RedisClients):
         self.r = redis.memory
 
-    # ── UserPreferences ────────────────────────────────────────────────
-    async def get_preferences(self, user_id: str) -> Optional[dict]:
-        """None = cache miss → Supervisor faz fallback ao DynamoDB."""
-        raw = await self.r.hgetall(f"mem:pref:{user_id}")
-        return raw if raw else None
+    <span class="cm"># ── UserPreferences ────────────────────────────────────────────────</span>
+    <span class="kw">async def</span> <span class="fn">get_preferences</span>(self, user_id: str) -> Optional[dict]:
+        <span class="st">"""None = cache miss → Supervisor faz fallback ao DynamoDB."""</span>
+        raw = <span class="kw">await</span> self.r.<span class="fn">hgetall</span>(f<span class="st">"mem:pref:{user_id}"</span>)
+        <span class="kw">return</span> raw <span class="kw">if</span> raw <span class="kw">else</span> <span class="nb">None</span>
 
-    async def set_preferences(self, user_id: str, prefs: dict) -> None:
-        """Chamado após escrita no DynamoDB (write-through). Sem TTL."""
-        await self.r.hset(f"mem:pref:{user_id}", mapping=prefs)
+    <span class="kw">async def</span> <span class="fn">set_preferences</span>(self, user_id: str, prefs: dict) -> <span class="nb">None</span>:
+        <span class="st">"""Chamado após escrita no DynamoDB (write-through). Sem TTL."""</span>
+        <span class="kw">await</span> self.r.<span class="fn">hset</span>(f<span class="st">"mem:pref:{user_id}"</span>, mapping=prefs)
 
-    # ── LTM Summaries ──────────────────────────────────────────────────
-    async def get_ltm_summaries(self, user_id: str, n: int = 5) -> list[dict]:
-        raw_list = await self.r.lrange(f"mem:ltm:{user_id}:summaries", 0, n - 1)
-        return [json.loads(s) for s in raw_list]
+    <span class="cm"># ── LTM Summaries ──────────────────────────────────────────────────</span>
+    <span class="kw">async def</span> <span class="fn">get_ltm_summaries</span>(self, user_id: str, n: <span class="nb">int</span> = <span class="nb">5</span>) -> list[dict]:
+        raw_list = <span class="kw">await</span> self.r.<span class="fn">lrange</span>(f<span class="st">"mem:ltm:{user_id}:summaries"</span>, <span class="nb">0</span>, n - <span class="nb">1</span>)
+        <span class="kw">return</span> [json.<span class="fn">loads</span>(s) <span class="kw">for</span> s <span class="kw">in</span> raw_list]
 
-    async def push_ltm_summary(self, user_id: str, summary: dict) -> None:
-        key = f"mem:ltm:{user_id}:summaries"
-        pipe = self.r.pipeline()
-        pipe.lpush(key, json.dumps(summary))          # mais recente na frente
-        pipe.ltrim(key, 0, MAX_LTM_SUMMARIES - 1)    # mantém top 10
-        await pipe.execute()
+    <span class="kw">async def</span> <span class="fn">push_ltm_summary</span>(self, user_id: str, summary: dict) -> <span class="nb">None</span>:
+        key = f<span class="st">"mem:ltm:{user_id}:summaries"</span>
+        pipe = self.r.<span class="fn">pipeline</span>()
+        pipe.<span class="fn">lpush</span>(key, json.<span class="fn">dumps</span>(summary))          <span class="cm"># mais recente na frente</span>
+        pipe.<span class="fn">ltrim</span>(key, <span class="nb">0</span>, MAX_LTM_SUMMARIES - <span class="nb">1</span>)    <span class="cm"># mantém top 10</span>
+        <span class="kw">await</span> pipe.<span class="fn">execute</span>()
 
-    # ── Working Memory ─────────────────────────────────────────────────
-    async def get_working_memory(self, thread_id: str) -> Optional[dict]:
-        raw = await self.r.hgetall(f"mem:wm:{thread_id}")
-        return raw if raw else None
+    <span class="cm"># ── Working Memory ─────────────────────────────────────────────────</span>
+    <span class="kw">async def</span> <span class="fn">get_working_memory</span>(self, thread_id: str) -> Optional[dict]:
+        raw = <span class="kw">await</span> self.r.<span class="fn">hgetall</span>(f<span class="st">"mem:wm:{thread_id}"</span>)
+        <span class="kw">return</span> raw <span class="kw">if</span> raw <span class="kw">else</span> <span class="nb">None</span>
 
-    async def set_working_memory(self, thread_id: str, data: dict) -> None:
-        pipe = self.r.pipeline()
-        pipe.hset(f"mem:wm:{thread_id}", mapping=data)
-        pipe.expire(f"mem:wm:{thread_id}", WM_TTL)
-        await pipe.execute()
+    <span class="kw">async def</span> <span class="fn">set_working_memory</span>(self, thread_id: str, data: dict) -> <span class="nb">None</span>:
+        pipe = self.r.<span class="fn">pipeline</span>()
+        pipe.<span class="fn">hset</span>(f<span class="st">"mem:wm:{thread_id}"</span>, mapping=data)
+        pipe.<span class="fn">expire</span>(f<span class="st">"mem:wm:{thread_id}"</span>, WM_TTL)
+        <span class="kw">await</span> pipe.<span class="fn">execute</span>()
 
-    async def update_working_memory(self, thread_id: str, updates: dict) -> None:
-        pipe = self.r.pipeline()
-        pipe.hset(f"mem:wm:{thread_id}", mapping=updates)
-        pipe.expire(f"mem:wm:{thread_id}", WM_TTL)  # renova TTL
-        await pipe.execute()</code></pre>
-      </div>
+    <span class="kw">async def</span> <span class="fn">update_working_memory</span>(self, thread_id: str, updates: dict) -> <span class="nb">None</span>:
+        pipe = self.r.<span class="fn">pipeline</span>()
+        pipe.<span class="fn">hset</span>(f<span class="st">"mem:wm:{thread_id}"</span>, mapping=updates)
+        pipe.<span class="fn">expire</span>(f<span class="st">"mem:wm:{thread_id}"</span>, WM_TTL)  <span class="cm"># renova TTL</span>
+        <span class="kw">await</span> pipe.<span class="fn">execute</span>()</code></pre>
     </div>
+  </section>
 
-    <div class="section" id="dynamo-repo">
-      <h3>DynamoDB Repository</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">memory/dynamo_repository.py</span>
-        </div>
-        <pre><code>import boto3
-from datetime import datetime, timezone, timedelta
-from typing import Optional
-from boto3.dynamodb.conditions import Key
+  <!-- DYNAMODB REPO -->
+  <section class="section" id="dynamo-repo">
+    <div class="section-label">Implementação</div>
+    <h3>DynamoDB Repository</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — memory/dynamo_repository.py</span>
+      </div>
+      <pre><code><span class="kw">import</span> boto3
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone, timedelta
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+<span class="kw">from</span> boto3.dynamodb.conditions <span class="kw">import</span> Key
 
-def _ttl_epoch(days: int = 90) -> int:
-    return int((datetime.now(timezone.utc) + timedelta(days=days)).timestamp())
+<span class="kw">def</span> <span class="fn">_ttl_epoch</span>(days: <span class="nb">int</span> = <span class="nb">90</span>) -> <span class="nb">int</span>:
+    <span class="kw">return</span> <span class="fn">int</span>((datetime.<span class="fn">now</span>(timezone.utc) + <span class="fn">timedelta</span>(days=days)).<span class="fn">timestamp</span>())
 
-class DynamoRepository:
-    def __init__(self, region: str = "us-east-1"):
-        ddb = boto3.resource("dynamodb", region_name=region)
-        self.history  = ddb.Table("ConversationHistory")
-        self.prefs    = ddb.Table("UserPreferences")
-        self.sessions = ddb.Table("SessionIndex")
+<span class="kw">class</span> <span class="tp">DynamoRepository</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, region: str = <span class="st">"us-east-1"</span>):
+        ddb = boto3.<span class="fn">resource</span>(<span class="st">"dynamodb"</span>, region_name=region)
+        self.history  = ddb.<span class="fn">Table</span>(<span class="st">"ConversationHistory"</span>)
+        self.prefs    = ddb.<span class="fn">Table</span>(<span class="st">"UserPreferences"</span>)
+        self.sessions = ddb.<span class="fn">Table</span>(<span class="st">"SessionIndex"</span>)
 
-    # ── ConversationHistory ────────────────────────────────────────────
-    async def save_message(
+    <span class="cm"># ── ConversationHistory ────────────────────────────────────────────</span>
+    <span class="kw">async def</span> <span class="fn">save_message</span>(
         self, user_id: str, session_id: str, thread_id: str,
         message_id: str, role: str, content: str,
-        agent_name: Optional[str] = None, token_count: int = 0,
-    ) -> None:
-        ts = datetime.now(timezone.utc).isoformat()
-        self.history.put_item(Item={
-            "PK": f"USER#{user_id}",
-            "SK": f"SESSION#{session_id}#MSG#{ts}",
-            "message_id": message_id, "thread_id": thread_id,
-            "role": role, "content": content,
-            "agent_name": agent_name or "supervisor",
-            "token_count": token_count, "ttl": _ttl_epoch(),
+        agent_name: Optional[str] = <span class="nb">None</span>, token_count: <span class="nb">int</span> = <span class="nb">0</span>,
+    ) -> <span class="nb">None</span>:
+        ts = datetime.<span class="fn">now</span>(timezone.utc).<span class="fn">isoformat</span>()
+        self.history.<span class="fn">put_item</span>(Item={
+            <span class="st">"PK"</span>: f<span class="st">"USER#{user_id}"</span>,
+            <span class="st">"SK"</span>: f<span class="st">"SESSION#{session_id}#MSG#{ts}"</span>,
+            <span class="st">"message_id"</span>: message_id, <span class="st">"thread_id"</span>: thread_id,
+            <span class="st">"role"</span>: role, <span class="st">"content"</span>: content,
+            <span class="st">"agent_name"</span>: agent_name <span class="kw">or</span> <span class="st">"supervisor"</span>,
+            <span class="st">"token_count"</span>: token_count, <span class="st">"ttl"</span>: <span class="fn">_ttl_epoch</span>(),
         })
 
-    async def save_session_summary(
+    <span class="kw">async def</span> <span class="fn">save_session_summary</span>(
         self, user_id: str, session_id: str, summary: str,
-        topics: list, sentiment: str, resolved: bool,
-        turn_count: int, started_at: str, ended_at: str,
-    ) -> None:
-        self.history.put_item(Item={
-            "PK": f"USER#{user_id}", "SK": f"SUMMARY#{session_id}",
-            "session_id": session_id, "summary": summary,
-            "topics": topics, "sentiment": sentiment,
-            "resolved": resolved, "turn_count": turn_count,
-            "started_at": started_at, "ended_at": ended_at,
-            "ttl": _ttl_epoch(),
+        topics: list, sentiment: str, resolved: <span class="nb">bool</span>,
+        turn_count: <span class="nb">int</span>, started_at: str, ended_at: str,
+    ) -> <span class="nb">None</span>:
+        self.history.<span class="fn">put_item</span>(Item={
+            <span class="st">"PK"</span>: f<span class="st">"USER#{user_id}"</span>, <span class="st">"SK"</span>: f<span class="st">"SUMMARY#{session_id}"</span>,
+            <span class="st">"session_id"</span>: session_id, <span class="st">"summary"</span>: summary,
+            <span class="st">"topics"</span>: topics, <span class="st">"sentiment"</span>: sentiment,
+            <span class="st">"resolved"</span>: resolved, <span class="st">"turn_count"</span>: turn_count,
+            <span class="st">"started_at"</span>: started_at, <span class="st">"ended_at"</span>: ended_at,
+            <span class="st">"ttl"</span>: <span class="fn">_ttl_epoch</span>(),
         })
 
-    async def get_session_messages(self, user_id: str, session_id: str) -> list:
-        resp = self.history.query(
+    <span class="kw">async def</span> <span class="fn">get_session_messages</span>(self, user_id: str, session_id: str) -> list:
+        resp = self.history.<span class="fn">query</span>(
             KeyConditionExpression=
-                Key("PK").eq(f"USER#{user_id}") &
-                Key("SK").begins_with(f"SESSION#{session_id}#MSG#"),
+                <span class="fn">Key</span>(<span class="st">"PK"</span>).<span class="fn">eq</span>(f<span class="st">"USER#{user_id}"</span>) &amp;
+                <span class="fn">Key</span>(<span class="st">"SK"</span>).<span class="fn">begins_with</span>(f<span class="st">"SESSION#{session_id}#MSG#"</span>),
         )
-        return sorted(resp["Items"], key=lambda x: x["SK"])
+        <span class="kw">return</span> <span class="fn">sorted</span>(resp[<span class="st">"Items"</span>], key=<span class="kw">lambda</span> x: x[<span class="st">"SK"</span>])
 
-    async def get_recent_summaries(self, user_id: str, limit: int = 5) -> list:
-        resp = self.history.query(
-            IndexName="SessionSummaryIndex",
+    <span class="kw">async def</span> <span class="fn">get_recent_summaries</span>(self, user_id: str, limit: <span class="nb">int</span> = <span class="nb">5</span>) -> list:
+        resp = self.history.<span class="fn">query</span>(
+            IndexName=<span class="st">"SessionSummaryIndex"</span>,
             KeyConditionExpression=
-                Key("PK").eq(f"USER#{user_id}") &
-                Key("SK").begins_with("SUMMARY#"),
-            ScanIndexForward=False,
+                <span class="fn">Key</span>(<span class="st">"PK"</span>).<span class="fn">eq</span>(f<span class="st">"USER#{user_id}"</span>) &amp;
+                <span class="fn">Key</span>(<span class="st">"SK"</span>).<span class="fn">begins_with</span>(<span class="st">"SUMMARY#"</span>),
+            ScanIndexForward=<span class="nb">False</span>,
             Limit=limit,
         )
-        return resp["Items"]
+        <span class="kw">return</span> resp[<span class="st">"Items"</span>]
 
-    # ── UserPreferences ────────────────────────────────────────────────
-    async def get_preferences(self, user_id: str) -> Optional[dict]:
-        resp = self.prefs.get_item(
-            Key={"PK": f"USER#{user_id}", "SK": "PREF#PROFILE"}
+    <span class="cm"># ── UserPreferences ────────────────────────────────────────────────</span>
+    <span class="kw">async def</span> <span class="fn">get_preferences</span>(self, user_id: str) -> Optional[dict]:
+        resp = self.prefs.<span class="fn">get_item</span>(
+            Key={<span class="st">"PK"</span>: f<span class="st">"USER#{user_id}"</span>, <span class="st">"SK"</span>: <span class="st">"PREF#PROFILE"</span>}
         )
-        return resp.get("Item")
+        <span class="kw">return</span> resp.<span class="fn">get</span>(<span class="st">"Item"</span>)
 
-    async def save_preferences(self, user_id: str, prefs: dict) -> None:
-        now = datetime.now(timezone.utc).isoformat()
-        self.prefs.put_item(Item={
-            "PK": f"USER#{user_id}", "SK": "PREF#PROFILE",
-            **prefs, "last_updated": now,
+    <span class="kw">async def</span> <span class="fn">save_preferences</span>(self, user_id: str, prefs: dict) -> <span class="nb">None</span>:
+        now = datetime.<span class="fn">now</span>(timezone.utc).<span class="fn">isoformat</span>()
+        self.prefs.<span class="fn">put_item</span>(Item={
+            <span class="st">"PK"</span>: f<span class="st">"USER#{user_id}"</span>, <span class="st">"SK"</span>: <span class="st">"PREF#PROFILE"</span>,
+            **prefs, <span class="st">"last_updated"</span>: now,
         })
 
-    async def save_preference_fact(
+    <span class="kw">async def</span> <span class="fn">save_preference_fact</span>(
         self, user_id: str, fact_key: str, fact_value: str,
-        confidence: float, source_session: str,
-    ) -> None:
-        self.prefs.put_item(Item={
-            "PK": f"USER#{user_id}", "SK": f"PREF#FACT#{fact_key}",
-            "fact_key": fact_key, "fact_value": fact_value,
-            "confidence": str(confidence),
-            "inferred_at": datetime.now(timezone.utc).isoformat(),
-            "source_session": source_session,
+        confidence: <span class="nb">float</span>, source_session: str,
+    ) -> <span class="nb">None</span>:
+        self.prefs.<span class="fn">put_item</span>(Item={
+            <span class="st">"PK"</span>: f<span class="st">"USER#{user_id}"</span>, <span class="st">"SK"</span>: f<span class="st">"PREF#FACT#{fact_key}"</span>,
+            <span class="st">"fact_key"</span>: fact_key, <span class="st">"fact_value"</span>: fact_value,
+            <span class="st">"confidence"</span>: <span class="fn">str</span>(confidence),
+            <span class="st">"inferred_at"</span>: datetime.<span class="fn">now</span>(timezone.utc).<span class="fn">isoformat</span>(),
+            <span class="st">"source_session"</span>: source_session,
         })
 
-    # ── SessionIndex ───────────────────────────────────────────────────
-    async def register_session(
-        self, user_id: str, session_id: str, status: str = "active"
-    ) -> None:
-        now = datetime.now(timezone.utc).isoformat()
-        self.sessions.put_item(Item={
-            "PK": f"USER#{user_id}",
-            "SK": f"SESSION#{now}#{session_id}",
-            "session_id": session_id, "status": status,
-            "thread_count": 0, "ttl": _ttl_epoch(),
+    <span class="cm"># ── SessionIndex ───────────────────────────────────────────────────</span>
+    <span class="kw">async def</span> <span class="fn">register_session</span>(
+        self, user_id: str, session_id: str, status: str = <span class="st">"active"</span>
+    ) -> <span class="nb">None</span>:
+        now = datetime.<span class="fn">now</span>(timezone.utc).<span class="fn">isoformat</span>()
+        self.sessions.<span class="fn">put_item</span>(Item={
+            <span class="st">"PK"</span>: f<span class="st">"USER#{user_id}"</span>,
+            <span class="st">"SK"</span>: f<span class="st">"SESSION#{now}#{session_id}"</span>,
+            <span class="st">"session_id"</span>: session_id, <span class="st">"status"</span>: status,
+            <span class="st">"thread_count"</span>: <span class="nb">0</span>, <span class="st">"ttl"</span>: <span class="fn">_ttl_epoch</span>(),
         })</code></pre>
-      </div>
     </div>
+  </section>
 
-    <div class="section" id="context-enricher">
-      <h3>Context Enricher — Read-through com fallback</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">supervisor/context_enricher.py</span>
-        </div>
-        <pre><code>import json
-from typing import TypedDict, Optional
-from memory.session_store     import SessionStore
-from memory.memory_store      import MemoryStore
-from memory.dynamo_repository import DynamoRepository
+  <!-- CONTEXT ENRICHER -->
+  <section class="section" id="context-enricher">
+    <div class="section-label">Implementação</div>
+    <h3>Context Enricher — Read-through com fallback</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — supervisor/context_enricher.py</span>
+      </div>
+      <pre><code><span class="kw">import</span> json
+<span class="kw">from</span> typing <span class="kw">import</span> TypedDict, Optional
+<span class="kw">from</span> memory.session_store     <span class="kw">import</span> SessionStore
+<span class="kw">from</span> memory.memory_store      <span class="kw">import</span> MemoryStore
+<span class="kw">from</span> memory.dynamo_repository <span class="kw">import</span> DynamoRepository
 
-class EnrichedContext(TypedDict):
+<span class="kw">class</span> <span class="tp">EnrichedContext</span>(TypedDict):
     user_id:          str
     session_id:       str
     thread_id:        str
@@ -1443,190 +1032,194 @@ class EnrichedContext(TypedDict):
     working_memory:   dict
     session_metadata: dict
 
-class ContextEnricher:
-    def __init__(self, sessions: SessionStore, memory: MemoryStore, dynamo: DynamoRepository):
+<span class="kw">class</span> <span class="tp">ContextEnricher</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, sessions: SessionStore, memory: MemoryStore, dynamo: DynamoRepository):
         self.sessions = sessions
         self.memory   = memory
         self.dynamo   = dynamo
 
-    async def enrich(self, session_id: str, thread_id: str, user_id: str) -> EnrichedContext:
-        # 1. Session metadata
-        session = await self.sessions.get_session(session_id) or {}
+    <span class="kw">async def</span> <span class="fn">enrich</span>(self, session_id: str, thread_id: str, user_id: str) -> EnrichedContext:
+        <span class="cm"># 1. Session metadata</span>
+        session = <span class="kw">await</span> self.sessions.<span class="fn">get_session</span>(session_id) <span class="kw">or</span> {}
 
-        # 2. UserPreferences — Redis primeiro, fallback DynamoDB (warm-up automático)
-        preferences = await self.memory.get_preferences(user_id)
-        if not preferences:
-            preferences = await self.dynamo.get_preferences(user_id) or {}
-            if preferences:
-                await self.memory.set_preferences(user_id, preferences)
+        <span class="cm"># 2. UserPreferences — Redis primeiro, fallback DynamoDB (warm-up automático)</span>
+        preferences = <span class="kw">await</span> self.memory.<span class="fn">get_preferences</span>(user_id)
+        <span class="kw">if not</span> preferences:
+            preferences = <span class="kw">await</span> self.dynamo.<span class="fn">get_preferences</span>(user_id) <span class="kw">or</span> {}
+            <span class="kw">if</span> preferences:
+                <span class="kw">await</span> self.memory.<span class="fn">set_preferences</span>(user_id, preferences)
 
-        # 3. LTM Summaries — Redis primeiro, fallback DynamoDB
-        ltm_summaries = await self.memory.get_ltm_summaries(user_id, n=5)
-        if not ltm_summaries:
-            ltm_summaries = await self.dynamo.get_recent_summaries(user_id, limit=5)
+        <span class="cm"># 3. LTM Summaries — Redis primeiro, fallback DynamoDB</span>
+        ltm_summaries = <span class="kw">await</span> self.memory.<span class="fn">get_ltm_summaries</span>(user_id, n=<span class="nb">5</span>)
+        <span class="kw">if not</span> ltm_summaries:
+            ltm_summaries = <span class="kw">await</span> self.dynamo.<span class="fn">get_recent_summaries</span>(user_id, limit=<span class="nb">5</span>)
 
-        # 4. Working memory da thread ativa
-        working_memory = await self.memory.get_working_memory(thread_id) or {}
+        <span class="cm"># 4. Working memory da thread ativa</span>
+        working_memory = <span class="kw">await</span> self.memory.<span class="fn">get_working_memory</span>(thread_id) <span class="kw">or</span> {}
 
-        return EnrichedContext(
+        <span class="kw">return</span> <span class="fn">EnrichedContext</span>(
             user_id=user_id, session_id=session_id, thread_id=thread_id,
             preferences=preferences, ltm_summaries=ltm_summaries,
             working_memory=working_memory, session_metadata=session,
         )
 
-    def build_context_prompt(self, ctx: EnrichedContext) -> str:
-        """Serializa contexto como texto para o system prompt."""
+    <span class="kw">def</span> <span class="fn">build_context_prompt</span>(self, ctx: EnrichedContext) -> str:
+        <span class="st">"""Serializa contexto como texto para o system prompt."""</span>
         parts = []
-        if ctx["preferences"]:
-            parts.append(
-                f"## User Profile\n{json.dumps(ctx['preferences'], indent=2, ensure_ascii=False)}"
+        <span class="kw">if</span> ctx[<span class="st">"preferences"</span>]:
+            parts.<span class="fn">append</span>(
+                f<span class="st">"## User Profile\n{json.dumps(ctx['preferences'], indent=2, ensure_ascii=False)}"</span>
             )
-        if ctx["ltm_summaries"]:
-            lines = "\n".join(
-                f"- [{s.get('created_at','')[:10]}] {s.get('summary','')}"
-                for s in ctx["ltm_summaries"]
+        <span class="kw">if</span> ctx[<span class="st">"ltm_summaries"</span>]:
+            lines = <span class="st">"\n"</span>.<span class="fn">join</span>(
+                f<span class="st">"- [{s.get('created_at','')[:10]}] {s.get('summary','')}"</span>
+                <span class="kw">for</span> s <span class="kw">in</span> ctx[<span class="st">"ltm_summaries"</span>]
             )
-            parts.append(f"## Recent Session History\n{lines}")
-        if ctx["working_memory"]:
-            parts.append(
-                f"## Current Working Memory\n{json.dumps(ctx['working_memory'], indent=2, ensure_ascii=False)}"
+            parts.<span class="fn">append</span>(f<span class="st">"## Recent Session History\n{lines}"</span>)
+        <span class="kw">if</span> ctx[<span class="st">"working_memory"</span>]:
+            parts.<span class="fn">append</span>(
+                f<span class="st">"## Current Working Memory\n{json.dumps(ctx['working_memory'], indent=2, ensure_ascii=False)}"</span>
             )
-        return "\n\n".join(parts)</code></pre>
-      </div>
+        <span class="kw">return</span> <span class="st">"\n\n"</span>.<span class="fn">join</span>(parts)</code></pre>
     </div>
+  </section>
 
-    <div class="section" id="graph">
-      <h3>LangGraph StateGraph — Supervisor com Memória</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">supervisor/graph.py</span>
-        </div>
-        <pre><code>from typing import TypedDict, Annotated, Optional
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
-from langchain_anthropic import ChatAnthropic
-from langgraph.graph import StateGraph, END
-from langgraph.graph.message import add_messages
-from memory.langgraph_checkpointer import RedisCheckpointer
-from supervisor.context_enricher   import ContextEnricher
-from supervisor.thread_archiver    import ThreadArchiver
+  <!-- STATEGRAPH -->
+  <section class="section" id="graph">
+    <div class="section-label">Implementação</div>
+    <h3>LangGraph StateGraph — Supervisor com Memória</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — supervisor/graph.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> typing <span class="kw">import</span> TypedDict, Annotated, Optional
+<span class="kw">from</span> langchain_core.messages <span class="kw">import</span> BaseMessage, HumanMessage, AIMessage, SystemMessage
+<span class="kw">from</span> langchain_anthropic <span class="kw">import</span> ChatAnthropic
+<span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> langgraph.graph.message <span class="kw">import</span> add_messages
+<span class="kw">from</span> memory.langgraph_checkpointer <span class="kw">import</span> RedisCheckpointer
+<span class="kw">from</span> supervisor.context_enricher   <span class="kw">import</span> ContextEnricher
+<span class="kw">from</span> supervisor.thread_archiver    <span class="kw">import</span> ThreadArchiver
 
-class AgentState(TypedDict):
+<span class="kw">class</span> <span class="tp">AgentState</span>(TypedDict):
     messages:         Annotated[list[BaseMessage], add_messages]
     session_id:       str
     thread_id:        str
     user_id:          str
     enriched_context: dict
     agent_route:      Optional[str]
-    resolved:         bool
+    resolved:         <span class="nb">bool</span>
 
-# ── Nó: enriquecimento ───────────────────────────────────────────────
-async def enrich_context_node(state: AgentState, enricher: ContextEnricher) -> AgentState:
-    ctx = await enricher.enrich(
-        session_id=state["session_id"],
-        thread_id=state["thread_id"],
-        user_id=state["user_id"],
+<span class="cm"># ── Nó: enriquecimento ───────────────────────────────────────────────</span>
+<span class="kw">async def</span> <span class="fn">enrich_context_node</span>(state: AgentState, enricher: ContextEnricher) -> AgentState:
+    ctx = <span class="kw">await</span> enricher.<span class="fn">enrich</span>(
+        session_id=state[<span class="st">"session_id"</span>],
+        thread_id=state[<span class="st">"thread_id"</span>],
+        user_id=state[<span class="st">"user_id"</span>],
     )
-    context_prompt = enricher.build_context_prompt(ctx)
-    system_msg = SystemMessage(content=f"""Você é o Supervisor de um sistema multi-agente.
+    context_prompt = enricher.<span class="fn">build_context_prompt</span>(ctx)
+    system_msg = <span class="fn">SystemMessage</span>(content=f<span class="st">"""Você é o Supervisor de um sistema multi-agente.
 
 {context_prompt}
 
 Roteie a solicitação para o agente correto.
-Agentes: billing_agent, technical_agent, onboarding_agent.""")
-    return {
+Agentes: billing_agent, technical_agent, onboarding_agent."""</span>)
+    <span class="kw">return</span> {
         **state,
-        "enriched_context": dict(ctx),
-        "messages": [system_msg] + [m for m in state["messages"]
-                                    if not isinstance(m, SystemMessage)],
+        <span class="st">"enriched_context"</span>: <span class="fn">dict</span>(ctx),
+        <span class="st">"messages"</span>: [system_msg] + [m <span class="kw">for</span> m <span class="kw">in</span> state[<span class="st">"messages"</span>]
+                                    <span class="kw">if not</span> <span class="fn">isinstance</span>(m, SystemMessage)],
     }
 
-# ── Nó: supervisor LLM ───────────────────────────────────────────────
-async def supervisor_node(state: AgentState) -> AgentState:
-    llm = ChatAnthropic(model="claude-sonnet-4-20250514")
-    response = await llm.ainvoke(state["messages"])
-    return {**state, "messages": [response]}
+<span class="cm"># ── Nó: supervisor LLM ───────────────────────────────────────────────</span>
+<span class="kw">async def</span> <span class="fn">supervisor_node</span>(state: AgentState) -> AgentState:
+    llm = <span class="fn">ChatAnthropic</span>(model=<span class="st">"claude-sonnet-4-20250514"</span>)
+    response = <span class="kw">await</span> llm.<span class="fn">ainvoke</span>(state[<span class="st">"messages"</span>])
+    <span class="kw">return</span> {**state, <span class="st">"messages"</span>: [response]}
 
-# ── Nó: roteamento MCP ───────────────────────────────────────────────
-async def route_to_agent_node(state: AgentState) -> AgentState:
+<span class="cm"># ── Nó: roteamento MCP ───────────────────────────────────────────────</span>
+<span class="kw">async def</span> <span class="fn">route_to_agent_node</span>(state: AgentState) -> AgentState:
     mcp_payload = {
-        "thread_id": state["thread_id"],
-        "user_id":   state["user_id"],
-        "context":   state["enriched_context"],
-        "messages":  [m.dict() for m in state["messages"][-10:]],
+        <span class="st">"thread_id"</span>: state[<span class="st">"thread_id"</span>],
+        <span class="st">"user_id"</span>:   state[<span class="st">"user_id"</span>],
+        <span class="st">"context"</span>:   state[<span class="st">"enriched_context"</span>],
+        <span class="st">"messages"</span>:  [m.<span class="fn">dict</span>() <span class="kw">for</span> m <span class="kw">in</span> state[<span class="st">"messages"</span>][-<span class="nb">10</span>:]],
     }
-    # agent_response = await mcp_client.call(state["agent_route"], mcp_payload)
-    return state
+    <span class="cm"># agent_response = await mcp_client.call(state["agent_route"], mcp_payload)</span>
+    <span class="kw">return</span> state
 
-# ── Nó: verificar encerramento ────────────────────────────────────────
-async def check_resolution_node(state: AgentState, archiver: ThreadArchiver) -> AgentState:
-    last = state["messages"][-1] if state["messages"] else None
-    resolved = False
-    if last and isinstance(last, AIMessage):
-        signals = ["posso ajudar com mais algo", "há algo mais", "problema resolvido"]
-        resolved = any(s in last.content.lower() for s in signals)
-    if resolved:
-        await archiver.archive_thread(
-            thread_id=state["thread_id"],
-            session_id=state["session_id"],
-            user_id=state["user_id"],
-            messages=state["messages"],
+<span class="cm"># ── Nó: verificar encerramento ────────────────────────────────────────</span>
+<span class="kw">async def</span> <span class="fn">check_resolution_node</span>(state: AgentState, archiver: ThreadArchiver) -> AgentState:
+    last = state[<span class="st">"messages"</span>][-<span class="nb">1</span>] <span class="kw">if</span> state[<span class="st">"messages"</span>] <span class="kw">else</span> <span class="nb">None</span>
+    resolved = <span class="nb">False</span>
+    <span class="kw">if</span> last <span class="kw">and</span> <span class="fn">isinstance</span>(last, AIMessage):
+        signals = [<span class="st">"posso ajudar com mais algo"</span>, <span class="st">"há algo mais"</span>, <span class="st">"problema resolvido"</span>]
+        resolved = <span class="fn">any</span>(s <span class="kw">in</span> last.content.<span class="fn">lower</span>() <span class="kw">for</span> s <span class="kw">in</span> signals)
+    <span class="kw">if</span> resolved:
+        <span class="kw">await</span> archiver.<span class="fn">archive_thread</span>(
+            thread_id=state[<span class="st">"thread_id"</span>],
+            session_id=state[<span class="st">"session_id"</span>],
+            user_id=state[<span class="st">"user_id"</span>],
+            messages=state[<span class="st">"messages"</span>],
         )
-    return {**state, "resolved": resolved}
+    <span class="kw">return</span> {**state, <span class="st">"resolved"</span>: resolved}
 
-def should_end(state: AgentState) -> str:
-    return END if state.get("resolved") else "supervisor"
+<span class="kw">def</span> <span class="fn">should_end</span>(state: AgentState) -> str:
+    <span class="kw">return</span> END <span class="kw">if</span> state.<span class="fn">get</span>(<span class="st">"resolved"</span>) <span class="kw">else</span> <span class="st">"supervisor"</span>
 
-def build_supervisor_graph(
+<span class="kw">def</span> <span class="fn">build_supervisor_graph</span>(
     enricher: ContextEnricher,
     archiver: ThreadArchiver,
     checkpointer: RedisCheckpointer,
 ) -> StateGraph:
-    graph = StateGraph(AgentState)
-    graph.add_node("enrich_context",    lambda s: enrich_context_node(s, enricher))
-    graph.add_node("supervisor",        supervisor_node)
-    graph.add_node("route_agent",       route_to_agent_node)
-    graph.add_node("check_resolution",  lambda s: check_resolution_node(s, archiver))
-    graph.set_entry_point("enrich_context")
-    graph.add_edge("enrich_context",    "supervisor")
-    graph.add_edge("supervisor",        "route_agent")
-    graph.add_edge("route_agent",       "check_resolution")
-    graph.add_conditional_edges("check_resolution", should_end)
-    return graph.compile(checkpointer=checkpointer)</code></pre>
-      </div>
+    graph = <span class="fn">StateGraph</span>(AgentState)
+    graph.<span class="fn">add_node</span>(<span class="st">"enrich_context"</span>,    <span class="kw">lambda</span> s: <span class="fn">enrich_context_node</span>(s, enricher))
+    graph.<span class="fn">add_node</span>(<span class="st">"supervisor"</span>,        supervisor_node)
+    graph.<span class="fn">add_node</span>(<span class="st">"route_agent"</span>,       route_to_agent_node)
+    graph.<span class="fn">add_node</span>(<span class="st">"check_resolution"</span>,  <span class="kw">lambda</span> s: <span class="fn">check_resolution_node</span>(s, archiver))
+    graph.<span class="fn">set_entry_point</span>(<span class="st">"enrich_context"</span>)
+    graph.<span class="fn">add_edge</span>(<span class="st">"enrich_context"</span>,    <span class="st">"supervisor"</span>)
+    graph.<span class="fn">add_edge</span>(<span class="st">"supervisor"</span>,        <span class="st">"route_agent"</span>)
+    graph.<span class="fn">add_edge</span>(<span class="st">"route_agent"</span>,       <span class="st">"check_resolution"</span>)
+    graph.<span class="fn">add_conditional_edges</span>(<span class="st">"check_resolution"</span>, should_end)
+    <span class="kw">return</span> graph.<span class="fn">compile</span>(checkpointer=checkpointer)</code></pre>
     </div>
+  </section>
 
-    <div class="section" id="archiver">
-      <h3>Thread Archiver — Encerramento com Summary LLM</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">supervisor/thread_archiver.py</span>
-        </div>
-        <pre><code>import json
-from datetime import datetime, timezone
-from langchain_core.messages import BaseMessage
-from langchain_anthropic import ChatAnthropic
-from memory.memory_store      import MemoryStore
-from memory.dynamo_repository import DynamoRepository
+  <!-- THREAD ARCHIVER -->
+  <section class="section" id="archiver">
+    <div class="section-label">Implementação</div>
+    <h3>Thread Archiver — Encerramento com Summary LLM</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — supervisor/thread_archiver.py</span>
+      </div>
+      <pre><code><span class="kw">import</span> json
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> langchain_core.messages <span class="kw">import</span> BaseMessage
+<span class="kw">from</span> langchain_anthropic <span class="kw">import</span> ChatAnthropic
+<span class="kw">from</span> memory.memory_store      <span class="kw">import</span> MemoryStore
+<span class="kw">from</span> memory.dynamo_repository <span class="kw">import</span> DynamoRepository
 
-class ThreadArchiver:
-    def __init__(self, memory: MemoryStore, dynamo: DynamoRepository):
+<span class="kw">class</span> <span class="tp">ThreadArchiver</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, memory: MemoryStore, dynamo: DynamoRepository):
         self.memory = memory
         self.dynamo = dynamo
-        self.llm    = ChatAnthropic(model="claude-haiku-4-5-20251001")
+        self.llm    = <span class="fn">ChatAnthropic</span>(model=<span class="st">"claude-haiku-4-5-20251001"</span>)
 
-    async def archive_thread(
+    <span class="kw">async def</span> <span class="fn">archive_thread</span>(
         self, thread_id: str, session_id: str, user_id: str, messages: list[BaseMessage]
-    ) -> None:
-        ended_at = datetime.now(timezone.utc).isoformat()
+    ) -> <span class="nb">None</span>:
+        ended_at = datetime.<span class="fn">now</span>(timezone.utc).<span class="fn">isoformat</span>()
 
-        # 1. Gerar summary via LLM
-        conv = "\n".join(
-            f"[{m.__class__.__name__}]: {m.content}"
-            for m in messages if hasattr(m, "content")
+        <span class="cm"># 1. Gerar summary via LLM</span>
+        conv = <span class="st">"\n"</span>.<span class="fn">join</span>(
+            f<span class="st">"[{m.__class__.__name__}]: {m.content}"</span>
+            <span class="kw">for</span> m <span class="kw">in</span> messages <span class="kw">if</span> <span class="fn">hasattr</span>(m, <span class="st">"content"</span>)
         )
-        resp = await self.llm.ainvoke([{"role": "user", "content": f"""Analise esta conversa e retorne um JSON com:
+        resp = <span class="kw">await</span> self.llm.<span class="fn">ainvoke</span>([{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: f<span class="st">"""Analise esta conversa e retorne um JSON com:
 - summary: resumo em 1-2 frases do que foi discutido e resolvido
 - topics: lista de tópicos principais (array de strings)
 - sentiment: "positive" | "neutral" | "negative"
@@ -1637,326 +1230,320 @@ class ThreadArchiver:
 Conversa:
 {conv}
 
-Retorne SOMENTE o JSON, sem texto adicional."""}])
+Retorne SOMENTE o JSON, sem texto adicional."""</span>}])
 
-        try:
-            a = json.loads(resp.content)
-        except json.JSONDecodeError:
-            a = {"summary": "Conversa encerrada.", "topics": [],
-                 "sentiment": "neutral", "resolved": True,
-                 "inferred_preferences": {}, "facts": {}}
+        <span class="kw">try</span>:
+            a = json.<span class="fn">loads</span>(resp.content)
+        <span class="kw">except</span> json.JSONDecodeError:
+            a = {<span class="st">"summary"</span>: <span class="st">"Conversa encerrada."</span>, <span class="st">"topics"</span>: [],
+                 <span class="st">"sentiment"</span>: <span class="st">"neutral"</span>, <span class="st">"resolved"</span>: <span class="nb">True</span>,
+                 <span class="st">"inferred_preferences"</span>: {}, <span class="st">"facts"</span>: {}}
 
-        # 2. Salvar no DynamoDB
-        await self.dynamo.save_session_summary(
+        <span class="cm"># 2. Salvar no DynamoDB</span>
+        <span class="kw">await</span> self.dynamo.<span class="fn">save_session_summary</span>(
             user_id=user_id, session_id=session_id,
-            summary=a["summary"], topics=a.get("topics", []),
-            sentiment=a.get("sentiment", "neutral"), resolved=a.get("resolved", True),
-            turn_count=len(messages),
+            summary=a[<span class="st">"summary"</span>], topics=a.<span class="fn">get</span>(<span class="st">"topics"</span>, []),
+            sentiment=a.<span class="fn">get</span>(<span class="st">"sentiment"</span>, <span class="st">"neutral"</span>), resolved=a.<span class="fn">get</span>(<span class="st">"resolved"</span>, <span class="nb">True</span>),
+            turn_count=<span class="fn">len</span>(messages),
             started_at=ended_at, ended_at=ended_at,
         )
 
-        # 3. Atualizar LTM no Redis
-        await self.memory.push_ltm_summary(user_id, {
-            "session_id": session_id, "summary": a["summary"],
-            "topics": a.get("topics", []), "sentiment": a.get("sentiment", "neutral"),
-            "resolved": a.get("resolved", True), "created_at": ended_at,
+        <span class="cm"># 3. Atualizar LTM no Redis</span>
+        <span class="kw">await</span> self.memory.<span class="fn">push_ltm_summary</span>(user_id, {
+            <span class="st">"session_id"</span>: session_id, <span class="st">"summary"</span>: a[<span class="st">"summary"</span>],
+            <span class="st">"topics"</span>: a.<span class="fn">get</span>(<span class="st">"topics"</span>, []), <span class="st">"sentiment"</span>: a.<span class="fn">get</span>(<span class="st">"sentiment"</span>, <span class="st">"neutral"</span>),
+            <span class="st">"resolved"</span>: a.<span class="fn">get</span>(<span class="st">"resolved"</span>, <span class="nb">True</span>), <span class="st">"created_at"</span>: ended_at,
         })
 
-        # 4. Write-through UserPreferences (DynamoDB → Redis)
-        if a.get("inferred_preferences"):
-            existing = await self.dynamo.get_preferences(user_id) or {}
-            merged   = {**existing, **a["inferred_preferences"]}
-            merged["inferred_count"] = str(int(existing.get("inferred_count", 0)) + 1)
-            await self.dynamo.save_preferences(user_id, merged)
-            await self.memory.set_preferences(user_id, merged)
+        <span class="cm"># 4. Write-through UserPreferences (DynamoDB → Redis)</span>
+        <span class="kw">if</span> a.<span class="fn">get</span>(<span class="st">"inferred_preferences"</span>):
+            existing = <span class="kw">await</span> self.dynamo.<span class="fn">get_preferences</span>(user_id) <span class="kw">or</span> {}
+            merged   = {**existing, **a[<span class="st">"inferred_preferences"</span>]}
+            merged[<span class="st">"inferred_count"</span>] = <span class="fn">str</span>(<span class="fn">int</span>(existing.<span class="fn">get</span>(<span class="st">"inferred_count"</span>, <span class="nb">0</span>)) + <span class="nb">1</span>)
+            <span class="kw">await</span> self.dynamo.<span class="fn">save_preferences</span>(user_id, merged)
+            <span class="kw">await</span> self.memory.<span class="fn">set_preferences</span>(user_id, merged)
 
-        # 5. Fatos estruturados
-        for key, val in a.get("facts", {}).items():
-            await self.dynamo.save_preference_fact(
-                user_id=user_id, fact_key=key, fact_value=str(val),
-                confidence=0.85, source_session=session_id,
+        <span class="cm"># 5. Fatos estruturados</span>
+        <span class="kw">for</span> key, val <span class="kw">in</span> a.<span class="fn">get</span>(<span class="st">"facts"</span>, {}).<span class="fn">items</span>():
+            <span class="kw">await</span> self.dynamo.<span class="fn">save_preference_fact</span>(
+                user_id=user_id, fact_key=key, fact_value=<span class="fn">str</span>(val),
+                confidence=<span class="nb">0.85</span>, source_session=session_id,
             )</code></pre>
-      </div>
     </div>
+  </section>
 
-    <div class="section" id="entrypoint">
-      <h3>Entrypoint — Uso completo</h3>
-      <div class="code-block">
-        <div class="code-header">
-          <span class="code-lang">python</span>
-          <span class="code-filename">main.py</span>
-        </div>
-        <pre><code>import asyncio, uuid
-from infrastructure.redis_clients  import RedisClients
-from memory.session_store           import SessionStore
-from memory.memory_store            import MemoryStore
-from memory.dynamo_repository       import DynamoRepository
-from memory.langgraph_checkpointer  import RedisCheckpointer
-from supervisor.context_enricher    import ContextEnricher
-from supervisor.thread_archiver     import ThreadArchiver
-from supervisor.graph               import build_supervisor_graph
-from langchain_core.messages        import HumanMessage
+  <!-- ENTRYPOINT -->
+  <section class="section" id="entrypoint">
+    <div class="section-label">Implementação</div>
+    <h3>Entrypoint — Uso completo</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — main.py</span>
+      </div>
+      <pre><code><span class="kw">import</span> asyncio, uuid
+<span class="kw">from</span> infrastructure.redis_clients  <span class="kw">import</span> RedisClients
+<span class="kw">from</span> memory.session_store           <span class="kw">import</span> SessionStore
+<span class="kw">from</span> memory.memory_store            <span class="kw">import</span> MemoryStore
+<span class="kw">from</span> memory.dynamo_repository       <span class="kw">import</span> DynamoRepository
+<span class="kw">from</span> memory.langgraph_checkpointer  <span class="kw">import</span> RedisCheckpointer
+<span class="kw">from</span> supervisor.context_enricher    <span class="kw">import</span> ContextEnricher
+<span class="kw">from</span> supervisor.thread_archiver     <span class="kw">import</span> ThreadArchiver
+<span class="kw">from</span> supervisor.graph               <span class="kw">import</span> build_supervisor_graph
+<span class="kw">from</span> langchain_core.messages        <span class="kw">import</span> HumanMessage
 
 REDIS_CONFIG = {
-    "sessions": {"host": "redis-sessions.xxx.cache.amazonaws.com", "port": 6379},
-    "threads":  {"host": "redis-threads.xxx.cache.amazonaws.com",  "port": 6379},
-    "memory":   {"host": "redis-memory.xxx.cache.amazonaws.com",   "port": 6379},
+    <span class="st">"sessions"</span>: {<span class="st">"host"</span>: <span class="st">"redis-sessions.xxx.cache.amazonaws.com"</span>, <span class="st">"port"</span>: <span class="nb">6379</span>},
+    <span class="st">"threads"</span>:  {<span class="st">"host"</span>: <span class="st">"redis-threads.xxx.cache.amazonaws.com"</span>,  <span class="st">"port"</span>: <span class="nb">6379</span>},
+    <span class="st">"memory"</span>:   {<span class="st">"host"</span>: <span class="st">"redis-memory.xxx.cache.amazonaws.com"</span>,   <span class="st">"port"</span>: <span class="nb">6379</span>},
 }
 
-async def handle_message(user_id: str, message: str, session_id: str = None):
-    redis        = RedisClients(REDIS_CONFIG)
-    sessions     = SessionStore(redis)
-    memory       = MemoryStore(redis)
-    dynamo       = DynamoRepository()
-    checkpointer = RedisCheckpointer(redis)
-    enricher     = ContextEnricher(sessions, memory, dynamo)
-    archiver     = ThreadArchiver(memory, dynamo)
-    graph        = build_supervisor_graph(enricher, archiver, checkpointer)
+<span class="kw">async def</span> <span class="fn">handle_message</span>(user_id: str, message: str, session_id: str = <span class="nb">None</span>):
+    redis        = <span class="fn">RedisClients</span>(REDIS_CONFIG)
+    sessions     = <span class="fn">SessionStore</span>(redis)
+    memory       = <span class="fn">MemoryStore</span>(redis)
+    dynamo       = <span class="fn">DynamoRepository</span>()
+    checkpointer = <span class="fn">RedisCheckpointer</span>(redis)
+    enricher     = <span class="fn">ContextEnricher</span>(sessions, memory, dynamo)
+    archiver     = <span class="fn">ThreadArchiver</span>(memory, dynamo)
+    graph        = <span class="fn">build_supervisor_graph</span>(enricher, archiver, checkpointer)
 
-    if not session_id:
-        session_id = f"sess_{uuid.uuid4().hex[:12]}"
-        await sessions.create_session(session_id, user_id, {"channel": "api"})
-        await dynamo.register_session(user_id, session_id)
-    else:
-        await sessions.touch_session(session_id)
+    <span class="kw">if not</span> session_id:
+        session_id = f<span class="st">"sess_{uuid.uuid4().hex[:12]}"</span>
+        <span class="kw">await</span> sessions.<span class="fn">create_session</span>(session_id, user_id, {<span class="st">"channel"</span>: <span class="st">"api"</span>})
+        <span class="kw">await</span> dynamo.<span class="fn">register_session</span>(user_id, session_id)
+    <span class="kw">else</span>:
+        <span class="kw">await</span> sessions.<span class="fn">touch_session</span>(session_id)
 
-    thread_id = f"thrd_{uuid.uuid4().hex[:12]}"  # nova thread por conversa
+    thread_id = f<span class="st">"thrd_{uuid.uuid4().hex[:12]}"</span>  <span class="cm"># nova thread por conversa</span>
 
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: thread_id}}
     state  = {
-        "messages":         [HumanMessage(content=message)],
-        "session_id":       session_id,
-        "thread_id":        thread_id,
-        "user_id":          user_id,
-        "enriched_context": {},
-        "agent_route":      None,
-        "resolved":         False,
+        <span class="st">"messages"</span>:         [<span class="fn">HumanMessage</span>(content=message)],
+        <span class="st">"session_id"</span>:       session_id,
+        <span class="st">"thread_id"</span>:        thread_id,
+        <span class="st">"user_id"</span>:          user_id,
+        <span class="st">"enriched_context"</span>: {},
+        <span class="st">"agent_route"</span>:      <span class="nb">None</span>,
+        <span class="st">"resolved"</span>:         <span class="nb">False</span>,
     }
-    result = await graph.ainvoke(state, config=config)
-    await redis.close()
-    return result
+    result = <span class="kw">await</span> graph.<span class="fn">ainvoke</span>(state, config=config)
+    <span class="kw">await</span> redis.<span class="fn">close</span>()
+    <span class="kw">return</span> result
 
-if __name__ == "__main__":
-    asyncio.run(handle_message(
-        user_id="usr_xyz789",
-        message="Preciso entender minha fatura do mês passado",
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    asyncio.<span class="fn">run</span>(<span class="fn">handle_message</span>(
+        user_id=<span class="st">"usr_xyz789"</span>,
+        message=<span class="st">"Preciso entender minha fatura do mês passado"</span>,
     ))</code></pre>
-      </div>
     </div>
+  </section>
 
-    <!-- FLUXO COMPLETO -->
-    <div class="section" id="fluxo">
-      <div class="section-label">Seção 12</div>
-      <h2>Fluxo Ponta a Ponta — <em>Lifecycle Completo</em></h2>
+  <!-- SEÇÃO 12: FLUXO COMPLETO -->
+  <section class="section" id="fluxo">
+    <div class="section-label">Resumo</div>
+    <h2>Fluxo Ponta a Ponta — <em>Lifecycle Completo</em></h2>
 
-      <div class="flow">
-        <div class="flow-step">
-          <div class="flow-left">
-            <div class="flow-num">1</div>
-            <div class="flow-line"></div>
-          </div>
-          <div class="flow-content">
-            <div class="flow-title">Nova mensagem do usuário</div>
-            <div class="flow-desc"><code>SessionStore.get_session()</code> + <code>touch_session()</code> → <strong>redis-sessions</strong> (renova sliding TTL)</div>
-          </div>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-n">1</div>
+        <div class="flow-content">
+          <div class="flow-title">Nova mensagem do usuário</div>
+          <div class="flow-desc"><code>SessionStore.get_session()</code> + <code>touch_session()</code> → <strong>redis-sessions</strong> (renova sliding TTL)</div>
         </div>
-        <div class="flow-step">
-          <div class="flow-left">
-            <div class="flow-num">2</div>
-            <div class="flow-line"></div>
-          </div>
-          <div class="flow-content">
-            <div class="flow-title">ContextEnricher carrega todos os layers</div>
-            <div class="flow-desc">
-              <code>get_preferences()</code> → redis-memory → fallback DynamoDB (warm-up)<br>
-              <code>get_ltm_summaries()</code> → redis-memory → fallback DynamoDB<br>
-              <code>get_working_memory()</code> → redis-memory
-            </div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="flow-left">
-            <div class="flow-num">3</div>
-            <div class="flow-line"></div>
-          </div>
-          <div class="flow-content">
-            <div class="flow-title">LangGraph.ainvoke() — execução do grafo</div>
-            <div class="flow-desc">
-              <code>enrich_context_node</code> injeta SystemMessage com contexto completo →
-              <code>supervisor_node</code> LLM decide rota →
-              <code>route_agent_node</code> envia MCP payload enriquecido para Agents Account
-            </div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="flow-left">
-            <div class="flow-num">4</div>
-            <div class="flow-line"></div>
-          </div>
-          <div class="flow-content">
-            <div class="flow-title">check_resolution_node — loop ou encerramento</div>
-            <div class="flow-desc">
-              LLM sinalizou encerramento explícito <em>ou</em> inatividade de 30min detectada →
-              dispara <code>ThreadArchiver.archive_thread()</code>
-            </div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="flow-left">
-            <div class="flow-num">5</div>
-            <div class="flow-line"></div>
-          </div>
-          <div class="flow-content">
-            <div class="flow-title">ThreadArchiver — arquivamento e geração de LTM</div>
-            <div class="flow-desc">
-              LLM (Haiku) gera summary estruturado →
-              <code>DynamoDB.save_session_summary()</code> →
-              <code>MemoryStore.push_ltm_summary()</code> →
-              write-through UserPreferences (DynamoDB primeiro, Redis depois)
-            </div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="flow-left">
-            <div class="flow-num">6</div>
-            <div class="flow-line"></div>
-          </div>
-          <div class="flow-content">
-            <div class="flow-title">TTL Redis expira naturalmente</div>
-            <div class="flow-desc">Dados já persistidos no DynamoDB. Redis libera memória automaticamente.</div>
-          </div>
-        </div>
-        <div class="flow-step">
-          <div class="flow-left">
-            <div class="flow-num">7</div>
-            <div class="flow-line"></div>
-          </div>
-          <div class="flow-content">
-            <div class="flow-title">DynamoDB Streams → Lambda → S3 Data Lake</div>
-            <div class="flow-desc">Após 90 dias, TTL do DynamoDB expira. Streams dispara Lambda que serializa em Parquet no S3.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">2</div>
+        <div class="flow-content">
+          <div class="flow-title">ContextEnricher carrega todos os layers</div>
+          <div class="flow-desc">
+            <code>get_preferences()</code> → redis-memory → fallback DynamoDB (warm-up)<br/>
+            <code>get_ltm_summaries()</code> → redis-memory → fallback DynamoDB<br/>
+            <code>get_working_memory()</code> → redis-memory
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- TTL TABLE -->
-    <div class="section" id="ttl-table">
-      <div class="section-label">Seção 13</div>
-      <h2>Resumo de <em>TTLs e Decisões</em></h2>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Layer</th>
-              <th>Cluster / Store</th>
-              <th>TTL</th>
-              <th>Primário</th>
-              <th>Invalidação</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Session store</td>
-              <td>redis-sessions</td>
-              <td><span class="badge badge-blue">2h sliding</span></td>
-              <td>Redis</td>
-              <td>Expiração / close explícito</td>
-            </tr>
-            <tr>
-              <td>Thread state + checkpointer</td>
-              <td>redis-threads</td>
-              <td><span class="badge badge-blue">30min sliding</span></td>
-              <td>Redis</td>
-              <td>Arquivamento antes da expiração</td>
-            </tr>
-            <tr>
-              <td>Working memory</td>
-              <td>redis-memory</td>
-              <td><span class="badge badge-blue">30min</span></td>
-              <td>Redis</td>
-              <td>Expira com a thread</td>
-            </tr>
-            <tr>
-              <td>UserPreferences cache</td>
-              <td>redis-memory</td>
-              <td><span class="badge badge-purple">sem TTL</span></td>
-              <td>DynamoDB</td>
-              <td>Write-through por evento</td>
-            </tr>
-            <tr>
-              <td>LTM Summaries cache</td>
-              <td>redis-memory</td>
-              <td><span class="badge badge-purple">sem TTL</span></td>
-              <td>DynamoDB</td>
-              <td>LPUSH + LTRIM (top 10)</td>
-            </tr>
-            <tr>
-              <td>ConversationHistory</td>
-              <td>DynamoDB</td>
-              <td><span class="badge badge-yellow">90 dias</span></td>
-              <td>DynamoDB</td>
-              <td>DynamoDB Streams → S3</td>
-            </tr>
-            <tr>
-              <td>UserPreferences</td>
-              <td>DynamoDB</td>
-              <td><span class="badge badge-green">permanente</span></td>
-              <td>DynamoDB</td>
-              <td>Merge por inferência</td>
-            </tr>
-            <tr>
-              <td>SessionIndex</td>
-              <td>DynamoDB</td>
-              <td><span class="badge badge-yellow">90 dias</span></td>
-              <td>DynamoDB</td>
-              <td>—</td>
-            </tr>
-            <tr>
-              <td>Data Lake</td>
-              <td>S3 Parquet</td>
-              <td><span class="badge badge-green">permanente</span></td>
-              <td>S3</td>
-              <td>—</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="flow-step">
+        <div class="flow-n">3</div>
+        <div class="flow-content">
+          <div class="flow-title">LangGraph.ainvoke() — execução do grafo</div>
+          <div class="flow-desc">
+            <code>enrich_context_node</code> injeta SystemMessage com contexto completo →
+            <code>supervisor_node</code> LLM decide rota →
+            <code>route_agent_node</code> envia MCP payload enriquecido para Agents Account
+          </div>
+        </div>
       </div>
-
-      <div class="callout danger">
-        <strong>Ponto de atenção — SQS como safety net:</strong> o <code>ThreadArchiver</code>
-        deve ser envolvido em uma fila SQS com retry antes do fluxo síncrono em produção.
-        Se o archiver falhar silenciosamente e o Redis expirar, o estado da thread é perdido.
-        Uma fila garante pelo menos 3 tentativas com backoff exponencial.
+      <div class="flow-step">
+        <div class="flow-n">4</div>
+        <div class="flow-content">
+          <div class="flow-title">check_resolution_node — loop ou encerramento</div>
+          <div class="flow-desc">
+            LLM sinalizou encerramento explícito <em>ou</em> inatividade de 30min detectada →
+            dispara <code>ThreadArchiver.archive_thread()</code>
+          </div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">5</div>
+        <div class="flow-content">
+          <div class="flow-title">ThreadArchiver — arquivamento e geração de LTM</div>
+          <div class="flow-desc">
+            LLM (Haiku) gera summary estruturado →
+            <code>DynamoDB.save_session_summary()</code> →
+            <code>MemoryStore.push_ltm_summary()</code> →
+            write-through UserPreferences (DynamoDB primeiro, Redis depois)
+          </div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">6</div>
+        <div class="flow-content">
+          <div class="flow-title">TTL Redis expira naturalmente</div>
+          <div class="flow-desc">Dados já persistidos no DynamoDB. Redis libera memória automaticamente.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">7</div>
+        <div class="flow-content">
+          <div class="flow-title">DynamoDB Streams → Lambda → S3 Data Lake</div>
+          <div class="flow-desc">Após 90 dias, TTL do DynamoDB expira. Streams dispara Lambda que serializa em Parquet no S3.</div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- TAGS -->
-    <div class="tag-row">
-      <span class="tag">Redis</span>
-      <span class="tag">ElastiCache</span>
-      <span class="tag">DynamoDB</span>
-      <span class="tag">LangGraph</span>
-      <span class="tag">Checkpointer</span>
-      <span class="tag">Short-term Memory</span>
-      <span class="tag">Long-term Memory</span>
-      <span class="tag">UserPreferences</span>
-      <span class="tag">Session Store</span>
-      <span class="tag">Write-through</span>
-      <span class="tag">TTL</span>
-      <span class="tag">S3 Data Lake</span>
-      <span class="tag">DynamoDB Streams</span>
+  <!-- SEÇÃO 13: TTL TABLE -->
+  <section class="section" id="ttl-table">
+    <div class="section-label">Resumo</div>
+    <h2>Resumo de <em>TTLs e Decisões</em></h2>
+
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Cluster / Store</th>
+          <th>TTL</th>
+          <th>Primário</th>
+          <th>Invalidação</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Session store</td>
+          <td>redis-sessions</td>
+          <td><span class="pill blue">2h sliding</span></td>
+          <td>Redis</td>
+          <td>Expiração / close explícito</td>
+        </tr>
+        <tr>
+          <td>Thread state + checkpointer</td>
+          <td>redis-threads</td>
+          <td><span class="pill blue">30min sliding</span></td>
+          <td>Redis</td>
+          <td>Arquivamento antes da expiração</td>
+        </tr>
+        <tr>
+          <td>Working memory</td>
+          <td>redis-memory</td>
+          <td><span class="pill blue">30min</span></td>
+          <td>Redis</td>
+          <td>Expira com a thread</td>
+        </tr>
+        <tr>
+          <td>UserPreferences cache</td>
+          <td>redis-memory</td>
+          <td><span class="pill purple">sem TTL</span></td>
+          <td>DynamoDB</td>
+          <td>Write-through por evento</td>
+        </tr>
+        <tr>
+          <td>LTM Summaries cache</td>
+          <td>redis-memory</td>
+          <td><span class="pill purple">sem TTL</span></td>
+          <td>DynamoDB</td>
+          <td>LPUSH + LTRIM (top 10)</td>
+        </tr>
+        <tr>
+          <td>ConversationHistory</td>
+          <td>DynamoDB</td>
+          <td><span class="pill amber">90 dias</span></td>
+          <td>DynamoDB</td>
+          <td>DynamoDB Streams → S3</td>
+        </tr>
+        <tr>
+          <td>UserPreferences</td>
+          <td>DynamoDB</td>
+          <td><span class="pill green">permanente</span></td>
+          <td>DynamoDB</td>
+          <td>Merge por inferência</td>
+        </tr>
+        <tr>
+          <td>SessionIndex</td>
+          <td>DynamoDB</td>
+          <td><span class="pill amber">90 dias</span></td>
+          <td>DynamoDB</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Data Lake</td>
+          <td>S3 Parquet</td>
+          <td><span class="pill green">permanente</span></td>
+          <td>S3</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
     </div>
 
-    <!-- PAGINATION -->
-    <div class="pagination">
-      <a href="https://lsasounian.github.io/docs/langchain/03-arquitetura-tres-contas.html">← Arquitetura 3 Contas</a>
-      <span class="current-label">04 / memoria-redis-dynamo</span>
-      <a href="https://lsasounian.github.io/docs/langchain/index.html">Voltar ao índice →</a>
+    <div class="callout red">
+      <strong>Ponto de atenção — SQS como safety net:</strong> o <code>ThreadArchiver</code> deve ser envolvido em uma fila SQS com retry antes do fluxo síncrono em produção. Se o archiver falhar silenciosamente e o Redis expirar, o estado da thread é perdido. Uma fila garante pelo menos 3 tentativas com backoff exponencial.
     </div>
 
-  </main>
+    <div class="tags">
+      <span class="pill">Redis</span>
+      <span class="pill">ElastiCache</span>
+      <span class="pill">DynamoDB</span>
+      <span class="pill">LangGraph</span>
+      <span class="pill">Checkpointer</span>
+      <span class="pill">Short-term Memory</span>
+      <span class="pill">Long-term Memory</span>
+      <span class="pill">UserPreferences</span>
+      <span class="pill">Session Store</span>
+      <span class="pill">Write-through</span>
+      <span class="pill">TTL</span>
+      <span class="pill">S3 Data Lake</span>
+      <span class="pill">DynamoDB Streams</span>
+    </div>
+  </section>
+
+  <div class="doc-footer">
+    <a href="03-arquitetura-tres-contas.html">← Arquitetura 3 Contas</a>
+    <span>04 / memoria-redis-dynamo</span>
+    <a href="index.html">Voltar ao índice →</a>
+  </div>
+
 </div>
+</main>
+
+<script>
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
 
 </body>
 </html>
