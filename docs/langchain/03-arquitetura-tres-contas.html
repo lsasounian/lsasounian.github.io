@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>03 — Arquitetura 3 Contas | Multi-Agent Systems</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:        #080d18;
+  --surface:   #0c1220;
+  --card:      #101828;
+  --border:    #1a2540;
+  --border-hi: #253660;
+  --blue:      #4f8ef7;
+  --blue-dim:  #1e3a6e;
+  --purple:    #8b5cf6;
+  --green:     #10b981;
+  --amber:     #f59e0b;
+  --red:       #ef4444;
+  --cyan:      #22d3ee;
+  --text:      #dce6f5;
+  --muted:     #6b7fa3;
+  --mono:      'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: .25;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow {
+  position: fixed; border-radius: 50%;
+  filter: blur(140px); pointer-events: none; z-index: 0;
+}
+.glow-1 { width: 700px; height: 700px; background: #10b98122; top: -200px; left: -200px; }
+.glow-2 { width: 500px; height: 500px; background: #1e3a6e22; bottom: -200px; right: -100px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: #080d18cc;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex; align-items: center;
+}
+.nav-back {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 0; text-decoration: none;
+  color: var(--muted); font-family: var(--mono); font-size: 12px;
+  border-right: 1px solid var(--border);
+  padding-right: 24px; margin-right: 24px;
+  transition: color .2s;
+}
+.nav-back:hover { color: var(--green); }
+.nav-title { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.nav-title span { color: var(--green); }
+.nav-sections { margin-left: auto; display: flex; }
+.nav-sections a {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); text-decoration: none;
+  padding: 14px 16px;
+  border-left: 1px solid var(--border);
+  transition: color .2s, background .2s;
+}
+.nav-sections a:hover { color: var(--text); background: #ffffff05; }
+
+.wrapper {
+  position: relative; z-index: 1;
+  max-width: 980px; margin: 0 auto;
+  padding: 64px 32px 96px;
+}
+
+.doc-header { margin-bottom: 72px; }
+.doc-num {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  letter-spacing: .15em; text-transform: uppercase;
+  margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+}
+.doc-num::before { content: ''; width: 32px; height: 1px; background: var(--green); }
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700; letter-spacing: -.025em; line-height: 1.15; margin-bottom: 20px;
+}
+h1 em { color: var(--green); font-style: normal; }
+.doc-lead { font-size: 1.05rem; color: var(--muted); max-width: 620px; line-height: 1.75; }
+
+.section { margin-bottom: 80px; }
+.section-label {
+  font-family: var(--mono); font-size: 10px; color: var(--green);
+  letter-spacing: .18em; text-transform: uppercase;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--border-hi), transparent);
+}
+h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.015em; margin-bottom: 24px; }
+h3 { font-size: 1rem; font-weight: 600; margin-bottom: 14px; margin-top: 36px; }
+p { color: var(--muted); margin-bottom: 16px; font-size: .95rem; }
+p strong { color: var(--text); font-weight: 500; }
+
+/* ── ACCOUNT CARDS ── */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 32px 0;
+}
+.account-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.account-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.account-card.supervisora::before { background: var(--blue); }
+.account-card.agentes::before    { background: var(--green); }
+.account-card.bffs::before       { background: var(--amber); }
+
+.account-badge {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .12em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 4px;
+  display: inline-block; margin-bottom: 16px;
+}
+.supervisora .account-badge { color: var(--blue);  background: #4f8ef718; border: 1px solid #4f8ef740; }
+.agentes    .account-badge { color: var(--green); background: #10b98118; border: 1px solid #10b98140; }
+.bffs       .account-badge { color: var(--amber); background: #f59e0b18; border: 1px solid #f59e0b40; }
+
+.account-title { font-weight: 600; font-size: .95rem; margin-bottom: 16px; }
+.account-components { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.account-components li {
+  font-size: .82rem; color: var(--muted);
+  padding-left: 16px; position: relative; line-height: 1.5;
+}
+.account-components li::before {
+  content: '◆'; position: absolute; left: 0;
+  font-size: 7px; top: 5px;
+}
+.supervisora .account-components li::before { color: var(--blue); }
+.agentes    .account-components li::before { color: var(--green); }
+.bffs       .account-components li::before { color: var(--amber); }
+.account-components li strong { color: var(--text); }
+
+/* ── RESPONSIBILITY TABLE ── */
+.resp-table {
+  width: 100%; border-collapse: collapse;
+  margin: 24px 0; font-size: .85rem;
+}
+.resp-table th {
+  text-align: left; padding: 10px 16px;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); border-bottom: 1px solid var(--border);
+  background: #0c1220;
+}
+.resp-table td {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.resp-table tr:last-child td { border-bottom: none; }
+.resp-table tr:hover td { background: #ffffff04; }
+.resp-who {
+  font-family: var(--mono); font-size: .8rem;
+  padding: 3px 8px; border-radius: 4px;
+  white-space: nowrap;
+}
+.who-sup  { color: var(--blue);  background: #4f8ef718; border: 1px solid #4f8ef730; }
+.who-mcp  { color: var(--green); background: #10b98118; border: 1px solid #10b98130; }
+.who-bff  { color: var(--amber); background: #f59e0b18; border: 1px solid #f59e0b30; }
+.who-ecs  { color: var(--purple);background: #8b5cf618; border: 1px solid #8b5cf630; }
+
+/* ── CODE BLOCK ── */
+.code-wrap { margin: 24px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.code-header {
+  background: #0c1220; padding: 10px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.code-lang { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+.code-dots { display: flex; gap: 6px; }
+.code-dots span { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+pre { background: #06090f; padding: 24px; overflow-x: auto; margin: 0; }
+code { font-family: var(--mono); font-size: .82rem; line-height: 1.8; }
+
+.kw  { color: #c792ea; } .fn  { color: #82aaff; } .st  { color: #c3e88d; }
+.cm  { color: #546e7a; font-style: italic; } .nb  { color: #f78c6c; }
+.tp  { color: #ffcb6b; } .op  { color: #89ddff; } .dc  { color: #4f8ef7; }
+
+/* ── CALLOUT ── */
+.callout {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  background: #10b98110;
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px; margin: 24px 0;
+  font-size: .875rem; color: var(--text); line-height: 1.6;
+}
+.callout.blue  { border-left-color: var(--blue);   background: #4f8ef710; }
+.callout.amber { border-left-color: var(--amber);  background: #f59e0b10; }
+.callout.purple{ border-left-color: var(--purple); background: #8b5cf610; font-family: var(--mono); }
+
+/* ── DIAGRAM ── */
+.diagram {
+  background: #06090f; border: 1px solid var(--border);
+  border-radius: 10px; padding: 28px 32px;
+  margin: 24px 0; overflow-x: auto;
+}
+.diagram pre {
+  background: none; padding: 0;
+  font-family: var(--mono); font-size: .79rem;
+  line-height: 1.75; color: #8ba3cc; white-space: pre;
+}
+.diagram pre .hi  { color: var(--blue);   font-weight: 600; }
+.diagram pre .hi2 { color: var(--green);  font-weight: 600; }
+.diagram pre .hi3 { color: var(--amber);  font-weight: 600; }
+.diagram pre .hi4 { color: var(--purple); }
+.diagram pre .dim { color: #3a4e6e; }
+
+/* ── FLOW ── */
+.flow { display: flex; flex-direction: column; gap: 0; margin: 28px 0; position: relative; }
+.flow::before {
+  content: '';
+  position: absolute; left: 19px; top: 20px; bottom: 20px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--green), transparent);
+}
+.flow-step { display: flex; align-items: flex-start; gap: 16px; padding: 14px 0; position: relative; }
+.flow-n {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: #10b98122;
+  border: 1px solid var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  color: var(--green); flex-shrink: 0; z-index: 1;
+}
+.flow-content { padding-top: 6px; }
+.flow-title { font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
+.flow-desc { font-size: .84rem; color: var(--muted); }
+.flow-sub  { font-family: var(--mono); font-size: .77rem; color: var(--muted); margin-top: 4px; }
+
+/* ── CHANGE BANNER ── */
+.change-banner {
+  background: #f59e0b0c;
+  border: 1px solid #f59e0b30;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin: 32px 0;
+}
+.change-banner-title {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--amber); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 16px;
+}
+.change-row {
+  display: grid; grid-template-columns: 1fr 24px 1fr;
+  align-items: center; gap: 12px;
+  margin-bottom: 12px; font-size: .85rem;
+}
+.change-row:last-child { margin-bottom: 0; }
+.change-before { color: var(--muted); padding: 8px 12px; background: #ffffff06; border-radius: 6px; }
+.change-after  { color: var(--text);  padding: 8px 12px; background: #10b98114; border-radius: 6px; border: 1px solid #10b98130; }
+.change-arrow  { color: var(--amber); text-align: center; font-size: 14px; }
+
+/* ── PILLS ── */
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.pill {
+  font-family: var(--mono); font-size: 10px;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--muted); background: #ffffff05;
+}
+.pill.blue   { border-color: var(--blue);   color: var(--blue);   background: #4f8ef712; }
+.pill.green  { border-color: var(--green);  color: var(--green);  background: #10b98112; }
+.pill.amber  { border-color: var(--amber);  color: var(--amber);  background: #f59e0b12; }
+.pill.purple { border-color: var(--purple); color: var(--purple); background: #8b5cf612; }
+
+/* ── FOOTER ── */
+.doc-footer {
+  margin-top: 96px; padding-top: 32px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
+}
+.doc-footer a {
+  font-family: var(--mono); font-size: 12px; color: var(--green);
+  text-decoration: none; display: flex; align-items: center; gap: 8px;
+  transition: gap .2s;
+}
+.doc-footer a:hover { gap: 12px; }
+.doc-footer span { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+@media (max-width: 720px) {
+  .accounts-grid { grid-template-columns: 1fr; }
+  .change-row { grid-template-columns: 1fr; }
+  .change-arrow { display: none; }
+  .nav-sections { display: none; }
+  .wrapper { padding: 40px 20px 72px; }
+}
+</style>
+</head>
+<body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<nav>
+  <a href="index.html" class="nav-back">← índice</a>
+  <span class="nav-title"><span>03</span> / Arquitetura 3 Contas AWS</span>
+  <div class="nav-sections">
+    <a href="#mudanca">Mudança</a>
+    <a href="#contas">Contas</a>
+    <a href="#supervisor">Supervisor</a>
+    <a href="#mcp-agentes">MCP Agentes</a>
+    <a href="#ecs">ECS Agents</a>
+    <a href="#bffs">MCP BFFs</a>
+    <a href="#fluxo">Fluxo</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <header class="doc-header">
+    <div class="doc-num">Tópico 03</div>
+    <h1>Arquitetura AWS<br/><em>Multi-Conta</em> com MCP por Camada</h1>
+    <p class="doc-lead">Conta Supervisora com Redis centralizado. Conta de Agentes com ECS + MCP próprio. Conta de BFFs com actions orquestradas por MCP independente. O Supervisor como único dono do estado.</p>
+  </header>
+
+  <!-- SEÇÃO 1: MUDANÇA -->
+  <section class="section" id="mudanca">
+    <div class="section-label">Seção 01</div>
+    <h2>O que Muda na Nova Arquitetura</h2>
+
+    <p>A constraint fundamental: <strong>Redis fica exclusivamente na conta supervisora</strong>. O MCP sai da conta do supervisor e passa para a conta dos agentes. Isso muda quem é responsável por quê.</p>
+
+    <div class="change-banner">
+      <div class="change-banner-title">⟳ Mudanças estruturais</div>
+      <div class="change-row">
+        <div class="change-before">MCP Central na conta do Supervisor<br/>enriquecia contexto via Redis</div>
+        <div class="change-arrow">→</div>
+        <div class="change-after">MCP na conta dos Agentes<br/>só roteia — não vê o Redis</div>
+      </div>
+      <div class="change-row">
+        <div class="change-before">MCP Central donod o estado cross-agent</div>
+        <div class="change-arrow">→</div>
+        <div class="change-after">Supervisor é o único dono do Redis e do contexto</div>
+      </div>
+      <div class="change-row">
+        <div class="change-before">Actions sem camada própria</div>
+        <div class="change-arrow">→</div>
+        <div class="change-after">Conta de BFFs com MCP próprio para actions</div>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <strong>Consequência imediata:</strong> o Supervisor precisa <strong>serializar o contexto do Redis e injetar no payload</strong> de cada chamada MCP. O MCP de Agentes recebe o payload já enriquecido e só roteia para o ECS correto.
+    </div>
+  </section>
+
+  <!-- SEÇÃO 2: CONTAS -->
+  <section class="section" id="contas">
+    <div class="section-label">Seção 02</div>
+    <h2>As Três Contas AWS</h2>
+
+    <div class="accounts-grid">
+      <div class="account-card supervisora">
+        <div class="account-badge">Conta Supervisora</div>
+        <div class="account-title">Orquestração & Estado</div>
+        <ul class="account-components">
+          <li><strong>LangGraph Supervisor</strong> — orquestração e decisão</li>
+          <li><strong>Redis (ElastiCache)</strong> — checkpoints, working memory, sessão</li>
+          <li><strong>ContextEnricher</strong> — lê Redis, monta payloads</li>
+          <li>VPC Endpoint de saída para Conta Agentes</li>
+        </ul>
+      </div>
+      <div class="account-card agentes">
+        <div class="account-badge">Conta Agentes</div>
+        <div class="account-title">Execução Especializada</div>
+        <ul class="account-components">
+          <li><strong>MCP Agentes</strong> — roteamento stateless por agent</li>
+          <li><strong>ECS Agent Pesquisa</strong> — RAG + lógica de pesquisa</li>
+          <li><strong>ECS Agent Análise</strong> — RAG + análise de dados</li>
+          <li><strong>ECS Agent Relatório</strong> — RAG + geração de docs</li>
+          <li><strong>OpenSearch</strong> — KBs por agente</li>
+          <li>VPC Endpoint de saída para Conta BFFs</li>
+        </ul>
+      </div>
+      <div class="account-card bffs">
+        <div class="account-badge">Conta BFFs</div>
+        <div class="account-title">Actions & Integrações</div>
+        <ul class="account-components">
+          <li><strong>MCP BFFs</strong> — orquestra todas as actions</li>
+          <li><strong>Action CRM</strong> — busca/atualiza clientes</li>
+          <li><strong>Action ERP</strong> — oportunidades e pedidos</li>
+          <li><strong>Action Notificação</strong> — email, SMS, push</li>
+          <li><strong>Action DB</strong> — consultas internas</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Responsabilidades por função</h3>
+
+    <table class="resp-table">
+      <thead>
+        <tr>
+          <th>Responsabilidade</th>
+          <th>Quem executa</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Orquestração, decisão de qual agente invocar</td>
+          <td><span class="resp-who who-sup">Supervisor (LangGraph)</span></td>
+        </tr>
+        <tr>
+          <td>Estado de sessão e working memory</td>
+          <td><span class="resp-who who-sup">Redis (Conta Supervisora)</span></td>
+        </tr>
+        <tr>
+          <td>Enriquecimento de contexto antes de invocar</td>
+          <td><span class="resp-who who-sup">Supervisor (lê Redis, serializa)</span></td>
+        </tr>
+        <tr>
+          <td>Roteamento para ECS Agent correto</td>
+          <td><span class="resp-who who-mcp">MCP Agentes</span></td>
+        </tr>
+        <tr>
+          <td>Execução especializada + RAG</td>
+          <td><span class="resp-who who-ecs">ECS Agents</span></td>
+        </tr>
+        <tr>
+          <td>Execução de actions externas</td>
+          <td><span class="resp-who who-bff">MCP BFFs</span></td>
+        </tr>
+        <tr>
+          <td>Persistência de resultados no Redis</td>
+          <td><span class="resp-who who-sup">Supervisor (após receber resultado)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- TOPOLOGIA -->
+  <section class="section">
+    <div class="section-label">Diagrama Completo</div>
+    <h2>Topologia da Arquitetura</h2>
+
+    <div class="diagram">
+      <pre>
+┌──────────────────────────────────────────────────────────────────────┐
+│                      <span class="hi">CONTA SUPERVISORA</span>                              │
+│                                                                      │
+│   ┌──────────────────┐       ┌───────────────────────────────────┐   │
+│   │  LangGraph App   │ ←───→ │         Redis (ElastiCache)       │   │
+│   │                  │       │                                   │   │
+│   │  AgentState:     │       │  checkpoint:{thread_id}:{id}      │   │
+│   │  - messages      │       │  working:{session_id}             │   │
+│   │  - session_id    │       │  session:user:{user_id}:active    │   │
+│   │  - intent        │       └───────────────────────────────────┘   │
+│   │                  │                                               │
+│   │  ContextEnricher │  lê Redis → monta payload → injeta contexto  │
+│   └────────┬─────────┘                                               │
+│            │ VPC Endpoint (saída)                                    │
+└────────────┼────────────────────────────────────────────────────────┘
+             │  payload enriquecido: {session_id, instrucoes, contexto}
+             ↓
+┌────────────────────────────────────────────────────────────────────────┐
+│                       <span class="hi2">CONTA AGENTES</span>                                    │
+│                                                                        │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │                     MCP Agentes                              │     │
+│   │  recebe payload → roteia para ECS correto → devolve output  │     │
+│   └─────────────────────┬──────────────────────────────────────┘     │
+│              ┌───────────┼────────────────┐                           │
+│              ↓           ↓                ↓                           │
+│        ┌──────────┐ ┌──────────┐  ┌──────────────┐                   │
+│        │ECS Agent │ │ECS Agent │  │ECS Agent     │                   │
+│        │Pesquisa  │ │Análise   │  │Relatório     │                   │
+│        └────┬─────┘ └────┬─────┘  └──────┬───────┘                   │
+│             │            │               │                            │
+│        OpenSearch   OpenSearch      OpenSearch                        │
+│        kb-pesquisa  kb-analise      kb-relatorio                     │
+│              │           │               │                            │
+│              └───────────┴───────────────┘                           │
+│                          │ VPC Endpoint (saída)                       │
+└──────────────────────────┼────────────────────────────────────────────┘
+                           │  chamadas de actions
+                           ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│                        <span class="hi3">CONTA BFFs</span>                                    │
+│                                                                      │
+│   ┌────────────────────────────────────────────────────────────┐     │
+│   │                       MCP BFFs                             │     │
+│   │  expõe todas as actions como tools — qualquer ECS invoca  │     │
+│   └────────┬────────────────────────────────────────────────┘       │
+│            │                                                          │
+│   ┌────────┴───────────────────────────────────────┐                 │
+│   ↓          ↓           ↓              ↓           │                 │
+│ Action     Action      Action         Action        │                 │
+│ CRM        ERP         Notificação    DB            │                 │
+└──────────────────────────────────────────────────────────────────────┘
+      </pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 3: SUPERVISOR -->
+  <section class="section" id="supervisor">
+    <div class="section-label">Seção 03</div>
+    <h2>Conta Supervisora — Implementação</h2>
+
+    <p>O Supervisor acumula a responsabilidade de enriquecimento de contexto que antes era do MCP Central. Antes de invocar qualquer agente, ele lê o Redis e injeta o contexto filtrado no payload.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — conta_supervisora/supervisor.py</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="tp">AgentState</span>(TypedDict):
+    messages:            Annotated[List[BaseMessage], add_messages]
+    session_id:          str
+    user_id:             str
+    intent:              str
+    <span class="cm"># Não carrega dados volumosos — só referências ao que existe no Redis</span>
+    working_memory_keys: List[str]
+
+
+<span class="kw">class</span> <span class="tp">ContextEnricher</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis_client):
+        self.redis = redis_client
+
+    <span class="kw">async def</span> <span class="fn">build_payload</span>(self, session_id: str, agent_name: str, instrucoes: str) -> dict:
+        raw = <span class="kw">await</span> self.redis.<span class="fn">get</span>(<span class="st">f"working:{session_id}"</span>)
+        working_mem = json.<span class="fn">loads</span>(raw) <span class="kw">if</span> raw <span class="kw">else</span> {}
+
+        <span class="cm"># Filtra apenas o contexto relevante para cada agente</span>
+        context_map = {
+            <span class="st">"agent_pesquisa"</span>:  [<span class="st">"queries_anteriores"</span>, <span class="st">"intent"</span>],
+            <span class="st">"agent_analise"</span>:   [<span class="st">"pesquisa_resultado"</span>, <span class="st">"intent"</span>, <span class="st">"dados_coletados"</span>],
+            <span class="st">"agent_relatorio"</span>: [<span class="st">"pesquisa_resultado"</span>, <span class="st">"analise_resultado"</span>, <span class="st">"intent"</span>],
+        }
+        keys = context_map.<span class="fn">get</span>(agent_name, [])
+        contexto = {k: working_mem[k] <span class="kw">for</span> k <span class="kw">in</span> keys <span class="kw">if</span> k <span class="kw">in</span> working_mem}
+
+        <span class="kw">return</span> {<span class="st">"session_id"</span>: session_id, <span class="st">"instrucoes"</span>: instrucoes, <span class="st">"contexto"</span>: contexto}
+
+    <span class="kw">async def</span> <span class="fn">persist_result</span>(self, session_id: str, agent_name: str, resultado: str):
+        <span class="cm"># Supervisor é o único escritor do Redis</span>
+        raw = <span class="kw">await</span> self.redis.<span class="fn">get</span>(<span class="st">f"working:{session_id}"</span>)
+        mem = json.<span class="fn">loads</span>(raw) <span class="kw">if</span> raw <span class="kw">else</span> {}
+        mem[agent_name.<span class="fn">replace</span>(<span class="st">"agent_"</span>, <span class="st">""</span>) + <span class="st">"_resultado"</span>] = resultado
+        <span class="kw">await</span> self.redis.<span class="fn">setex</span>(<span class="st">f"working:{session_id}"</span>, <span class="nb">3600</span>, json.<span class="fn">dumps</span>(mem))
+
+
+<span class="cm"># Tool usada pelo supervisor para invocar agente via MCP Agentes</span>
+<span class="dc">@tool</span>
+<span class="kw">async def</span> <span class="fn">invocar_agent_analise</span>(session_id: str, instrucoes: str) -> str:
+    <span class="st">"""Invoca o agente de análise. Contexto da sessão é injetado automaticamente."""</span>
+    payload = <span class="kw">await</span> enricher.<span class="fn">build_payload</span>(session_id, <span class="st">"agent_analise"</span>, instrucoes)
+
+    <span class="kw">async with</span> httpx.<span class="fn">AsyncClient</span>() <span class="kw">as</span> client:
+        resp = <span class="kw">await</span> client.<span class="fn">post</span>(
+            <span class="st">"https://mcp-agentes.conta-agentes.internal/tools/agent_analise"</span>,
+            json=payload, timeout=<span class="nb">60.0</span>
+        )
+    resultado = resp.<span class="fn">json</span>()[<span class="st">"output"</span>]
+
+    <span class="cm"># Persiste resultado no Redis para uso dos próximos agentes</span>
+    <span class="kw">await</span> enricher.<span class="fn">persist_result</span>(session_id, <span class="st">"agent_analise"</span>, resultado)
+    <span class="kw">return</span> resultado</code></pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 4: MCP AGENTES -->
+  <section class="section" id="mcp-agentes">
+    <div class="section-label">Seção 04</div>
+    <h2>Conta Agentes — MCP Server</h2>
+
+    <p>O MCP de Agentes é <strong>completamente stateless</strong>. Ele não conhece Redis, não conhece LangGraph. Recebe o payload já enriquecido pelo Supervisor e roteia para o ECS correto via HTTP interno.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — conta_agentes/mcp_server.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> mcp.server <span class="kw">import</span> FastMCP
+<span class="kw">import</span> httpx
+
+mcp = <span class="fn">FastMCP</span>(<span class="st">"mcp-agentes"</span>)
+
+ECS_AGENTS = {
+    <span class="st">"agent_pesquisa"</span>:  <span class="st">"http://ecs-pesquisa.interno:8080/invoke"</span>,
+    <span class="st">"agent_analise"</span>:   <span class="st">"http://ecs-analise.interno:8081/invoke"</span>,
+    <span class="st">"agent_relatorio"</span>: <span class="st">"http://ecs-relatorio.interno:8082/invoke"</span>,
+}
+
+<span class="dc">@mcp.tool()</span>
+<span class="kw">async def</span> <span class="fn">agent_pesquisa</span>(session_id: str, instrucoes: str, contexto: dict) -> str:
+    <span class="st">"""Agente especialista em pesquisa. Contexto fornecido pelo Supervisor."""</span>
+    <span class="kw">return await</span> <span class="fn">_invocar_ecs</span>(<span class="st">"agent_pesquisa"</span>, session_id, instrucoes, contexto)
+
+<span class="dc">@mcp.tool()</span>
+<span class="kw">async def</span> <span class="fn">agent_analise</span>(session_id: str, instrucoes: str, contexto: dict) -> str:
+    <span class="st">"""Agente especialista em análise. Recebe pesquisa prévia no contexto."""</span>
+    <span class="kw">return await</span> <span class="fn">_invocar_ecs</span>(<span class="st">"agent_analise"</span>, session_id, instrucoes, contexto)
+
+<span class="dc">@mcp.tool()</span>
+<span class="kw">async def</span> <span class="fn">agent_relatorio</span>(session_id: str, instrucoes: str, contexto: dict) -> str:
+    <span class="st">"""Agente especialista em geração de relatórios."""</span>
+    <span class="kw">return await</span> <span class="fn">_invocar_ecs</span>(<span class="st">"agent_relatorio"</span>, session_id, instrucoes, contexto)
+
+
+<span class="kw">async def</span> <span class="fn">_invocar_ecs</span>(agent: str, session_id: str, instrucoes: str, contexto: dict) -> str:
+    payload = {<span class="st">"session_id"</span>: session_id, <span class="st">"instrucoes"</span>: instrucoes, <span class="st">"contexto"</span>: contexto}
+    <span class="kw">async with</span> httpx.<span class="fn">AsyncClient</span>() <span class="kw">as</span> client:
+        resp = <span class="kw">await</span> client.<span class="fn">post</span>(ECS_AGENTS[agent], json=payload, timeout=<span class="nb">90.0</span>)
+        resp.<span class="fn">raise_for_status</span>()
+        <span class="kw">return</span> resp.<span class="fn">json</span>()[<span class="st">"output"</span>]</code></pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 5: ECS AGENTS -->
+  <section class="section" id="ecs">
+    <div class="section-label">Seção 05</div>
+    <h2>Conta Agentes — ECS Agent com MCP BFFs</h2>
+
+    <p>Cada ECS Agent é um serviço FastAPI independente. Ele recebe o payload enriquecido, faz RAG no seu OpenSearch local e pode invocar o <strong>MCP BFFs para executar actions</strong> — tudo sem saber nada sobre Redis ou LangGraph.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — conta_agentes/ecs/agent_analise/agent.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+<span class="kw">from</span> langchain_mcp_adapters.client <span class="kw">import</span> MultiServerMCPClient
+
+app = <span class="fn">FastAPI</span>()
+
+<span class="cm"># Conecta ao MCP BFFs (Conta BFFs via VPC Endpoint)</span>
+bff_client = <span class="fn">MultiServerMCPClient</span>({
+    <span class="st">"bffs"</span>: {
+        <span class="st">"url"</span>:       <span class="st">"https://mcp-bffs.conta-bffs.internal/mcp"</span>,
+        <span class="st">"transport"</span>: <span class="st">"streamable_http"</span>
+    }
+})
+
+<span class="cm"># Retriever no OpenSearch local da Conta Agentes</span>
+retriever = <span class="fn">criar_retriever_opensearch</span>(
+    url=<span class="st">"https://opensearch.interno.conta-agentes"</span>,
+    index=<span class="st">"kb-analise"</span>
+)
+
+<span class="dc">@app.post</span>(<span class="st">"/invoke"</span>)
+<span class="kw">async def</span> <span class="fn">invocar</span>(payload: dict):
+    instrucoes = payload[<span class="st">"instrucoes"</span>]
+    contexto   = payload.<span class="fn">get</span>(<span class="st">"contexto"</span>, {})
+    session_id = payload[<span class="st">"session_id"</span>]
+
+    <span class="cm"># 1. RAG no KB local</span>
+    docs = retriever.<span class="fn">get_relevant_documents</span>(instrucoes)
+
+    <span class="cm"># 2. Carrega tools do MCP BFFs disponíveis para este agente</span>
+    bff_tools = <span class="kw">await</span> bff_client.<span class="fn">get_tools</span>()
+
+    <span class="cm"># 3. Executa ReAct agent com tools de BFF + contexto injetado</span>
+    agent = <span class="fn">criar_react_agent</span>(
+        llm=llm,
+        tools=bff_tools,
+        prompt=<span class="fn">montar_prompt</span>(instrucoes, docs, contexto)
+    )
+    resultado = <span class="kw">await</span> agent.<span class="fn">ainvoke</span>({<span class="st">"messages"</span>: [<span class="fn">HumanMessage</span>(instrucoes)]})
+
+    <span class="kw">return</span> {<span class="st">"output"</span>: resultado[<span class="st">"messages"</span>][<span class="op">-</span><span class="nb">1</span>].content}</code></pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 6: BFFs -->
+  <section class="section" id="bffs">
+    <div class="section-label">Seção 06</div>
+    <h2>Conta BFFs — MCP de Actions</h2>
+
+    <p>O MCP BFFs é <strong>totalmente independente</strong> do fluxo de sessão. Expõe actions como tools MCP. Qualquer ECS Agent de qualquer conta pode invocá-lo. Não conhece Redis, não conhece session_id — só executa actions e retorna resultados.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — conta_bffs/mcp_server.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> mcp.server <span class="kw">import</span> FastMCP
+
+mcp = <span class="fn">FastMCP</span>(<span class="st">"mcp-bffs"</span>)
+
+<span class="dc">@mcp.tool()</span>
+<span class="kw">async def</span> <span class="fn">buscar_cliente_crm</span>(cliente_id: str) -> dict:
+    <span class="st">"""Busca dados completos de um cliente no CRM."""</span>
+    <span class="kw">return await</span> crm_client.<span class="fn">get_cliente</span>(cliente_id)
+
+<span class="dc">@mcp.tool()</span>
+<span class="kw">async def</span> <span class="fn">atualizar_oportunidade_erp</span>(oportunidade_id: str, dados: dict) -> dict:
+    <span class="st">"""Atualiza uma oportunidade no ERP."""</span>
+    <span class="kw">return await</span> erp_client.<span class="fn">update_oportunidade</span>(oportunidade_id, dados)
+
+<span class="dc">@mcp.tool()</span>
+<span class="kw">async def</span> <span class="fn">enviar_notificacao</span>(destinatario: str, canal: str, mensagem: str) -> dict:
+    <span class="st">"""Envia notificação pelo canal especificado (email | sms | push)."""</span>
+    <span class="kw">return await</span> notification_service.<span class="fn">send</span>(destinatario, canal, mensagem)
+
+<span class="dc">@mcp.tool()</span>
+<span class="kw">async def</span> <span class="fn">consultar_base_dados</span>(query_sql: str, database: str) -> list:
+    <span class="st">"""Executa consulta somente-leitura em base de dados interna."""</span>
+    <span class="kw">return await</span> db_client.<span class="fn">query</span>(database, query_sql)</code></pre>
+    </div>
+
+    <div class="callout blue">
+      <strong>Design limpo:</strong> os ECS Agents carregam as tools do MCP BFFs via <code>get_tools()</code> e as usam como qualquer tool LangChain. O agente não sabe se está chamando uma API REST, um banco ou um serviço externo — o MCP BFFs abstrai tudo isso.
+    </div>
+  </section>
+
+  <!-- SEÇÃO 7: FLUXO -->
+  <section class="section" id="fluxo">
+    <div class="section-label">Seção 07</div>
+    <h2>Fluxo Ponta a Ponta</h2>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-n">1</div>
+        <div class="flow-content">
+          <div class="flow-title">Usuário envia mensagem</div>
+          <div class="flow-desc">LangGraph recebe, roda nó detect_intent, classifica intenção</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">2</div>
+        <div class="flow-content">
+          <div class="flow-title">Supervisor lê Redis e monta payload</div>
+          <div class="flow-desc">ContextEnricher busca <code>working:{session_id}</code>, filtra contexto relevante para o agente alvo</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">3</div>
+        <div class="flow-content">
+          <div class="flow-title">Supervisor emite tool_call → MCP Agentes (Conta Agentes)</div>
+          <div class="flow-sub">payload: {session_id, instrucoes, contexto filtrado}</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">4</div>
+        <div class="flow-content">
+          <div class="flow-title">MCP Agentes roteia → ECS Agent correto</div>
+          <div class="flow-desc">HTTP interno para o container ECS. Repassa payload integralmente.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">5</div>
+        <div class="flow-content">
+          <div class="flow-title">ECS Agent: RAG + lógica + BFF actions</div>
+          <div class="flow-desc">Faz retrieval no OpenSearch local. Se precisar de action → invoca MCP BFFs (Conta BFFs via VPC Endpoint)</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">6</div>
+        <div class="flow-content">
+          <div class="flow-title">MCP BFFs executa action</div>
+          <div class="flow-desc">CRM, ERP, notificação, DB — retorna resultado para o ECS Agent</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">7</div>
+        <div class="flow-content">
+          <div class="flow-title">ECS Agent retorna resultado</div>
+          <div class="flow-desc">Output sobe: ECS → MCP Agentes → Supervisor (como ToolMessage no state)</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">8</div>
+        <div class="flow-content">
+          <div class="flow-title">Supervisor persiste no Redis</div>
+          <div class="flow-desc">ContextEnricher salva resultado em <code>working:{session_id}</code> para uso nos próximos agentes</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">9</div>
+        <div class="flow-content">
+          <div class="flow-title">Supervisor decide próximo passo</div>
+          <div class="flow-desc">Loop até não haver mais tool_calls → END. Checkpointer salva estado final no Redis.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>O ponto crítico da nova arquitetura</h3>
+
+    <div class="callout">
+      <strong>Antes:</strong> Supervisor → MCP Central (enriquece + persiste) → Agentes<br/>
+      <strong>Agora:</strong> Supervisor (enriquece + persiste) → MCP Agentes (só roteia) → Agentes
+      <br/><br/>
+      Isso é saudável — o Supervisor tem o Redis, faz sentido ele ser o <strong>único dono do contexto</strong>. O MCP de Agentes fica limpo fazendo só roteamento. O MCP de BFFs fica independente, podendo ser chamado por qualquer agente sem acoplar ao fluxo de sessão.
+    </div>
+
+    <div class="tags">
+      <span class="pill blue">LangGraph Supervisor</span>
+      <span class="pill blue">Redis ElastiCache</span>
+      <span class="pill blue">ContextEnricher</span>
+      <span class="pill green">MCP Agentes</span>
+      <span class="pill green">ECS Fargate</span>
+      <span class="pill green">OpenSearch</span>
+      <span class="pill amber">MCP BFFs</span>
+      <span class="pill amber">Actions</span>
+      <span class="pill purple">VPC Endpoint</span>
+    </div>
+  </section>
+
+  <div class="doc-footer">
+    <a href="02-memoria-distribuida.html">← Camadas de Memória</a>
+    <span>03 / arquitetura-tres-contas</span>
+    <a href="index.html">Voltar ao índice →</a>
+  </div>
+
+</div>
+</body>
+</html>

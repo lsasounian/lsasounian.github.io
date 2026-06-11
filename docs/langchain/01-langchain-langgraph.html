@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>01 — LangChain vs LangGraph | Multi-Agent Systems</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:        #080d18;
+  --surface:   #0c1220;
+  --card:      #101828;
+  --border:    #1a2540;
+  --border-hi: #253660;
+  --blue:      #4f8ef7;
+  --blue-dim:  #1e3a6e;
+  --purple:    #8b5cf6;
+  --green:     #10b981;
+  --amber:     #f59e0b;
+  --red:       #ef4444;
+  --cyan:      #22d3ee;
+  --text:      #dce6f5;
+  --muted:     #6b7fa3;
+  --mono:      'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: .25;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(140px);
+  pointer-events: none;
+  z-index: 0;
+}
+.glow-1 { width: 700px; height: 700px; background: #1e3a6e33; top: -300px; left: -200px; }
+.glow-2 { width: 500px; height: 500px; background: #1e3a6e22; bottom: -200px; right: -100px; }
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: #080d18cc;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex; align-items: center; gap: 0;
+}
+.nav-back {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 0;
+  text-decoration: none;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  border-right: 1px solid var(--border);
+  padding-right: 24px;
+  margin-right: 24px;
+  transition: color .2s;
+}
+.nav-back:hover { color: var(--blue); }
+.nav-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.nav-title span { color: var(--blue); }
+.nav-sections {
+  margin-left: auto;
+  display: flex; gap: 0;
+}
+.nav-sections a {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 14px 16px;
+  border-left: 1px solid var(--border);
+  transition: color .2s, background .2s;
+}
+.nav-sections a:hover { color: var(--text); background: #ffffff05; }
+
+/* ── LAYOUT ── */
+.wrapper {
+  position: relative; z-index: 1;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 64px 32px 96px;
+}
+
+/* ── HEADER ── */
+.doc-header { margin-bottom: 72px; }
+.doc-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.doc-num::before {
+  content: '';
+  width: 32px; height: 1px;
+  background: var(--blue);
+}
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -.025em;
+  line-height: 1.15;
+  margin-bottom: 20px;
+}
+h1 em { color: var(--blue); font-style: normal; }
+.doc-lead {
+  font-size: 1.05rem;
+  color: var(--muted);
+  max-width: 620px;
+  line-height: 1.75;
+}
+
+/* ── SECTION ── */
+.section { margin-bottom: 80px; }
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--blue);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--border-hi), transparent);
+}
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -.015em;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 14px;
+  margin-top: 36px;
+}
+
+p { color: var(--muted); margin-bottom: 16px; font-size: .95rem; }
+p strong { color: var(--text); font-weight: 500; }
+
+/* ── COMPARISON TABLE ── */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 32px 0;
+}
+.compare-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+}
+.compare-card.blue { border-top: 2px solid var(--blue); }
+.compare-card.purple { border-top: 2px solid var(--purple); }
+.compare-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.compare-card.blue .compare-label { color: var(--blue); }
+.compare-card.purple .compare-label { color: var(--purple); }
+.compare-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; }
+.compare-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.compare-list li {
+  font-size: .875rem;
+  color: var(--muted);
+  padding-left: 18px;
+  position: relative;
+  line-height: 1.5;
+}
+.compare-list li::before {
+  content: '▸';
+  position: absolute; left: 0;
+  font-size: 10px;
+  top: 3px;
+}
+.compare-card.blue .compare-list li::before { color: var(--blue); }
+.compare-card.purple .compare-list li::before { color: var(--purple); }
+
+/* ── CALLOUT ── */
+.callout {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blue);
+  background: #4f8ef710;
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 24px 0;
+  font-family: var(--mono);
+  font-size: .875rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+.callout.green { border-left-color: var(--green); background: #10b98110; }
+.callout.amber { border-left-color: var(--amber); background: #f59e0b10; }
+.callout.purple { border-left-color: var(--purple); background: #8b5cf610; }
+
+/* ── CODE BLOCK ── */
+.code-wrap {
+  margin: 24px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.code-header {
+  background: #0c1220;
+  padding: 10px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.code-lang {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.code-dots { display: flex; gap: 6px; }
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.dot-r { background: #ff5f57; }
+.dot-y { background: #febc2e; }
+.dot-g { background: #28c840; }
+pre {
+  background: #06090f;
+  padding: 24px;
+  overflow-x: auto;
+  margin: 0;
+}
+code {
+  font-family: var(--mono);
+  font-size: .82rem;
+  line-height: 1.8;
+}
+
+/* Syntax tokens */
+.kw  { color: #c792ea; }  /* keyword */
+.fn  { color: #82aaff; }  /* function */
+.st  { color: #c3e88d; }  /* string */
+.cm  { color: #546e7a; font-style: italic; }  /* comment */
+.nb  { color: #f78c6c; }  /* number/built-in */
+.tp  { color: #ffcb6b; }  /* type */
+.op  { color: #89ddff; }  /* operator/punctuation */
+.dc  { color: #4f8ef7; }  /* decorator */
+
+/* ── DIAGRAM BOX ── */
+.diagram {
+  background: #06090f;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px 32px;
+  margin: 24px 0;
+  overflow-x: auto;
+}
+.diagram pre {
+  background: none;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: .8rem;
+  line-height: 1.7;
+  color: #8ba3cc;
+  white-space: pre;
+}
+.diagram pre .hi { color: var(--blue); font-weight: 600; }
+.diagram pre .hi2 { color: var(--green); }
+.diagram pre .hi3 { color: var(--amber); }
+.diagram pre .hi4 { color: var(--purple); }
+
+/* ── FLOW STEPS ── */
+.flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 28px 0;
+  position: relative;
+}
+.flow::before {
+  content: '';
+  position: absolute;
+  left: 19px; top: 20px; bottom: 20px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--blue-dim), transparent);
+}
+.flow-step {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px 0;
+  position: relative;
+}
+.flow-n {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--blue-dim);
+  border: 1px solid var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  flex-shrink: 0;
+  z-index: 1;
+}
+.flow-content { padding-top: 6px; }
+.flow-title { font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
+.flow-desc { font-size: .85rem; color: var(--muted); }
+
+/* ── PILL TAGS ── */
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: #ffffff05;
+}
+.pill.blue { border-color: var(--blue); color: var(--blue); background: #4f8ef712; }
+.pill.green { border-color: var(--green); color: var(--green); background: #10b98112; }
+.pill.purple { border-color: var(--purple); color: var(--purple); background: #8b5cf612; }
+
+/* ── FOOTER ── */
+.doc-footer {
+  margin-top: 96px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
+}
+.doc-footer a {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--blue);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 8px;
+  transition: gap .2s;
+}
+.doc-footer a:hover { gap: 12px; }
+.doc-footer span { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+@media (max-width: 680px) {
+  .compare { grid-template-columns: 1fr; }
+  .nav-sections { display: none; }
+  .wrapper { padding: 40px 20px 72px; }
+}
+</style>
+</head>
+<body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<nav>
+  <a href="index.html" class="nav-back">← índice</a>
+  <span class="nav-title"><span>01</span> / LangChain vs LangGraph</span>
+  <div class="nav-sections">
+    <a href="#divisao">Divisão</a>
+    <a href="#grafos">Grafos</a>
+    <a href="#supervisor">Supervisor</a>
+    <a href="#mcp">Agent-as-a-Tool</a>
+    <a href="#intencoes">Intenções</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <header class="doc-header">
+    <div class="doc-num">Tópico 01</div>
+    <h1>LangChain vs <em>LangGraph</em><br/>Arquitetura Multi-Agentes</h1>
+    <p class="doc-lead">Entenda a divisão de responsabilidades, como os grafos de estado funcionam, o padrão Supervisor/Especialista e como invocar agentes via MCP sem A2A.</p>
+  </header>
+
+  <!-- SEÇÃO 1 -->
+  <section class="section" id="divisao">
+    <div class="section-label">Seção 01</div>
+    <h2>A Divisão de Responsabilidades</h2>
+
+    <p>LangChain e LangGraph não são concorrentes — são camadas complementares com responsabilidades distintas. A confusão surge porque ambos fazem parte do mesmo ecossistema e podem ser usados juntos de formas não óbvias.</p>
+
+    <div class="callout">
+      LangChain = <strong>o que os agentes sabem fazer</strong> &nbsp;|&nbsp; LangGraph = <strong>como, quando e em que ordem eles fazem</strong>
+    </div>
+
+    <div class="compare">
+      <div class="compare-card blue">
+        <div class="compare-label">LangChain</div>
+        <div class="compare-title">A caixa de ferramentas</div>
+        <ul class="compare-list">
+          <li><strong>LLMs / Chat Models</strong> — abstrações sobre OpenAI, Anthropic, Bedrock</li>
+          <li><strong>Prompts</strong> — ChatPromptTemplate, MessagesPlaceholder</li>
+          <li><strong>Tools</strong> — @tool, StructuredTool, ToolNode</li>
+          <li><strong>Memory</strong> — ConversationBufferMemory, checkpointers</li>
+          <li><strong>Retrievers</strong> — integração com vector stores para RAG</li>
+          <li><strong>Chains</strong> — pipelines lineares com | (LCEL)</li>
+        </ul>
+      </div>
+      <div class="compare-card purple">
+        <div class="compare-label">LangGraph</div>
+        <div class="compare-title">O motor de orquestração</div>
+        <ul class="compare-list">
+          <li><strong>StateGraph</strong> — grafo de estado tipado com TypedDict</li>
+          <li><strong>Nós</strong> — funções que lêem e escrevem no estado</li>
+          <li><strong>Arestas condicionais</strong> — roteamento dinâmico decidido pelo LLM</li>
+          <li><strong>Checkpointer</strong> — persistência de estado entre execuções</li>
+          <li><strong>Interrupt</strong> — human-in-the-loop nativo</li>
+          <li><strong>Subgrafos</strong> — composição de fluxos complexos</li>
+        </ul>
+      </div>
+    </div>
+
+    <p>LangChain sozinho resolve fluxos <strong>lineares e sem estado</strong>. Quando você precisa de loops, decisões condicionais, estado persistente entre etapas e múltiplos agentes colaborando — aí entra o LangGraph.</p>
+  </section>
+
+  <!-- SEÇÃO 2 -->
+  <section class="section" id="grafos">
+    <div class="section-label">Seção 02</div>
+    <h2>Grafos: Como Funcionam de Verdade</h2>
+
+    <p>Um grafo LangGraph <strong>não é um fluxograma de caixas</strong>. É uma <strong>máquina de estados</strong> onde cada transição pode ser determinística ou decidida pelo LLM em tempo de execução.</p>
+
+    <div class="diagram">
+      <pre>
+  <span class="hi">Estado (TypedDict)</span>
+       ↓
+  <span class="hi2">Nó</span> lê o estado → processa → escreve de volta no estado
+       ↓
+  <span class="hi3">Aresta</span> decide qual nó vem a seguir  (fixo ou condicional)
+       ↓
+  Repete até chegar em <span class="hi4">END</span>
+      </pre>
+    </div>
+
+    <h3>Definindo o Estado — o contrato compartilhado</h3>
+    <p>O Estado é o <strong>TypedDict compartilhado</strong> entre todos os nós. A chave do design é o uso de <strong>reducers</strong> via Annotated — eles definem <em>como</em> o estado é atualizado quando múltiplos nós escrevem na mesma chave.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — agent_state.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> typing <span class="kw">import</span> TypedDict, Annotated, List
+<span class="kw">from</span> langgraph.graph <span class="kw">import</span> add_messages
+<span class="kw">from</span> langchain_core.messages <span class="kw">import</span> BaseMessage
+
+<span class="kw">class</span> <span class="tp">AgentState</span>(TypedDict):
+    <span class="cm"># Annotated + reducer: define COMO o campo é atualizado</span>
+    <span class="cm"># add_messages faz append em vez de sobrescrever</span>
+    messages:      Annotated[List[BaseMessage], add_messages]
+
+    intent:        str     <span class="cm"># intenção detectada pelo nó de classificação</span>
+    current_agent: str     <span class="cm"># agente ativo no momento</span>
+    session_id:    str     <span class="cm"># id de sessão (passa para tools MCP)</span>
+    context:       dict    <span class="cm"># dados acumulados na sessão</span>
+    final_answer:  str     <span class="cm"># resposta final para o usuário</span></code></pre>
+    </div>
+
+    <div class="callout amber">
+      <strong>Atenção:</strong> sem reducer, o último valor escrito sobrescreve tudo. O <code>add_messages</code> acumula mensagens sem perder histórico. Para outros campos que precisam acumular, defina seu próprio reducer.
+    </div>
+
+    <h3>Tipos de Arestas</h3>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — edges</span>
+      </div>
+      <pre><code><span class="cm"># Aresta fixa — sempre vai para o mesmo nó</span>
+graph.<span class="fn">add_edge</span>(<span class="st">"node_a"</span>, <span class="st">"node_b"</span>)
+
+<span class="cm"># Aresta condicional — função decide o próximo nó em runtime</span>
+graph.<span class="fn">add_conditional_edges</span>(
+    <span class="st">"supervisor"</span>,
+    route_decision,         <span class="cm"># retorna nome do próximo nó</span>
+    {
+        <span class="st">"agent_pesquisa"</span>: <span class="st">"agent_pesquisa"</span>,
+        <span class="st">"agent_dados"</span>:    <span class="st">"agent_dados"</span>,
+        <span class="st">"FINISH"</span>:         END
+    }
+)</code></pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 3 -->
+  <section class="section" id="supervisor">
+    <div class="section-label">Seção 03</div>
+    <h2>Padrão Supervisor + Agentes Especialistas</h2>
+
+    <div class="diagram">
+      <pre>
+         ┌─────────────────────────────────────────────────┐
+         │                 <span class="hi">SUPERVISOR</span>                    │
+         │  - Detecta intenção                             │
+         │  - Decide qual agente invocar via tool_calls    │
+         │  - Agrega respostas no estado                   │
+         │  - Decide quando terminar (END)                 │
+         └────────┬──────────────┬──────────────┬──────────┘
+                  │              │              │
+          ┌───────▼───┐  ┌───────▼───┐  ┌──────▼──────┐
+          │  <span class="hi2">Agente</span>   │  │  <span class="hi2">Agente</span>   │  │  <span class="hi2">Agente</span>   │
+          │  Pesquisa │  │  Análise  │  │  Relatório  │
+          └───────────┘  └───────────┘  └─────────────┘
+      </pre>
+    </div>
+
+    <p>O Supervisor é um <strong>nó LLM</strong> com prompt que instrui o modelo a escolher qual agente invocar. Ele não executa tarefas — apenas decide e delega.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — supervisor_node.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="kw">from</span> langchain_anthropic <span class="kw">import</span> ChatAnthropic
+
+supervisor_prompt = ChatPromptTemplate.<span class="fn">from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"""Você é o supervisor de agentes.
+    Com base na conversa, decida qual agente especialista invocar.
+
+    Agentes disponíveis:
+    - agent_pesquisa  : busca e coleta informações
+    - agent_analise   : analisa dados e identifica padrões
+    - agent_relatorio : formata e gera relatórios
+    - FINISH          : quando a tarefa estiver completa
+
+    Responda chamando a tool do agente correto."""</span>),
+    MessagesPlaceholder(variable_name=<span class="st">"messages"</span>),
+])
+
+llm = ChatAnthropic(model=<span class="st">"claude-sonnet-4-20250514"</span>)
+
+<span class="kw">def</span> <span class="fn">supervisor_node</span>(state: <span class="tp">AgentState</span>):
+    mensagens = <span class="fn">trim_messages</span>(
+        state[<span class="st">"messages"</span>],
+        strategy=<span class="st">"last"</span>,
+        token_counter=llm,
+        max_tokens=<span class="nb">8000</span>,
+        start_on=<span class="st">"human"</span>,
+        include_system=<span class="nb">True</span>,
+    )
+    response = (supervisor_prompt | llm.<span class="fn">bind_tools</span>(tools)).<span class="fn">invoke</span>(mensagens)
+    <span class="kw">return</span> {<span class="st">"messages"</span>: [response]}</code></pre>
+    </div>
+
+    <h3>Loop Supervisor ↔ ToolNode</h3>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — graph_definition.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> langgraph.prebuilt <span class="kw">import</span> ToolNode
+
+<span class="kw">def</span> <span class="fn">should_continue</span>(state: <span class="tp">AgentState</span>) -> str:
+    last = state[<span class="st">"messages"</span>][<span class="op">-</span><span class="nb">1</span>]
+    <span class="cm"># Se o LLM chamou alguma tool → vai executar</span>
+    <span class="kw">if</span> last.tool_calls:
+        <span class="kw">return</span> <span class="st">"tools"</span>
+    <span class="cm"># Nenhum tool_call → supervisor decidiu terminar</span>
+    <span class="kw">return</span> END
+
+tool_node = <span class="fn">ToolNode</span>(tools)  <span class="cm"># executa qualquer tool chamada pelo LLM</span>
+
+graph = <span class="fn">StateGraph</span>(<span class="tp">AgentState</span>)
+graph.<span class="fn">add_node</span>(<span class="st">"supervisor"</span>, supervisor_node)
+graph.<span class="fn">add_node</span>(<span class="st">"tools"</span>,      tool_node)
+
+graph.<span class="fn">set_entry_point</span>(<span class="st">"supervisor"</span>)
+graph.<span class="fn">add_conditional_edges</span>(
+    <span class="st">"supervisor"</span>, should_continue,
+    {<span class="st">"tools"</span>: <span class="st">"tools"</span>, END: END}
+)
+<span class="cm"># Após executar a tool, volta pro supervisor decidir o próximo passo</span>
+graph.<span class="fn">add_edge</span>(<span class="st">"tools"</span>, <span class="st">"supervisor"</span>)
+
+app = graph.<span class="fn">compile</span>(checkpointer=checkpointer)</code></pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 4 -->
+  <section class="section" id="mcp">
+    <div class="section-label">Seção 04</div>
+    <h2>Agent-as-a-Tool via MCP</h2>
+
+    <p>Sem A2A, cada agente especialista é exposto como uma <strong>tool MCP</strong> e invocado pelo supervisor via <code>tool_calls</code>. Para o LangGraph, é indiferente se a tool é uma função local ou um agente completo rodando em outro servidor — a interface é a mesma.</p>
+
+    <div class="diagram">
+      <pre>
+  <span class="hi">Supervisor</span> (LangGraph local)
+       │
+       ├── tool: <span class="hi2">mcp_agent_pesquisa()</span>   →  MCP Server → ECS Agent Pesquisa
+       ├── tool: <span class="hi2">mcp_agent_analise()</span>    →  MCP Server → ECS Agent Análise
+       └── tool: <span class="hi2">mcp_agent_relatorio()</span>  →  MCP Server → ECS Agent Relatório
+      </pre>
+    </div>
+
+    <h3>Carregando tools do MCP</h3>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — mcp_tools.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> langchain_mcp_adapters.client <span class="kw">import</span> MultiServerMCPClient
+
+client = <span class="fn">MultiServerMCPClient</span>({
+    <span class="st">"agente_pesquisa"</span>: {
+        <span class="st">"url"</span>:       <span class="st">"https://mcp-agentes.interno/mcp"</span>,
+        <span class="st">"transport"</span>: <span class="st">"streamable_http"</span>
+    }
+})
+
+<span class="cm"># Cada tool MCP vira um objeto Tool do LangChain</span>
+<span class="cm"># O supervisor as usa exatamente como qualquer outra tool</span>
+tools = <span class="kw">await</span> client.<span class="fn">get_tools</span>()</code></pre>
+    </div>
+
+    <h3>Fluxo de execução com MCP</h3>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-n">1</div>
+        <div class="flow-content">
+          <div class="flow-title">Usuário envia mensagem</div>
+          <div class="flow-desc">"Pesquise sobre X e gere um relatório"</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">2</div>
+        <div class="flow-content">
+          <div class="flow-title">Supervisor analisa</div>
+          <div class="flow-desc">LLM decide emitir tool_call para mcp_agent_pesquisa</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">3</div>
+        <div class="flow-content">
+          <div class="flow-title">ToolNode invoca o MCP Server de pesquisa</div>
+          <div class="flow-desc">MCP Server roda o agente interno completo e retorna resultado como string/JSON</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">4</div>
+        <div class="flow-content">
+          <div class="flow-title">Resultado entra no estado</div>
+          <div class="flow-desc">Adicionado como ToolMessage em state["messages"] via add_messages reducer</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">5</div>
+        <div class="flow-content">
+          <div class="flow-title">Supervisor decide o próximo passo</div>
+          <div class="flow-desc">Com o contexto da pesquisa, chama mcp_agent_relatorio</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">6</div>
+        <div class="flow-content">
+          <div class="flow-title">Nenhum tool_call → END</div>
+          <div class="flow-desc">Supervisor retorna resposta final. Grafo termina.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 5 -->
+  <section class="section" id="intencoes">
+    <div class="section-label">Seção 05</div>
+    <h2>Intenções e Fluxos de Definição dos Grafos</h2>
+
+    <p>Em vez de deixar o supervisor detectar intenção implicitamente, o padrão recomendado é um <strong>nó dedicado de classificação</strong> como primeiro passo do grafo. Isso torna o roteamento previsível e auditável.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — intent_node.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> enum <span class="kw">import</span> Enum
+
+<span class="kw">class</span> <span class="tp">Intent</span>(str, Enum):
+    PESQUISA_SIMPLES = <span class="st">"pesquisa_simples"</span>
+    ANALISE_DADOS    = <span class="st">"analise_dados"</span>
+    RELATORIO        = <span class="st">"relatorio"</span>
+    CONVERSA         = <span class="st">"conversa"</span>
+    DESCONHECIDO     = <span class="st">"desconhecido"</span>
+
+intent_prompt = ChatPromptTemplate.<span class="fn">from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"""Classifique a intenção em UMA categoria:
+    - pesquisa_simples : quer buscar informações
+    - analise_dados    : quer analisar ou comparar dados
+    - relatorio        : quer um documento formatado
+    - conversa         : conversa casual, sem tarefa
+    - desconhecido     : não foi possível classificar
+
+    Responda APENAS com o nome da categoria."""</span>),
+    MessagesPlaceholder(<span class="st">"messages"</span>)
+])
+
+<span class="kw">def</span> <span class="fn">intent_node</span>(state: <span class="tp">AgentState</span>) -> dict:
+    response = (intent_prompt | llm).<span class="fn">invoke</span>(state)
+    <span class="kw">return</span> {<span class="st">"intent"</span>: response.content.<span class="fn">strip</span>()}
+
+<span class="kw">def</span> <span class="fn">route_by_intent</span>(state: <span class="tp">AgentState</span>) -> str:
+    routing_map = {
+        Intent.PESQUISA_SIMPLES: <span class="st">"supervisor"</span>,
+        Intent.ANALISE_DADOS:    <span class="st">"supervisor"</span>,
+        Intent.RELATORIO:        <span class="st">"supervisor"</span>,
+        Intent.CONVERSA:         <span class="st">"chat_simples"</span>,
+        Intent.DESCONHECIDO:     <span class="st">"clarification"</span>,
+    }
+    <span class="kw">return</span> routing_map.<span class="fn">get</span>(state[<span class="st">"intent"</span>], <span class="st">"clarification"</span>)</code></pre>
+    </div>
+
+    <h3>Grafo completo com intenções</h3>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — full_graph.py</span>
+      </div>
+      <pre><code>graph = <span class="fn">StateGraph</span>(<span class="tp">AgentState</span>)
+
+graph.<span class="fn">add_node</span>(<span class="st">"detect_intent"</span>, intent_node)
+graph.<span class="fn">add_node</span>(<span class="st">"supervisor"</span>,    supervisor_node)
+graph.<span class="fn">add_node</span>(<span class="st">"tools"</span>,         tool_node)
+graph.<span class="fn">add_node</span>(<span class="st">"chat_simples"</span>,  chat_node)
+graph.<span class="fn">add_node</span>(<span class="st">"clarification"</span>, clarification_node)
+
+<span class="cm"># Entrada sempre pelo detector de intenção</span>
+graph.<span class="fn">set_entry_point</span>(<span class="st">"detect_intent"</span>)
+
+<span class="cm"># Roteamento por intenção</span>
+graph.<span class="fn">add_conditional_edges</span>(<span class="st">"detect_intent"</span>, route_by_intent, {
+    <span class="st">"supervisor"</span>:   <span class="st">"supervisor"</span>,
+    <span class="st">"chat_simples"</span>: <span class="st">"chat_simples"</span>,
+    <span class="st">"clarification"</span>: <span class="st">"clarification"</span>,
+})
+
+<span class="cm"># Loop supervisor ↔ tools</span>
+graph.<span class="fn">add_conditional_edges</span>(
+    <span class="st">"supervisor"</span>, should_continue,
+    {<span class="st">"tools"</span>: <span class="st">"tools"</span>, END: END}
+)
+graph.<span class="fn">add_edge</span>(<span class="st">"tools"</span>, <span class="st">"supervisor"</span>)
+
+<span class="cm"># Terminações diretas</span>
+graph.<span class="fn">add_edge</span>(<span class="st">"chat_simples"</span>,  END)
+graph.<span class="fn">add_edge</span>(<span class="st">"clarification"</span>, END)
+
+app = graph.<span class="fn">compile</span>(checkpointer=<span class="fn">MemorySaver</span>())</code></pre>
+    </div>
+
+    <div class="callout green">
+      <strong>Padrão recomendado:</strong> sempre inicie o grafo com um nó de classificação de intenção. Isso separa "entender o que o usuário quer" de "executar o que o usuário quer" — dois problemas fundamentalmente diferentes que merecem nós distintos.
+    </div>
+
+    <div class="tags">
+      <span class="pill blue">StateGraph</span>
+      <span class="pill blue">TypedDict</span>
+      <span class="pill blue">add_messages</span>
+      <span class="pill blue">ToolNode</span>
+      <span class="pill green">MCP Tool</span>
+      <span class="pill green">Agent-as-a-Tool</span>
+      <span class="pill purple">Intent Classification</span>
+      <span class="pill purple">Conditional Edges</span>
+    </div>
+  </section>
+
+  <div class="doc-footer">
+    <a href="index.html">← Voltar ao índice</a>
+    <span>01 / langchain-langgraph</span>
+    <a href="02-memoria-distribuida.html">Próximo: Camadas de Memória →</a>
+  </div>
+
+</div>
+</body>
+</html>

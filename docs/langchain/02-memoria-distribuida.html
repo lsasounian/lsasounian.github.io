@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>02 — Camadas de Memória | Multi-Agent Systems</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:        #080d18;
+  --surface:   #0c1220;
+  --card:      #101828;
+  --border:    #1a2540;
+  --border-hi: #253660;
+  --blue:      #4f8ef7;
+  --blue-dim:  #1e3a6e;
+  --purple:    #8b5cf6;
+  --green:     #10b981;
+  --amber:     #f59e0b;
+  --red:       #ef4444;
+  --cyan:      #22d3ee;
+  --text:      #dce6f5;
+  --muted:     #6b7fa3;
+  --mono:      'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: .25;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow {
+  position: fixed; border-radius: 50%;
+  filter: blur(140px); pointer-events: none; z-index: 0;
+}
+.glow-1 { width: 700px; height: 700px; background: #3b1e6e33; top: -300px; right: -200px; }
+.glow-2 { width: 500px; height: 500px; background: #1e3a6e22; bottom: -200px; left: -100px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: #080d18cc;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex; align-items: center;
+}
+.nav-back {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 0; text-decoration: none;
+  color: var(--muted); font-family: var(--mono); font-size: 12px;
+  border-right: 1px solid var(--border);
+  padding-right: 24px; margin-right: 24px;
+  transition: color .2s;
+}
+.nav-back:hover { color: var(--purple); }
+.nav-title { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.nav-title span { color: var(--purple); }
+.nav-sections { margin-left: auto; display: flex; }
+.nav-sections a {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); text-decoration: none;
+  padding: 14px 16px;
+  border-left: 1px solid var(--border);
+  transition: color .2s, background .2s;
+}
+.nav-sections a:hover { color: var(--text); background: #ffffff05; }
+
+.wrapper {
+  position: relative; z-index: 1;
+  max-width: 980px; margin: 0 auto;
+  padding: 64px 32px 96px;
+}
+
+.doc-header { margin-bottom: 72px; }
+.doc-num {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  letter-spacing: .15em; text-transform: uppercase;
+  margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+}
+.doc-num::before { content: ''; width: 32px; height: 1px; background: var(--purple); }
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700; letter-spacing: -.025em; line-height: 1.15; margin-bottom: 20px;
+}
+h1 em { color: var(--purple); font-style: normal; }
+.doc-lead { font-size: 1.05rem; color: var(--muted); max-width: 620px; line-height: 1.75; }
+
+.section { margin-bottom: 80px; }
+.section-label {
+  font-family: var(--mono); font-size: 10px; color: var(--purple);
+  letter-spacing: .18em; text-transform: uppercase;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--border-hi), transparent);
+}
+h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.015em; margin-bottom: 24px; }
+h3 { font-size: 1rem; font-weight: 600; margin-bottom: 14px; margin-top: 36px; }
+p { color: var(--muted); margin-bottom: 16px; font-size: .95rem; }
+p strong { color: var(--text); font-weight: 500; }
+
+/* ── MEMORY LAYERS ── */
+.memory-layers { display: flex; flex-direction: column; gap: 0; margin: 32px 0; }
+.mem-layer {
+  display: grid;
+  grid-template-columns: 48px 120px 1fr auto;
+  align-items: center; gap: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: var(--card);
+  transition: background .2s;
+}
+.mem-layer:first-child { border-radius: 10px 10px 0 0; }
+.mem-layer:last-child  { border-bottom: 1px solid var(--border); border-radius: 0 0 10px 10px; }
+.mem-layer:hover { background: #ffffff06; }
+.mem-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.mem-num {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.mem-name { font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
+.mem-desc { font-size: .83rem; color: var(--muted); line-height: 1.5; }
+.mem-ttl {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); white-space: nowrap;
+  padding: 4px 10px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.mem-layer.l1 .mem-icon { background: #4f8ef718; }
+.mem-layer.l2 .mem-icon { background: #10b98118; }
+.mem-layer.l3 .mem-icon { background: #f59e0b18; }
+.mem-layer.l4 .mem-icon { background: #8b5cf618; }
+
+/* ── CODE BLOCK ── */
+.code-wrap { margin: 24px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.code-header {
+  background: #0c1220; padding: 10px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.code-lang { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+.code-dots { display: flex; gap: 6px; }
+.code-dots span { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+pre { background: #06090f; padding: 24px; overflow-x: auto; margin: 0; }
+code { font-family: var(--mono); font-size: .82rem; line-height: 1.8; }
+
+.kw  { color: #c792ea; } .fn  { color: #82aaff; } .st  { color: #c3e88d; }
+.cm  { color: #546e7a; font-style: italic; } .nb  { color: #f78c6c; }
+.tp  { color: #ffcb6b; } .op  { color: #89ddff; } .dc  { color: #4f8ef7; }
+
+/* ── CALLOUT ── */
+.callout {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--purple);
+  background: #8b5cf610;
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px; margin: 24px 0;
+  font-size: .875rem; color: var(--text); line-height: 1.6;
+}
+.callout.blue  { border-left-color: var(--blue);  background: #4f8ef710; }
+.callout.green { border-left-color: var(--green); background: #10b98110; }
+.callout.amber { border-left-color: var(--amber); background: #f59e0b10; font-family: var(--mono); }
+
+/* ── DIAGRAM ── */
+.diagram {
+  background: #06090f; border: 1px solid var(--border);
+  border-radius: 10px; padding: 28px 32px;
+  margin: 24px 0; overflow-x: auto;
+}
+.diagram pre {
+  background: none; padding: 0;
+  font-family: var(--mono); font-size: .8rem;
+  line-height: 1.7; color: #8ba3cc; white-space: pre;
+}
+.diagram pre .hi  { color: var(--blue); font-weight: 600; }
+.diagram pre .hi2 { color: var(--green); }
+.diagram pre .hi3 { color: var(--amber); }
+.diagram pre .hi4 { color: var(--purple); }
+
+/* ── REDIS KEY TABLE ── */
+.redis-table {
+  width: 100%; border-collapse: collapse;
+  margin: 24px 0; font-size: .85rem;
+}
+.redis-table th {
+  text-align: left; padding: 10px 16px;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); border-bottom: 1px solid var(--border);
+}
+.redis-table td {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.redis-table tr:last-child td { border-bottom: none; }
+.redis-table tr:hover td { background: #ffffff04; }
+.redis-key { font-family: var(--mono); font-size: .8rem; color: var(--cyan); }
+.redis-val { color: var(--muted); line-height: 1.5; }
+.redis-ttl { font-family: var(--mono); font-size: .78rem; color: var(--amber); white-space: nowrap; }
+
+/* ── RETRIEVER CARDS ── */
+.retriever-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 24px 0; }
+.ret-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px;
+}
+.ret-label {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px;
+}
+.ret-name { font-weight: 600; font-size: .9rem; margin-bottom: 12px; }
+.ret-params { display: flex; flex-direction: column; gap: 6px; }
+.ret-param {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono); font-size: .75rem;
+}
+.ret-param-k { color: var(--muted); }
+.ret-param-v { color: var(--cyan); }
+
+/* ── PILLS ── */
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.pill {
+  font-family: var(--mono); font-size: 10px;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--muted); background: #ffffff05;
+}
+.pill.blue   { border-color: var(--blue);   color: var(--blue);   background: #4f8ef712; }
+.pill.green  { border-color: var(--green);  color: var(--green);  background: #10b98112; }
+.pill.purple { border-color: var(--purple); color: var(--purple); background: #8b5cf612; }
+.pill.amber  { border-color: var(--amber);  color: var(--amber);  background: #f59e0b12; }
+
+/* ── FOOTER ── */
+.doc-footer {
+  margin-top: 96px; padding-top: 32px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
+}
+.doc-footer a {
+  font-family: var(--mono); font-size: 12px; color: var(--purple);
+  text-decoration: none; display: flex; align-items: center; gap: 8px;
+  transition: gap .2s;
+}
+.doc-footer a:hover { gap: 12px; }
+.doc-footer span { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+@media (max-width: 720px) {
+  .retriever-grid { grid-template-columns: 1fr; }
+  .mem-layer { grid-template-columns: 44px 1fr; }
+  .mem-ttl { display: none; }
+  .nav-sections { display: none; }
+  .wrapper { padding: 40px 20px 72px; }
+}
+</style>
+</head>
+<body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<nav>
+  <a href="index.html" class="nav-back">← índice</a>
+  <span class="nav-title"><span>02</span> / Camadas de Memória</span>
+  <div class="nav-sections">
+    <a href="#camadas">Camadas</a>
+    <a href="#buffer">Buffer</a>
+    <a href="#sessao">Sessão</a>
+    <a href="#working">Working Mem</a>
+    <a href="#rag">RAG</a>
+    <a href="#ltm">Longo Prazo</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <header class="doc-header">
+    <div class="doc-num">Tópico 02</div>
+    <h1>Camadas de <em>Memória</em><br/>em Ambiente Distribuído</h1>
+    <p class="doc-lead">Quatro camadas de memória com ciclos de vida completamente diferentes. Redis como checkpointer e working memory centralizado. RAG com OpenSearch por Knowledge Base de agente.</p>
+  </header>
+
+  <!-- SEÇÃO 1 -->
+  <section class="section" id="camadas">
+    <div class="section-label">Seção 01</div>
+    <h2>As Quatro Camadas de Memória</h2>
+
+    <p>O problema central: agentes em contas AWS diferentes, acessados via MCP, <strong>não compartilham estado nativo</strong>. Cada invocação de tool MCP é stateless por padrão. Você precisa de uma estratégia explícita para cada camada.</p>
+
+    <div class="memory-layers">
+      <div class="mem-layer l1">
+        <div class="mem-icon">💬</div>
+        <div class="mem-num">Camada 01</div>
+        <div>
+          <div class="mem-name">Contexto de Mensagens</div>
+          <div class="mem-desc">Histórico de messages dentro de uma única invocação. Vive no state["messages"] do LangGraph com add_messages reducer. Requer trim para não estourar context window.</div>
+        </div>
+        <div class="mem-ttl">segundos / minutos</div>
+      </div>
+      <div class="mem-layer l2">
+        <div class="mem-icon">🔄</div>
+        <div class="mem-num">Camada 02</div>
+        <div>
+          <div class="mem-name">Estado de Sessão</div>
+          <div class="mem-desc">Estado completo do grafo persistido pelo Checkpointer no Redis. Permite retomar conversa entre invocações. Identificado por thread_id único por sessão de usuário.</div>
+        </div>
+        <div class="mem-ttl">minutos / horas</div>
+      </div>
+      <div class="mem-layer l3">
+        <div class="mem-icon">🔗</div>
+        <div class="mem-num">Camada 03</div>
+        <div>
+          <div class="mem-name">Working Memory Cross-Agent</div>
+          <div class="mem-desc">Resultados acumulados entre agentes durante uma tarefa. O que o agente_pesquisa encontrou precisa chegar ao agente_analise. Requer estratégia explícita de passagem de contexto.</div>
+        </div>
+        <div class="mem-ttl">duração da tarefa</div>
+      </div>
+      <div class="mem-layer l4">
+        <div class="mem-icon">📚</div>
+        <div class="mem-num">Camada 04</div>
+        <div>
+          <div class="mem-name">Conhecimento Persistente / RAG</div>
+          <div class="mem-desc">Knowledge Bases por agente no OpenSearch. Documentos, políticas, dados de domínio. Cada agente tem seu próprio índice com estratégia de retrieval específica.</div>
+        </div>
+        <div class="mem-ttl">permanente</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 2 -->
+  <section class="section" id="buffer">
+    <div class="section-label">Seção 02</div>
+    <h2>Camada 1 — Buffer de Mensagens</h2>
+
+    <p>O histórico de mensagens vive em <code>state["messages"]</code>. O LangGraph guarda tudo, mas o LLM só deve ver o necessário. <strong>Trim sempre</strong> — nunca passe o histórico completo para o modelo.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — message_trimming.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> langchain_core.messages <span class="kw">import</span> trim_messages
+
+<span class="kw">def</span> <span class="fn">supervisor_node</span>(state: <span class="tp">AgentState</span>):
+    mensagens_trimadas = <span class="fn">trim_messages</span>(
+        state[<span class="st">"messages"</span>],
+        strategy=<span class="st">"last"</span>,       <span class="cm"># mantém as mensagens mais recentes</span>
+        token_counter=llm,       <span class="cm"># conta tokens reais do modelo</span>
+        max_tokens=<span class="nb">8000</span>,         <span class="cm"># reserva espaço para a resposta</span>
+        start_on=<span class="st">"human"</span>,        <span class="cm"># sempre começa com mensagem humana</span>
+        include_system=<span class="nb">True</span>,     <span class="cm"># mantém o system prompt</span>
+        allow_partial=<span class="nb">False</span>,     <span class="cm"># sem mensagens cortadas no meio</span>
+    )
+    response = supervisor_llm.<span class="fn">invoke</span>(mensagens_trimadas)
+    <span class="kw">return</span> {<span class="st">"messages"</span>: [response]}</code></pre>
+    </div>
+
+    <div class="callout">
+      <strong>Regra prática:</strong> o estado LangGraph guarda o histórico completo para auditoria e checkpointing. O LLM recebe apenas uma janela trimada. São dois propósitos diferentes — não confunda.
+    </div>
+  </section>
+
+  <!-- SEÇÃO 3 -->
+  <section class="section" id="sessao">
+    <div class="section-label">Seção 03</div>
+    <h2>Camada 2 — Sessão com Checkpointer Redis</h2>
+
+    <p>O <strong>Checkpointer</strong> persiste o estado completo do TypedDict entre execuções. É o que permite retomar uma conversa depois que o usuário some por 10 minutos — o grafo carrega o estado anterior automaticamente.</p>
+
+    <div class="callout green">
+      <strong>Use Redis (ElastiCache)</strong> na conta supervisora. O Redis fica acessível apenas pelo Supervisor e pelo MCP Central, centralizando o estado de sessão.
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — redis_checkpointer.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> langgraph.checkpoint.redis <span class="kw">import</span> AsyncRedisSaver
+<span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
+
+redis_client = aioredis.<span class="fn">from_url</span>(
+    <span class="st">"redis://elasticache-redis.interno:6379"</span>,
+    decode_responses=<span class="nb">True</span>
+)
+checkpointer = <span class="fn">AsyncRedisSaver</span>(redis_client)
+
+<span class="cm"># thread_id = identificador único da sessão do usuário</span>
+config = {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"user_123_session_456"</span>}}
+
+<span class="cm"># Invocação 1: usuário faz pergunta</span>
+result1 = <span class="kw">await</span> app.<span class="fn">ainvoke</span>(
+    {<span class="st">"messages"</span>: [<span class="fn">HumanMessage</span>(<span class="st">"Pesquise sobre X"</span>)]},
+    config
+)
+
+<span class="cm"># Invocação 2: usuário continua, 5 min depois</span>
+<span class="cm"># O grafo carrega o estado anterior do Redis automaticamente</span>
+result2 = <span class="kw">await</span> app.<span class="fn">ainvoke</span>(
+    {<span class="st">"messages"</span>: [<span class="fn">HumanMessage</span>(<span class="st">"Agora analise os dados"</span>)]},
+    config  <span class="cm"># mesmo thread_id → continua de onde parou</span>
+)</code></pre>
+    </div>
+
+    <h3>Estrutura de Chaves no Redis</h3>
+
+    <table class="redis-table">
+      <thead>
+        <tr>
+          <th>Chave</th>
+          <th>Conteúdo</th>
+          <th>TTL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="redis-key">checkpoint:{thread_id}:{id}</span></td>
+          <td class="redis-val">Estado completo serializado do grafo (TypedDict)</td>
+          <td class="redis-ttl">24h</td>
+        </tr>
+        <tr>
+          <td><span class="redis-key">checkpoint:{thread_id}:latest</span></td>
+          <td class="redis-val">Ponteiro para o último checkpoint</td>
+          <td class="redis-ttl">24h</td>
+        </tr>
+        <tr>
+          <td><span class="redis-key">working:{session_id}</span></td>
+          <td class="redis-val">dict com resultados acumulados cross-agent</td>
+          <td class="redis-ttl">3h</td>
+        </tr>
+        <tr>
+          <td><span class="redis-key">session:user:{user_id}:active</span></td>
+          <td class="redis-val">session_id ativo do usuário</td>
+          <td class="redis-ttl">24h</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SEÇÃO 4 -->
+  <section class="section" id="working">
+    <div class="section-label">Seção 04</div>
+    <h2>Camada 3 — Working Memory Cross-Agent</h2>
+
+    <p>O desafio mais complexo: quando o supervisor invoca <code>agent_pesquisa</code> via MCP e depois invoca <code>agent_analise</code>, como o segundo sabe o que o primeiro encontrou?</p>
+
+    <h3>Abordagem A — Contexto no payload da tool call</h3>
+    <p>O supervisor lê o Redis e serializa o contexto relevante diretamente no payload da chamada MCP. Simples, auditável, sem dependência nos agentes remotos.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — context_enricher.py</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="tp">ContextEnricher</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis_client):
+        self.redis = redis_client
+
+    <span class="kw">async def</span> <span class="fn">build_payload</span>(self, session_id: str, agent_name: str, instrucoes: str) -> dict:
+        raw = <span class="kw">await</span> self.redis.<span class="fn">get</span>(<span class="st">f"working:{session_id}"</span>)
+        working_mem = json.<span class="fn">loads</span>(raw) <span class="kw">if</span> raw <span class="kw">else</span> {}
+
+        <span class="cm"># Filtra contexto relevante por agente — evita payload desnecessário</span>
+        context_map = {
+            <span class="st">"agent_pesquisa"</span>:  [<span class="st">"queries_anteriores"</span>, <span class="st">"intent"</span>],
+            <span class="st">"agent_analise"</span>:   [<span class="st">"pesquisa_resultado"</span>, <span class="st">"intent"</span>, <span class="st">"dados_coletados"</span>],
+            <span class="st">"agent_relatorio"</span>: [<span class="st">"pesquisa_resultado"</span>, <span class="st">"analise_resultado"</span>, <span class="st">"intent"</span>],
+        }
+
+        keys = context_map.<span class="fn">get</span>(agent_name, [])
+        contexto = {k: working_mem[k] <span class="kw">for</span> k <span class="kw">in</span> keys <span class="kw">if</span> k <span class="kw">in</span> working_mem}
+
+        <span class="kw">return</span> {<span class="st">"session_id"</span>: session_id, <span class="st">"instrucoes"</span>: instrucoes, <span class="st">"contexto"</span>: contexto}
+
+    <span class="kw">async def</span> <span class="fn">persist_result</span>(self, session_id: str, agent_name: str, resultado: str):
+        <span class="cm"># Supervisor é o único que escreve no Redis</span>
+        raw = <span class="kw">await</span> self.redis.<span class="fn">get</span>(<span class="st">f"working:{session_id}"</span>)
+        working_mem = json.<span class="fn">loads</span>(raw) <span class="kw">if</span> raw <span class="kw">else</span> {}
+        result_key = agent_name.<span class="fn">replace</span>(<span class="st">"agent_"</span>, <span class="st">""</span>) + <span class="st">"_resultado"</span>
+        working_mem[result_key] = resultado
+        <span class="kw">await</span> self.redis.<span class="fn">setex</span>(<span class="st">f"working:{session_id}"</span>, <span class="nb">3600</span>, json.<span class="fn">dumps</span>(working_mem))</code></pre>
+    </div>
+
+    <h3>Abordagem B — Referências ao Redis (para contextos volumosos)</h3>
+    <p>Quando o resultado de um agente é grande demais para o payload, o state guarda apenas a <strong>chave</strong> Redis, não o dado em si. O próximo agente recebe a chave e busca diretamente (se tiver acesso) ou o supervisor repassa o conteúdo quando necessário.</p>
+
+    <div class="callout amber">
+      <strong>No seu cenário</strong> (Redis só na conta supervisora): os agentes remotos <em>não</em> enxergam o Redis diretamente. A Abordagem A é a correta — o Supervisor lê, filtra e injeta o contexto no payload de cada chamada MCP.
+    </div>
+  </section>
+
+  <!-- SEÇÃO 5 -->
+  <section class="section" id="rag">
+    <div class="section-label">Seção 05</div>
+    <h2>Camada 4 — RAG com OpenSearch por KB</h2>
+
+    <p>Cada agente especialista possui seu próprio Knowledge Base no OpenSearch, acessível via VPC Endpoint. Os KBs são completamente independentes — o agente de pesquisa não enxerga o KB de análise e vice-versa.</p>
+
+    <div class="diagram">
+      <pre>
+  <span class="hi">MCP Central</span>  (conta supervisor)
+       │ VPC Endpoint por conta
+       ├──────────────────────────────────────────────────────┐
+       │                         │                            │
+  Conta AWS A              Conta AWS B                 Conta AWS C
+  <span class="hi2">OpenSearch</span>              <span class="hi2">OpenSearch</span>                <span class="hi2">OpenSearch</span>
+  index: kb-pesquisa      index: kb-analise          index: kb-relatorio
+  Agente Pesquisa         Agente Análise             Agente Relatório
+      </pre>
+    </div>
+
+    <h3>Retriever por agente com estratégia diferenciada</h3>
+
+    <div class="retriever-grid">
+      <div class="ret-card">
+        <div class="ret-label">Agente Pesquisa</div>
+        <div class="ret-name">Busca ampla</div>
+        <div class="ret-params">
+          <div class="ret-param"><span class="ret-param-k">search_type</span><span class="ret-param-v">"similarity"</span></div>
+          <div class="ret-param"><span class="ret-param-k">k</span><span class="ret-param-v">8</span></div>
+          <div class="ret-param"><span class="ret-param-k">score_threshold</span><span class="ret-param-v">0.65</span></div>
+        </div>
+      </div>
+      <div class="ret-card">
+        <div class="ret-label">Agente Análise</div>
+        <div class="ret-name">MMR — diversidade</div>
+        <div class="ret-params">
+          <div class="ret-param"><span class="ret-param-k">search_type</span><span class="ret-param-v">"mmr"</span></div>
+          <div class="ret-param"><span class="ret-param-k">k / fetch_k</span><span class="ret-param-v">5 / 20</span></div>
+          <div class="ret-param"><span class="ret-param-k">lambda_mult</span><span class="ret-param-v">0.7</span></div>
+        </div>
+      </div>
+      <div class="ret-card">
+        <div class="ret-label">Agente Relatório</div>
+        <div class="ret-name">Alta precisão</div>
+        <div class="ret-params">
+          <div class="ret-param"><span class="ret-param-k">search_type</span><span class="ret-param-v">"threshold"</span></div>
+          <div class="ret-param"><span class="ret-param-k">k</span><span class="ret-param-v">3</span></div>
+          <div class="ret-param"><span class="ret-param-k">score_threshold</span><span class="ret-param-v">0.85</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — retriever_factory.py</span>
+      </div>
+      <pre><code><span class="kw">from</span> langchain_community.vectorstores <span class="kw">import</span> OpenSearchVectorSearch
+<span class="kw">from</span> langchain_aws <span class="kw">import</span> BedrockEmbeddings
+
+<span class="kw">def</span> <span class="fn">criar_retriever</span>(opensearch_url: str, index: str, aws_region: str, strategy: str):
+    embeddings = <span class="fn">BedrockEmbeddings</span>(
+        model_id=<span class="st">"amazon.titan-embed-text-v2:0"</span>,
+        region_name=aws_region
+    )
+    vectorstore = <span class="fn">OpenSearchVectorSearch</span>(
+        opensearch_url=opensearch_url,
+        index_name=index,
+        embedding_function=embeddings,
+        http_auth=<span class="fn">get_aws_auth</span>(opensearch_url, aws_region),  <span class="cm"># SigV4</span>
+        use_ssl=<span class="nb">True</span>,
+        verify_certs=<span class="nb">True</span>,
+    )
+
+    configs = {
+        <span class="st">"pesquisa"</span>:  {<span class="st">"search_type"</span>: <span class="st">"similarity"</span>, <span class="st">"k"</span>: <span class="nb">8</span>,  <span class="st">"score_threshold"</span>: <span class="nb">0.65</span>},
+        <span class="st">"analise"</span>:   {<span class="st">"search_type"</span>: <span class="st">"mmr"</span>,        <span class="st">"k"</span>: <span class="nb">5</span>,  <span class="st">"fetch_k"</span>: <span class="nb">20</span>, <span class="st">"lambda_mult"</span>: <span class="nb">0.7</span>},
+        <span class="st">"relatorio"</span>: {<span class="st">"search_type"</span>: <span class="st">"similarity_score_threshold"</span>, <span class="st">"score_threshold"</span>: <span class="nb">0.85</span>, <span class="st">"k"</span>: <span class="nb">3</span>},
+    }
+    <span class="kw">return</span> vectorstore.<span class="fn">as_retriever</span>(search_kwargs=configs[strategy])</code></pre>
+    </div>
+  </section>
+
+  <!-- SEÇÃO 6 -->
+  <section class="section" id="ltm">
+    <div class="section-label">Seção 06</div>
+    <h2>Memória de Longo Prazo Semântica</h2>
+
+    <p>Diferente do RAG de conhecimento de domínio, a memória semântica guarda <strong>fatos sobre o usuário</strong> que persistem entre sessões distintas. Implementada como um índice separado no OpenSearch, pesquisável por similaridade.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — long_term_memory.py</span>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="tp">LongTermMemoryManager</span>:
+    <span class="kw">async def</span> <span class="fn">salvar_fato</span>(self, user_id: str, fato: str):
+        embedding = <span class="kw">await</span> <span class="fn">gerar_embedding</span>(fato)
+        <span class="kw">await</span> self.os.<span class="fn">index</span>(
+            index=<span class="st">f"user-memory-{user_id}"</span>,
+            body={
+                <span class="st">"fato"</span>:       fato,
+                <span class="st">"embedding"</span>:  embedding,
+                <span class="st">"timestamp"</span>:  datetime.utcnow().<span class="fn">isoformat</span>(),
+            }
+        )
+
+    <span class="kw">async def</span> <span class="fn">recuperar_contexto</span>(self, user_id: str, query: str, k: <span class="nb">int</span> = <span class="nb">3</span>) -> List[str]:
+        query_emb = <span class="kw">await</span> <span class="fn">gerar_embedding</span>(query)
+        resp = <span class="kw">await</span> self.os.<span class="fn">search</span>(
+            index=<span class="st">f"user-memory-{user_id}"</span>,
+            body={<span class="st">"knn"</span>: {<span class="st">"embedding"</span>: {<span class="st">"vector"</span>: query_emb, <span class="st">"k"</span>: k}}}
+        )
+        <span class="kw">return</span> [hit[<span class="st">"_source"</span>][<span class="st">"fato"</span>] <span class="kw">for</span> hit <span class="kw">in</span> resp[<span class="st">"hits"</span>][<span class="st">"hits"</span>]]
+
+<span class="cm"># Uso no supervisor: enriquece o system prompt com memória do usuário</span>
+ltm_fatos = <span class="kw">await</span> ltm.<span class="fn">recuperar_contexto</span>(
+    user_id=state[<span class="st">"user_id"</span>],
+    query=state[<span class="st">"messages"</span>][<span class="op">-</span><span class="nb">1</span>].content
+)
+system = <span class="st">f"""Contexto sobre este usuário:
+{chr(10).join(ltm_fatos)}
+"""</span></code></pre>
+    </div>
+
+    <h3>Onde cada tecnologia vive</h3>
+
+    <div class="diagram">
+      <pre>
+  <span class="hi">REDIS</span>  (ElastiCache — conta supervisora)
+  ├── Checkpoints LangGraph         TTL 24h
+  ├── Working Memory cross-agent    TTL 3h
+  └── Cache de sessão de usuário    TTL 24h
+
+  <span class="hi4">OPENSEARCH</span>  (por conta via VPC Endpoint)
+  ├── kb-pesquisa    → KB do Agente Pesquisa
+  ├── kb-analise     → KB do Agente Análise
+  ├── kb-relatorio   → KB do Agente Relatório
+  └── user-memory-*  → Memória semântica por usuário
+
+  <span class="hi2">EM MEMÓRIA</span>  (efêmero — por invocação)
+  └── Buffer de mensagens trimado → direto no AgentState
+      </pre>
+    </div>
+
+    <div class="callout blue">
+      <strong>Redis e OpenSearch não se substituem.</strong> Redis é rápido e serve estado operacional com TTL curto. OpenSearch serve busca semântica em bases de conhecimento persistentes. No seu cenário, os dois são necessários e complementares.
+    </div>
+
+    <div class="tags">
+      <span class="pill purple">Redis Checkpointer</span>
+      <span class="pill purple">Working Memory</span>
+      <span class="pill green">OpenSearch</span>
+      <span class="pill green">RAG</span>
+      <span class="pill green">MMR</span>
+      <span class="pill blue">trim_messages</span>
+      <span class="pill blue">add_messages</span>
+      <span class="pill amber">Long-Term Memory</span>
+    </div>
+  </section>
+
+  <div class="doc-footer">
+    <a href="01-langchain-langgraph.html">← LangChain vs LangGraph</a>
+    <span>02 / memoria-distribuida</span>
+    <a href="03-arquitetura-tres-contas.html">Próximo: Arquitetura 3 Contas →</a>
+  </div>
+
+</div>
+</body>
+</html>
