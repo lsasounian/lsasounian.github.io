@@ -457,7 +457,7 @@
       <div class="logo-sub">Knowledge Base</div>
     </div>
   </div>
-  <div class="header-badge">v1.0 · Atualizado Jun 2026</div>
+  <div class="header-badge">v1.1 · Atualizado Jun 2026</div>
 </header>
 
 <section class="hero">
@@ -478,11 +478,11 @@
 
   <div class="hero-stats">
     <div class="stat">
-      <div class="stat-num" id="docCount">1</div>
+      <div class="stat-num" id="docCount">7</div>
       <div class="stat-label">Documentos</div>
     </div>
     <div class="stat">
-      <div class="stat-num">1</div>
+      <div class="stat-num">3</div>
       <div class="stat-label">Categorias</div>
     </div>
     <div class="stat">
@@ -500,14 +500,14 @@
   </div>
   <div class="card-grid" id="frameworks-grid">
 
-    <a href="docs/fastmcp.html" class="card card-green" data-tags="python mcp protocol tools">
+    <a href="docs/mcp-fastmcp-guide.html" class="card card-green" data-tags="python mcp protocol tools fastmcp">
       <div class="card-top">
         <div class="card-icon icon-green">⚡</div>
         <span class="card-status status-ready">Completo</span>
       </div>
       <div class="card-body">
-        <h3>FastMCP</h3>
-        <p>Framework Python para construção de servidores MCP. Tools, Resources, Prompts, Context, autenticação e testes.</p>
+        <h3>MCP & FastMCP</h3>
+        <p>Guia completo do Model Context Protocol: 3 primitivos, transportes, tools, resources, prompts, autenticação, deploy e limites.</p>
       </div>
       <div class="card-tags">
         <span class="tag">Python</span>
@@ -523,15 +523,182 @@
 
 <div class="divider"></div>
 
+<!-- A2A — AGENT TO AGENT -->
+<div class="section" id="a2a-section">
+  <div class="section-header">
+    <span class="section-title">A2A — Agent-to-Agent Protocol</span>
+    <span class="section-count" id="a2a-count">2 docs</span>
+  </div>
+  <div class="card-grid" id="a2a-grid">
+
+    <a href="docs/a2a-protocol.html" class="card card-blue" data-tags="a2a json-rpc langgraph api gateway agents protocol">
+      <div class="card-top">
+        <div class="card-icon icon-blue">🔗</div>
+        <span class="card-status status-ready">Completo</span>
+      </div>
+      <div class="card-body">
+        <h3>A2A Protocol</h3>
+        <p>Guia completo do protocolo Agent-to-Agent — funcionamento interno, integração com LangGraph e API Gateway de produção.</p>
+      </div>
+      <div class="card-tags">
+        <span class="tag">JSON-RPC 2.0</span>
+        <span class="tag">LangGraph</span>
+        <span class="tag">SSE</span>
+        <span class="tag">Linux Foundation</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a href="docs/a2a-aws-docs.html" class="card card-orange" data-tags="a2a aws sigv4 jwt api gateway cross-account">
+      <div class="card-top">
+        <div class="card-icon icon-orange">☁️</div>
+        <span class="card-status status-ready">Completo</span>
+      </div>
+      <div class="card-body">
+        <h3>A2A na AWS</h3>
+        <p>Padrões de Agent-to-Agent via API Gateway: SigV4 cross-account com IAM Resource Policy e Bearer JWT, com Terraform e código LangGraph.</p>
+      </div>
+      <div class="card-tags">
+        <span class="tag">AWS</span>
+        <span class="tag">API Gateway</span>
+        <span class="tag">SigV4</span>
+        <span class="tag">Terraform</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- MULTI-AGENT SYSTEMS / LANGCHAIN -->
+<div class="section" id="multiagent-section">
+  <div class="section-header">
+    <span class="section-title">Sistemas Multi-Agentes</span>
+    <span class="section-count" id="multiagent-count">4 docs</span>
+  </div>
+  <div class="card-grid" id="multiagent-grid">
+
+    <a href="docs/langchain/index.html" class="card card-purple" data-tags="langchain langgraph mcp aws multi-agent overview">
+      <div class="card-top">
+        <div class="card-icon icon-purple">🧠</div>
+        <span class="card-status status-ready">Hub</span>
+      </div>
+      <div class="card-body">
+        <h3>Multi-Agent AI Systems</h3>
+        <p>Visão geral da arquitetura: LangGraph Supervisor, LangChain, MCP entre contas AWS, memória distribuída e infraestrutura ECS multi-conta.</p>
+      </div>
+      <div class="card-tags">
+        <span class="tag">LangChain</span>
+        <span class="tag">LangGraph</span>
+        <span class="tag">MCP</span>
+        <span class="tag">AWS</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a href="docs/langchain/01-langchain-langgraph.html" class="card card-blue" data-tags="langchain langgraph stategraph supervisor toolnode">
+      <div class="card-top">
+        <div class="card-icon icon-blue">01</div>
+        <span class="card-status status-ready">Completo</span>
+      </div>
+      <div class="card-body">
+        <h3>LangChain vs LangGraph</h3>
+        <p>Diferença de responsabilidades, grafos de estado, padrão Supervisor/Especialista e Agent-as-a-Tool via MCP.</p>
+      </div>
+      <div class="card-tags">
+        <span class="tag">LangGraph</span>
+        <span class="tag">StateGraph</span>
+        <span class="tag">Supervisor</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a href="docs/langchain/02-memoria-distribuida.html" class="card card-purple" data-tags="redis opensearch checkpointer rag memoria">
+      <div class="card-top">
+        <div class="card-icon icon-purple">02</div>
+        <span class="card-status status-ready">Completo</span>
+      </div>
+      <div class="card-body">
+        <h3>Camadas de Memória</h3>
+        <p>Quatro camadas de memória em ambiente distribuído, Redis como checkpointer, RAG com OpenSearch e memória semântica de longo prazo.</p>
+      </div>
+      <div class="card-tags">
+        <span class="tag">Redis</span>
+        <span class="tag">OpenSearch</span>
+        <span class="tag">RAG</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a href="docs/langchain/03-arquitetura-tres-contas.html" class="card card-green" data-tags="aws ecs vpc endpoint mcp bffs multi-conta">
+      <div class="card-top">
+        <div class="card-icon icon-green">03</div>
+        <span class="card-status status-ready">Completo</span>
+      </div>
+      <div class="card-body">
+        <h3>Arquitetura 3 Contas</h3>
+        <p>Separação em Conta Supervisora, Conta de Agentes (ECS + MCP) e Conta de BFFs, com MCP como roteador stateless entre contas AWS.</p>
+      </div>
+      <div class="card-tags">
+        <span class="tag">AWS ECS</span>
+        <span class="tag">VPC Endpoint</span>
+        <span class="tag">Multi-conta</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
 <!-- RECENT -->
 <div class="section">
   <div class="section-header">
     <span class="section-title">Adicionados recentemente</span>
   </div>
   <div class="recent-list">
-    <a href="docs/fastmcp.html" class="recent-item">
+    <a href="docs/langchain/index.html" class="recent-item">
+      <div class="recent-dot" style="background:#a78bfa"></div>
+      <span class="recent-title">Multi-Agent AI Systems — Visão geral da arquitetura</span>
+      <span class="recent-category">Multi-Agentes</span>
+      <span class="recent-date">Jun 2026</span>
+    </a>
+    <a href="docs/langchain/03-arquitetura-tres-contas.html" class="recent-item">
       <div class="recent-dot" style="background:#4ade80"></div>
-      <span class="recent-title">FastMCP — Guia completo</span>
+      <span class="recent-title">03 — Arquitetura AWS Multi-Conta com MCP</span>
+      <span class="recent-category">Multi-Agentes</span>
+      <span class="recent-date">Jun 2026</span>
+    </a>
+    <a href="docs/langchain/02-memoria-distribuida.html" class="recent-item">
+      <div class="recent-dot" style="background:#a78bfa"></div>
+      <span class="recent-title">02 — Camadas de Memória em Ambiente Distribuído</span>
+      <span class="recent-category">Multi-Agentes</span>
+      <span class="recent-date">Jun 2026</span>
+    </a>
+    <a href="docs/langchain/01-langchain-langgraph.html" class="recent-item">
+      <div class="recent-dot" style="background:#60a5fa"></div>
+      <span class="recent-title">01 — LangChain vs LangGraph</span>
+      <span class="recent-category">Multi-Agentes</span>
+      <span class="recent-date">Jun 2026</span>
+    </a>
+    <a href="docs/a2a-aws-docs.html" class="recent-item">
+      <div class="recent-dot" style="background:#fb923c"></div>
+      <span class="recent-title">A2A na AWS — SigV4 & Bearer JWT</span>
+      <span class="recent-category">A2A</span>
+      <span class="recent-date">Jun 2026</span>
+    </a>
+    <a href="docs/a2a-protocol.html" class="recent-item">
+      <div class="recent-dot" style="background:#60a5fa"></div>
+      <span class="recent-title">A2A Protocol — Guia completo</span>
+      <span class="recent-category">A2A</span>
+      <span class="recent-date">Jun 2026</span>
+    </a>
+    <a href="docs/mcp-fastmcp-guide.html" class="recent-item">
+      <div class="recent-dot" style="background:#4ade80"></div>
+      <span class="recent-title">MCP & FastMCP — Guia completo</span>
       <span class="recent-category">Frameworks</span>
       <span class="recent-date">Jun 2026</span>
     </a>
@@ -540,7 +707,7 @@
 
 <footer>
   <div class="footer-text">DevDocs · Gerado a partir das conversas do projeto</div>
-  <div class="footer-text">Última atualização: <span>Jun 10, 2026</span></div>
+  <div class="footer-text">Última atualização: <span>Jun 11, 2026</span></div>
 </footer>
 
 <script>
