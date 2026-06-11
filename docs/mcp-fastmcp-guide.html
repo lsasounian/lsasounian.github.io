@@ -4,395 +4,102 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MCP & FastMCP — Guia Completo</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+:root { --accent: var(--green); --accent-dim: var(--green-dim); }
 
-  :root {
-    --bg: #0d0f14;
-    --surface: #141720;
-    --surface2: #1c2030;
-    --border: #252a3a;
-    --accent: #5b8ef0;
-    --accent2: #8b5cf6;
-    --accent3: #34d399;
-    --accent4: #f59e0b;
-    --text: #c8d0e8;
-    --text-dim: #6b7494;
-    --text-bright: #e8eeff;
-    --danger: #f87171;
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'IBM Plex Sans', sans-serif;
-  }
+/* ── HORIZONTAL FLOW (transport / pipeline boxes) ── */
+.flow-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 24px 0;
+  font-size: 13px;
+}
+.flow-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+}
+.flow-arrow { color: var(--muted); font-size: 16px; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.7;
-    min-height: 100vh;
-  }
-
-  /* Layout */
-  .shell { display: flex; min-height: 100vh; }
-
-  nav {
-    width: 240px;
-    flex-shrink: 0;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-    padding: 24px 0;
-  }
-
-  nav .logo {
-    padding: 0 20px 20px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-  }
-
-  nav .logo h1 {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-family: var(--mono);
-  }
-
-  nav .logo p {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin-top: 2px;
-  }
-
-  nav .back-link {
-    display: block;
-    font-size: 11px;
-    font-family: var(--mono);
-    color: var(--text-dim);
-    text-decoration: none;
-    padding: 0 20px 14px;
-    transition: color 0.15s;
-  }
-
-  nav .back-link:hover { color: var(--accent); }
-
-  nav a {
-    display: block;
-    padding: 6px 20px;
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 13px;
-    transition: color 0.15s, background 0.15s;
-    border-left: 2px solid transparent;
-  }
-
-  nav a:hover { color: var(--text-bright); background: var(--surface2); }
-  nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(91,142,240,0.08); }
-
-  nav .nav-section {
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    padding: 14px 20px 4px;
-    font-family: var(--mono);
-  }
-
-  main {
-    flex: 1;
-    max-width: 860px;
-    padding: 48px 56px;
-    overflow-x: hidden;
-  }
-
-  /* Typography */
-  h1 { font-size: 32px; font-weight: 300; color: var(--text-bright); line-height: 1.25; margin-bottom: 12px; }
-  h2 { font-size: 22px; font-weight: 600; color: var(--text-bright); margin: 52px 0 16px; padding-top: 52px; border-top: 1px solid var(--border); }
-  h3 { font-size: 16px; font-weight: 600; color: var(--accent); margin: 28px 0 10px; font-family: var(--mono); }
-  h4 { font-size: 13px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; margin: 20px 0 8px; }
-  p { margin-bottom: 14px; }
-
-  .subtitle {
-    font-size: 17px;
-    font-weight: 300;
-    color: var(--text-dim);
-    margin-bottom: 32px;
-    line-height: 1.6;
-  }
-
-  section { scroll-margin-top: 32px; }
-
-  /* Code */
-  pre {
-    background: #0a0c12;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 18px 20px;
-    overflow-x: auto;
-    margin: 14px 0 20px;
-    position: relative;
-  }
-
-  pre .label {
-    position: absolute;
-    top: 10px;
-    right: 14px;
-    font-size: 10px;
-    font-family: var(--mono);
-    color: var(--text-dim);
-    letter-spacing: 0.08em;
-  }
-
-  code {
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.65;
-    color: #a8b8e8;
-  }
-
-  p code, li code {
-    background: rgba(91,142,240,0.12);
-    color: var(--accent);
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 12.5px;
-  }
-
-  /* Syntax highlighting */
-  .kw { color: #8b5cf6; }
-  .fn { color: #5b8ef0; }
-  .str { color: #34d399; }
-  .cmt { color: #4a5470; font-style: italic; }
-  .dec { color: #f59e0b; }
-  .cls { color: #e879f9; }
-  .num { color: #fb923c; }
-
-  /* Callout boxes */
-  .callout {
-    border-radius: 8px;
-    padding: 14px 18px;
-    margin: 16px 0;
-    border-left: 3px solid;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
-  .callout.info { background: rgba(91,142,240,0.08); border-color: var(--accent); }
-  .callout.warn { background: rgba(245,158,11,0.08); border-color: var(--accent4); }
-  .callout.tip  { background: rgba(52,211,153,0.08); border-color: var(--accent3); }
-  .callout.danger { background: rgba(248,113,113,0.08); border-color: var(--danger); }
-
-  .callout strong { display: block; margin-bottom: 4px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
-  .callout.info strong { color: var(--accent); }
-  .callout.warn strong { color: var(--accent4); }
-  .callout.tip strong { color: var(--accent3); }
-  .callout.danger strong { color: var(--danger); }
-
-  /* Tags / badges */
-  .badge {
-    display: inline-block;
-    font-size: 10px;
-    font-family: var(--mono);
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    vertical-align: middle;
-    margin-left: 6px;
-  }
-
-  .badge.blue { background: rgba(91,142,240,0.15); color: var(--accent); border: 1px solid rgba(91,142,240,0.3); }
-  .badge.green { background: rgba(52,211,153,0.12); color: var(--accent3); border: 1px solid rgba(52,211,153,0.3); }
-  .badge.purple { background: rgba(139,92,246,0.12); color: var(--accent2); border: 1px solid rgba(139,92,246,0.3); }
-  .badge.amber { background: rgba(245,158,11,0.12); color: var(--accent4); border: 1px solid rgba(245,158,11,0.3); }
-
-  /* Grid primitives */
-  .grid-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin: 16px 0;
-  }
-
-  .grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    margin: 16px 0;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px;
-  }
-
-  .card h4 {
-    font-size: 12px;
-    margin: 0 0 6px;
-    color: var(--text-dim);
-    letter-spacing: 0.12em;
-  }
-
-  .card .icon { font-size: 22px; margin-bottom: 10px; }
-  .card p { font-size: 13px; color: var(--text-dim); margin: 0; line-height: 1.5; }
-  .card.highlight { border-color: var(--accent); }
-
-  /* Table */
-  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
-  th { text-align: left; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; }
-  td { padding: 10px 14px; border: 1px solid var(--border); vertical-align: top; }
-  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
-
-  /* Lists */
-  ul, ol { padding-left: 20px; margin-bottom: 14px; }
-  li { margin-bottom: 5px; }
-  li code { font-size: 12px; }
-
-  /* Hero */
-  .hero {
-    padding: 0 0 40px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
-  }
-
-  .hero-tag {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--accent3);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .hero-tag::before {
-    content: '';
-    display: block;
-    width: 24px;
-    height: 1px;
-    background: var(--accent3);
-  }
-
-  /* Transport table */
-  .transport-row td:first-child { font-family: var(--mono); color: var(--accent); font-size: 12px; }
-
-  /* TOC on mobile */
-  @media (max-width: 900px) {
-    .shell { flex-direction: column; }
-    nav { width: 100%; height: auto; position: static; }
-    main { padding: 28px 20px; }
-    .grid-3 { grid-template-columns: 1fr; }
-    .grid-2 { grid-template-columns: 1fr; }
-  }
-
-  /* Flow separator */
-  .flow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 20px 0;
-    font-size: 13px;
-  }
-
-  .flow-box {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 14px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text-bright);
-  }
-
-  .flow-arrow { color: var(--text-dim); font-size: 16px; }
-
-  /* Version note */
-  .version-note {
-    font-size: 11px;
-    font-family: var(--mono);
-    color: var(--text-dim);
-    margin-bottom: 20px;
-  }
+@media (max-width: 860px) {
+  .flow-row { flex-direction: column; align-items: stretch; }
+  .flow-arrow { transform: rotate(90deg); text-align: center; }
+}
 </style>
 </head>
 <body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
 
-<div class="shell">
-
-<!-- NAV -->
-<nav>
+<aside class="sidebar">
   <a href="../index.html" class="back-link">← DevDocs</a>
-  <div class="logo">
-    <h1>MCP Guide</h1>
-    <p>FastMCP · 2025/2026</p>
-  </div>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">MCP</span>
+    <span class="doc-title">FastMCP Guide</span>
+  </a>
+  <nav>
+    <div class="nav-section">Fundamentos</div>
+    <a href="#o-que-e">O que é MCP</a>
+    <a href="#primitivos">3 Primitivos</a>
+    <a href="#transportes">Transportes</a>
 
-  <div class="nav-section">Fundamentos</div>
-  <a href="#o-que-e" class="active">O que é MCP</a>
-  <a href="#primitivos">3 Primitivos</a>
-  <a href="#transportes">Transportes</a>
+    <div class="nav-section">Server-Side</div>
+    <a href="#tools">Tools</a>
+    <a href="#resources">Resources</a>
+    <a href="#prompts">Prompts</a>
+    <a href="#context">Context</a>
+    <a href="#lifespan">Lifespan</a>
+    <a href="#composicao">Composição</a>
 
-  <div class="nav-section">Server-Side</div>
-  <a href="#tools">Tools</a>
-  <a href="#resources">Resources</a>
-  <a href="#prompts">Prompts</a>
-  <a href="#context">Context</a>
-  <a href="#lifespan">Lifespan</a>
-  <a href="#composicao">Composição</a>
+    <div class="nav-section">Client-Side</div>
+    <a href="#client">FastMCP Client</a>
+    <a href="#callbacks">Callbacks</a>
+    <a href="#sampling">Sampling</a>
 
-  <div class="nav-section">Client-Side</div>
-  <a href="#client">FastMCP Client</a>
-  <a href="#callbacks">Callbacks</a>
-  <a href="#sampling">Sampling</a>
+    <div class="nav-section">Produção</div>
+    <a href="#http">Deploy HTTP</a>
+    <a href="#autenticacao">Autenticação</a>
+    <a href="#middleware">Middleware</a>
+    <a href="#background">Background Tasks</a>
+    <a href="#openapi">OpenAPI → MCP</a>
 
-  <div class="nav-section">Produção</div>
-  <a href="#http">Deploy HTTP</a>
-  <a href="#autenticacao">Autenticação</a>
-  <a href="#middleware">Middleware</a>
-  <a href="#background">Background Tasks</a>
-  <a href="#openapi">OpenAPI → MCP</a>
+    <div class="nav-section">Limites & Dicas</div>
+    <a href="#limites">Limites</a>
+    <a href="#integracoes">Integrações</a>
+    <a href="#arquitetura">Na sua Arquitetura</a>
+  </nav>
+</aside>
 
-  <div class="nav-section">Limites & Dicas</div>
-  <a href="#limites">Limites</a>
-  <a href="#integracoes">Integrações</a>
-  <a href="#arquitetura">Na sua Arquitetura</a>
-</nav>
+<main class="main">
+<div class="wrapper">
 
-<!-- MAIN -->
-<main>
-
-  <!-- HERO -->
-  <div class="hero">
-    <div class="hero-tag">Guia de Referência</div>
-    <h1>Model Context Protocol<br>& FastMCP</h1>
-    <p class="subtitle">Tudo que você precisa saber: o que é, o que você pode fazer, como consumir, como deployar e onde estão os limites.</p>
-    <p class="version-note">Baseado em FastMCP 3.x · MCP Spec 2025-11-25 · Junho 2026</p>
-  </div>
+  <header class="doc-header">
+    <div class="doc-num">Guia de Referência</div>
+    <h1>Model Context Protocol<br>& <span class="accent">FastMCP</span></h1>
+    <p class="doc-lead">Tudo que você precisa saber: o que é, o que você pode fazer, como consumir, como deployar e onde estão os limites.</p>
+  </header>
 
   <!-- ============================
        O QUE É MCP
   ============================= -->
-  <section id="o-que-e">
+  <section class="section" id="o-que-e">
+    <div class="section-label">Fundamentos</div>
     <h2>O que é MCP</h2>
     <p>MCP (Model Context Protocol) é um <strong>protocolo aberto</strong> criado pela Anthropic que padroniza como LLMs se conectam a ferramentas, dados e serviços externos. Pense como um "USB-C para IA": qualquer cliente MCP (Claude, ChatGPT, Cursor, Gemini, seu próprio agente) consegue falar com qualquer servidor MCP sem integrações customizadas.</p>
 
-    <div class="callout info">
+    <div class="callout">
       <strong>Por que importa</strong>
       Sem MCP, cada integração precisa de código específico: um plugin pra Claude, outro pra ChatGPT, outro pra seu agente LangGraph. Com MCP, você escreve uma vez e qualquer cliente compatível consome.
     </div>
 
-    <div class="flow">
+    <div class="flow-row">
       <div class="flow-box">LLM / Agente</div>
       <div class="flow-arrow">⟷</div>
       <div class="flow-box">MCP Client</div>
@@ -409,24 +116,22 @@
   <!-- ============================
        3 PRIMITIVOS
   ============================= -->
-  <section id="primitivos">
+  <section class="section" id="primitivos">
+    <div class="section-label">Fundamentos</div>
     <h2>Os 3 Primitivos do MCP</h2>
     <p>Todo servidor MCP expõe alguma combinação de três tipos de componentes:</p>
 
     <div class="grid-3">
-      <div class="card highlight">
-        <div class="icon">⚙️</div>
-        <h4>Tools</h4>
+      <div class="info-card green">
+        <div class="info-label">⚙️ Tools</div>
         <p>Funções invocáveis. O LLM decide quando chamar. Fazem ações, buscam dados ao vivo, chamam APIs.</p>
       </div>
-      <div class="card">
-        <div class="icon">📄</div>
-        <h4>Resources</h4>
+      <div class="info-card">
+        <div class="info-label">📄 Resources</div>
         <p>Fontes de dados passivas acessadas por URI. O cliente lê quando precisa de contexto.</p>
       </div>
-      <div class="card">
-        <div class="icon">💬</div>
-        <h4>Prompts</h4>
+      <div class="info-card">
+        <div class="info-label">💬 Prompts</div>
         <p>Templates de mensagens reutilizáveis que guiam interações do LLM de forma padronizada.</p>
       </div>
     </div>
@@ -435,15 +140,17 @@
   <!-- ============================
        TRANSPORTES
   ============================= -->
-  <section id="transportes">
+  <section class="section" id="transportes">
+    <div class="section-label">Fundamentos</div>
     <h2>Transportes</h2>
     <p>MCP suporta três mecanismos de comunicação:</p>
 
+    <div class="table-wrap">
     <table>
       <thead>
         <tr><th>Transporte</th><th>Quando usar</th><th>Características</th></tr>
       </thead>
-      <tbody class="transport-row">
+      <tbody>
         <tr>
           <td>STDIO</td>
           <td>Ferramentas locais, CLI, Claude Desktop</td>
@@ -461,145 +168,205 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
-    <pre><code><span class="cmt"># STDIO (default) — local</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="cm"># STDIO (default) — local</span>
 <span class="fn">mcp</span>.run()
 
-<span class="cmt"># HTTP — remoto</span>
-<span class="fn">mcp</span>.run(<span class="str">transport</span>=<span class="str">"http"</span>, <span class="str">host</span>=<span class="str">"0.0.0.0"</span>, <span class="str">port</span>=<span class="num">8000</span>)
+<span class="cm"># HTTP — remoto</span>
+<span class="fn">mcp</span>.run(<span class="st">transport</span>=<span class="st">"http"</span>, <span class="st">host</span>=<span class="st">"0.0.0.0"</span>, <span class="st">port</span>=<span class="nb">8000</span>)
 
-<span class="cmt"># ASGI app (para Uvicorn/Gunicorn)</span>
+<span class="cm"># ASGI app (para Uvicorn/Gunicorn)</span>
 app = <span class="fn">mcp</span>.http_app()
-<span class="cmt"># uvicorn app:app --host 0.0.0.0 --port 8000</span></code></pre>
+<span class="cm"># uvicorn app:app --host 0.0.0.0 --port 8000</span></code></pre>
+    </div>
   </section>
 
   <!-- ============================
        TOOLS
   ============================= -->
-  <section id="tools">
-    <h2>Tools <span class="badge blue">Server</span></h2>
+  <section class="section" id="tools">
+    <div class="section-label">Server-Side</div>
+    <h2>Tools <span class="badge">Server</span></h2>
     <p>Tools são o primitivo mais importante — funções Python decoradas que o LLM pode invocar. FastMCP gera automaticamente o JSON Schema, valida inputs e trata erros.</p>
 
     <h3>Definição básica</h3>
-    <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>
 
-mcp = <span class="cls">FastMCP</span>(<span class="str">"MeuServidor"</span>)
+mcp = <span class="tp">FastMCP</span>(<span class="st">"MeuServidor"</span>)
 
-<span class="dec">@mcp.tool</span>
-<span class="kw">def</span> <span class="fn">buscar_cliente</span>(cliente_id: <span class="cls">str</span>, incluir_historico: <span class="cls">bool</span> = <span class="kw">False</span>) -> <span class="cls">dict</span>:
-    <span class="str">"""Busca dados de um cliente pelo ID.
-    
+<span class="dc">@mcp.tool</span>
+<span class="kw">def</span> <span class="fn">buscar_cliente</span>(cliente_id: <span class="tp">str</span>, incluir_historico: <span class="tp">bool</span> = <span class="kw">False</span>) -> <span class="tp">dict</span>:
+    <span class="st">"""Busca dados de um cliente pelo ID.
+
     Args:
         cliente_id: ID único do cliente
         incluir_historico: Se True, inclui histórico de pedidos
     """</span>
-    <span class="cmt"># sua lógica aqui</span>
-    <span class="kw">return</span> {<span class="str">"id"</span>: cliente_id, <span class="str">"nome"</span>: <span class="str">"João"</span>}</code></pre>
+    <span class="cm"># sua lógica aqui</span>
+    <span class="kw">return</span> {<span class="st">"id"</span>: cliente_id, <span class="st">"nome"</span>: <span class="st">"João"</span>}</code></pre>
+    </div>
 
-    <div class="callout tip">
+    <div class="callout green">
       <strong>Dica</strong>
       O docstring vira a descrição da tool para o LLM. Seja descritivo — é o que o modelo usa para decidir quando e como chamar a função.
     </div>
 
     <h3>Tool assíncrona + Context</h3>
-    <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>, <span class="cls">Context</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>, <span class="tp">Context</span>
 
-<span class="dec">@mcp.tool</span>
-<span class="kw">async def</span> <span class="fn">processar_lote</span>(itens: <span class="cls">list</span>[<span class="cls">str</span>], ctx: <span class="cls">Context</span>) -> <span class="cls">str</span>:
-    <span class="str">"""Processa uma lista de itens com progresso reportado."""</span>
+<span class="dc">@mcp.tool</span>
+<span class="kw">async def</span> <span class="fn">processar_lote</span>(itens: <span class="tp">list</span>[<span class="tp">str</span>], ctx: <span class="tp">Context</span>) -> <span class="tp">str</span>:
+    <span class="st">"""Processa uma lista de itens com progresso reportado."""</span>
     <span class="kw">for</span> i, item <span class="kw">in</span> <span class="fn">enumerate</span>(itens):
-        <span class="kw">await</span> ctx.report_progress(i, <span class="fn">len</span>(itens), f<span class="str">"Processando {item}"</span>)
-        <span class="kw">await</span> ctx.info(f<span class="str">"Item {item} processado"</span>)
-        <span class="cmt"># ... lógica ...</span>
-    <span class="kw">return</span> <span class="str">"Concluído"</span></code></pre>
+        <span class="kw">await</span> ctx.report_progress(i, <span class="fn">len</span>(itens), f<span class="st">"Processando {item}"</span>)
+        <span class="kw">await</span> ctx.info(f<span class="st">"Item {item} processado"</span>)
+        <span class="cm"># ... lógica ...</span>
+    <span class="kw">return</span> <span class="st">"Concluído"</span></code></pre>
+    </div>
 
     <h3>Tipos suportados</h3>
     <p>FastMCP suporta qualquer tipo Python com suporte a Pydantic: <code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>list</code>, <code>dict</code>, <code>datetime</code>, modelos Pydantic, <code>Literal</code>, <code>Union</code>, <code>Optional</code>, <code>Enum</code> etc.</p>
 
-    <pre><code><span class="kw">from</span> pydantic <span class="kw">import</span> <span class="cls">BaseModel</span>
-<span class="kw">from</span> enum <span class="kw">import</span> <span class="cls">Enum</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> pydantic <span class="kw">import</span> <span class="tp">BaseModel</span>
+<span class="kw">from</span> enum <span class="kw">import</span> <span class="tp">Enum</span>
 
-<span class="kw">class</span> <span class="cls">Status</span>(<span class="cls">Enum</span>):
-    ATIVO = <span class="str">"ativo"</span>
-    INATIVO = <span class="str">"inativo"</span>
+<span class="kw">class</span> <span class="tp">Status</span>(<span class="tp">Enum</span>):
+    ATIVO = <span class="st">"ativo"</span>
+    INATIVO = <span class="st">"inativo"</span>
 
-<span class="kw">class</span> <span class="cls">FiltroCliente</span>(<span class="cls">BaseModel</span>):
-    status: <span class="cls">Status</span>
-    limite: <span class="cls">int</span> = <span class="num">10</span>
+<span class="kw">class</span> <span class="tp">FiltroCliente</span>(<span class="tp">BaseModel</span>):
+    status: <span class="tp">Status</span>
+    limite: <span class="tp">int</span> = <span class="nb">10</span>
 
-<span class="dec">@mcp.tool</span>
-<span class="kw">def</span> <span class="fn">listar_clientes</span>(filtro: <span class="cls">FiltroCliente</span>) -> <span class="cls">list</span>[<span class="cls">dict</span>]:
-    <span class="str">"""Lista clientes com filtro estruturado."""</span>
+<span class="dc">@mcp.tool</span>
+<span class="kw">def</span> <span class="fn">listar_clientes</span>(filtro: <span class="tp">FiltroCliente</span>) -> <span class="tp">list</span>[<span class="tp">dict</span>]:
+    <span class="st">"""Lista clientes com filtro estruturado."""</span>
     <span class="kw">pass</span></code></pre>
+    </div>
 
     <h3>Tags e controle de exposição</h3>
-    <pre><code><span class="cmt"># Exponha ou oculte tools por tags</span>
-<span class="dec">@mcp.tool</span>(tags={<span class="str">"public"</span>, <span class="str">"read-only"</span>})
-<span class="kw">def</span> <span class="fn">tool_publica</span>() -> <span class="cls">str</span>: ...
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="cm"># Exponha ou oculte tools por tags</span>
+<span class="dc">@mcp.tool</span>(tags={<span class="st">"public"</span>, <span class="st">"read-only"</span>})
+<span class="kw">def</span> <span class="fn">tool_publica</span>() -> <span class="tp">str</span>: ...
 
-<span class="dec">@mcp.tool</span>(tags={<span class="str">"admin"</span>})
-<span class="kw">def</span> <span class="fn">tool_admin</span>() -> <span class="cls">str</span>: ...
+<span class="dc">@mcp.tool</span>(tags={<span class="st">"admin"</span>})
+<span class="kw">def</span> <span class="fn">tool_admin</span>() -> <span class="tp">str</span>: ...
 
-<span class="cmt"># No servidor: só expõe tags "public"</span>
-mcp.enable(tags={<span class="str">"public"</span>}, only=<span class="kw">True</span>)</code></pre>
+<span class="cm"># No servidor: só expõe tags "public"</span>
+mcp.enable(tags={<span class="st">"public"</span>}, only=<span class="kw">True</span>)</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        RESOURCES
   ============================= -->
-  <section id="resources">
-    <h2>Resources <span class="badge purple">Server</span></h2>
+  <section class="section" id="resources">
+    <div class="section-label">Server-Side</div>
+    <h2>Resources <span class="badge">Server</span></h2>
     <p>Resources são fontes de dados identificadas por URI. O cliente decide quando ler — eles não são invocados pelo LLM como tools, mas fornecem contexto sob demanda.</p>
 
     <h3>Resource estático</h3>
-    <pre><code><span class="dec">@mcp.resource</span>(<span class="str">"config://app"</span>)
-<span class="kw">def</span> <span class="fn">get_config</span>() -> <span class="cls">dict</span>:
-    <span class="str">"""Configuração atual da aplicação."""</span>
-    <span class="kw">return</span> {<span class="str">"versao"</span>: <span class="str">"1.0"</span>, <span class="str">"ambiente"</span>: <span class="str">"prod"</span>}</code></pre>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="dc">@mcp.resource</span>(<span class="st">"config://app"</span>)
+<span class="kw">def</span> <span class="fn">get_config</span>() -> <span class="tp">dict</span>:
+    <span class="st">"""Configuração atual da aplicação."""</span>
+    <span class="kw">return</span> {<span class="st">"versao"</span>: <span class="st">"1.0"</span>, <span class="st">"ambiente"</span>: <span class="st">"prod"</span>}</code></pre>
+    </div>
 
     <h3>Resource Template (URI dinâmico)</h3>
-    <pre><code><span class="dec">@mcp.resource</span>(<span class="str">"usuario://{user_id}/perfil"</span>)
-<span class="kw">async def</span> <span class="fn">get_perfil</span>(user_id: <span class="cls">str</span>) -> <span class="cls">str</span>:
-    <span class="str">"""Perfil de um usuário específico."""</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="dc">@mcp.resource</span>(<span class="st">"usuario://{user_id}/perfil"</span>)
+<span class="kw">async def</span> <span class="fn">get_perfil</span>(user_id: <span class="tp">str</span>) -> <span class="tp">str</span>:
+    <span class="st">"""Perfil de um usuário específico."""</span>
     dados = <span class="kw">await</span> <span class="fn">buscar_usuario</span>(user_id)
     <span class="kw">return</span> <span class="fn">json.dumps</span>(dados)
 
-<span class="cmt"># Cliente acessa: usuario://abc123/perfil</span></code></pre>
+<span class="cm"># Cliente acessa: usuario://abc123/perfil</span></code></pre>
+    </div>
 
     <h3>Resource com conteúdo binário</h3>
-    <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">Image</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">Image</span>
 
-<span class="dec">@mcp.resource</span>(<span class="str">"relatorio://{mes}/grafico"</span>)
-<span class="kw">async def</span> <span class="fn">get_grafico</span>(mes: <span class="cls">str</span>) -> <span class="cls">Image</span>:
+<span class="dc">@mcp.resource</span>(<span class="st">"relatorio://{mes}/grafico"</span>)
+<span class="kw">async def</span> <span class="fn">get_grafico</span>(mes: <span class="tp">str</span>) -> <span class="tp">Image</span>:
     img_bytes = <span class="kw">await</span> <span class="fn">gerar_grafico</span>(mes)
-    <span class="kw">return</span> <span class="cls">Image</span>(data=img_bytes, format=<span class="str">"png"</span>)</code></pre>
+    <span class="kw">return</span> <span class="tp">Image</span>(data=img_bytes, format=<span class="st">"png"</span>)</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        PROMPTS
   ============================= -->
-  <section id="prompts">
-    <h2>Prompts <span class="badge green">Server</span></h2>
+  <section class="section" id="prompts">
+    <div class="section-label">Server-Side</div>
+    <h2>Prompts <span class="badge">Server</span></h2>
     <p>Prompts são templates reutilizáveis de mensagens para guiar interações do LLM de forma padronizada.</p>
 
-    <pre><code><span class="dec">@mcp.prompt</span>
-<span class="kw">def</span> <span class="fn">analisar_dados</span>(pontos: <span class="cls">list</span>[<span class="cls">float</span>], contexto: <span class="cls">str</span> = <span class="str">""</span>) -> <span class="cls">str</span>:
-    <span class="str">"""Template para análise de dados numéricos."""</span>
-    dados_fmt = <span class="str">", "</span>.<span class="fn">join</span>(<span class="fn">str</span>(p) <span class="kw">for</span> p <span class="kw">in</span> pontos)
-    <span class="kw">return</span> f<span class="str">"""Analise estes dados: {dados_fmt}
-    
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="dc">@mcp.prompt</span>
+<span class="kw">def</span> <span class="fn">analisar_dados</span>(pontos: <span class="tp">list</span>[<span class="tp">float</span>], contexto: <span class="tp">str</span> = <span class="st">""</span>) -> <span class="tp">str</span>:
+    <span class="st">"""Template para análise de dados numéricos."""</span>
+    dados_fmt = <span class="st">", "</span>.<span class="fn">join</span>(<span class="fn">str</span>(p) <span class="kw">for</span> p <span class="kw">in</span> pontos)
+    <span class="kw">return</span> f<span class="st">"""Analise estes dados: {dados_fmt}
+
 Contexto adicional: {contexto}
 
 Por favor identifique tendências, outliers e padrões relevantes."""</span></code></pre>
+    </div>
   </section>
 
   <!-- ============================
        CONTEXT
   ============================= -->
-  <section id="context">
-    <h2>Context API <span class="badge blue">Server</span></h2>
+  <section class="section" id="context">
+    <div class="section-label">Server-Side</div>
+    <h2>Context API <span class="badge">Server</span></h2>
     <p>O parâmetro <code>ctx: Context</code> em qualquer tool ou resource dá acesso a capacidades do servidor durante execução:</p>
 
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Método</th><th>O que faz</th></tr></thead>
       <tbody>
@@ -613,172 +380,226 @@ Por favor identifique tendências, outliers e padrões relevantes."""</span></co
         <tr><td><code>ctx.request_id</code></td><td>ID único da requisição atual</td></tr>
       </tbody>
     </table>
+    </div>
 
-    <pre><code><span class="dec">@mcp.tool</span>
-<span class="kw">async def</span> <span class="fn">resumir_doc</span>(uri: <span class="cls">str</span>, ctx: <span class="cls">Context</span>) -> <span class="cls">str</span>:
-    <span class="cmt"># Lê resource</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="dc">@mcp.tool</span>
+<span class="kw">async def</span> <span class="fn">resumir_doc</span>(uri: <span class="tp">str</span>, ctx: <span class="tp">Context</span>) -> <span class="tp">str</span>:
+    <span class="cm"># Lê resource</span>
     conteudo = <span class="kw">await</span> ctx.<span class="fn">read_resource</span>(uri)
-    
-    <span class="cmt"># Pede ao LLM para resumir (sampling)</span>
+
+    <span class="cm"># Pede ao LLM para resumir (sampling)</span>
     resumo = <span class="kw">await</span> ctx.<span class="fn">sample</span>(
-        f<span class="str">"Resuma em 3 bullets:\n{conteudo[0].text}"</span>,
-        max_tokens=<span class="num">300</span>
+        f<span class="st">"Resuma em 3 bullets:\n{conteudo[0].text}"</span>,
+        max_tokens=<span class="nb">300</span>
     )
     <span class="kw">return</span> resumo.text</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        LIFESPAN
   ============================= -->
-  <section id="lifespan">
-    <h2>Lifespan <span class="badge blue">Server</span></h2>
+  <section class="section" id="lifespan">
+    <div class="section-label">Server-Side</div>
+    <h2>Lifespan <span class="badge">Server</span></h2>
     <p>Lifespan gerencia recursos compartilhados que precisam existir durante toda a vida do servidor (conexões DB, pools HTTP, caches):</p>
 
-    <pre><code><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
-<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>
 
-<span class="dec">@asynccontextmanager</span>
+<span class="dc">@asynccontextmanager</span>
 <span class="kw">async def</span> <span class="fn">lifespan</span>(server):
-    <span class="cmt"># Setup: roda quando servidor inicia</span>
-    db = <span class="kw">await</span> <span class="cls">Database</span>.<span class="fn">connect</span>(<span class="str">"postgresql://..."</span>)
-    redis = <span class="kw">await</span> <span class="cls">Redis</span>.<span class="fn">create</span>(...)
-    
-    <span class="kw">yield</span> {<span class="str">"db"</span>: db, <span class="str">"redis"</span>: redis}  <span class="cmt"># disponível via ctx.lifespan_context</span>
-    
-    <span class="cmt"># Teardown: roda quando servidor para</span>
+    <span class="cm"># Setup: roda quando servidor inicia</span>
+    db = <span class="kw">await</span> <span class="tp">Database</span>.<span class="fn">connect</span>(<span class="st">"postgresql://..."</span>)
+    redis = <span class="kw">await</span> <span class="tp">Redis</span>.<span class="fn">create</span>(...)
+
+    <span class="kw">yield</span> {<span class="st">"db"</span>: db, <span class="st">"redis"</span>: redis}  <span class="cm"># disponível via ctx.lifespan_context</span>
+
+    <span class="cm"># Teardown: roda quando servidor para</span>
     <span class="kw">await</span> db.<span class="fn">disconnect</span>()
     <span class="kw">await</span> redis.<span class="fn">close</span>()
 
-mcp = <span class="cls">FastMCP</span>(<span class="str">"MeuApp"</span>, lifespan=lifespan)
+mcp = <span class="tp">FastMCP</span>(<span class="st">"MeuApp"</span>, lifespan=lifespan)
 
-<span class="dec">@mcp.tool</span>
-<span class="kw">async def</span> <span class="fn">buscar</span>(query: <span class="cls">str</span>, ctx: <span class="cls">Context</span>) -> <span class="cls">list</span>:
-    db = ctx.lifespan_context[<span class="str">"db"</span>]
+<span class="dc">@mcp.tool</span>
+<span class="kw">async def</span> <span class="fn">buscar</span>(query: <span class="tp">str</span>, ctx: <span class="tp">Context</span>) -> <span class="tp">list</span>:
+    db = ctx.lifespan_context[<span class="st">"db"</span>]
     <span class="kw">return</span> <span class="kw">await</span> db.<span class="fn">fetch</span>(query)</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        COMPOSIÇÃO
   ============================= -->
-  <section id="composicao">
-    <h2>Composição de Servidores <span class="badge amber">Advanced</span></h2>
+  <section class="section" id="composicao">
+    <div class="section-label">Server-Side</div>
+    <h2>Composição de Servidores <span class="badge">Advanced</span></h2>
     <p>FastMCP permite montar múltiplos servidores como sub-servidores, criando hierarquias e namespacing:</p>
 
-    <pre><code><span class="cmt"># Servidor de banco de dados</span>
-db_mcp = <span class="cls">FastMCP</span>(<span class="str">"Database"</span>)
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="cm"># Servidor de banco de dados</span>
+db_mcp = <span class="tp">FastMCP</span>(<span class="st">"Database"</span>)
 
-<span class="dec">@db_mcp.tool</span>
-<span class="kw">def</span> <span class="fn">query</span>(sql: <span class="cls">str</span>) -> <span class="cls">list</span>: ...
+<span class="dc">@db_mcp.tool</span>
+<span class="kw">def</span> <span class="fn">query</span>(sql: <span class="tp">str</span>) -> <span class="tp">list</span>: ...
 
-<span class="cmt"># Servidor de arquivos</span>
-files_mcp = <span class="cls">FastMCP</span>(<span class="str">"Files"</span>)
+<span class="cm"># Servidor de arquivos</span>
+files_mcp = <span class="tp">FastMCP</span>(<span class="st">"Files"</span>)
 
-<span class="dec">@files_mcp.tool</span>
-<span class="kw">def</span> <span class="fn">ler_arquivo</span>(path: <span class="cls">str</span>) -> <span class="cls">str</span>: ...
+<span class="dc">@files_mcp.tool</span>
+<span class="kw">def</span> <span class="fn">ler_arquivo</span>(path: <span class="tp">str</span>) -> <span class="tp">str</span>: ...
 
-<span class="cmt"># Servidor principal que compõe os dois</span>
-main = <span class="cls">FastMCP</span>(<span class="str">"Principal"</span>)
-main.<span class="fn">mount</span>(db_mcp, prefix=<span class="str">"db"</span>)
-main.<span class="fn">mount</span>(files_mcp, prefix=<span class="str">"files"</span>)
+<span class="cm"># Servidor principal que compõe os dois</span>
+main = <span class="tp">FastMCP</span>(<span class="st">"Principal"</span>)
+main.<span class="fn">mount</span>(db_mcp, prefix=<span class="st">"db"</span>)
+main.<span class="fn">mount</span>(files_mcp, prefix=<span class="st">"files"</span>)
 
-<span class="cmt"># Resultado: tools "db_query" e "files_ler_arquivo"</span></code></pre>
+<span class="cm"># Resultado: tools "db_query" e "files_ler_arquivo"</span></code></pre>
+    </div>
 
     <h3>OpenAPI → MCP Server</h3>
-    <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>
 
-<span class="cmt"># Gera servidor MCP a partir de qualquer OpenAPI spec</span>
-mcp = <span class="cls">FastMCP</span>.<span class="fn">from_openapi</span>(
-    openapi_url=<span class="str">"https://api.meuservico.com/openapi.json"</span>,
-    client=httpx.<span class="cls">AsyncClient</span>(base_url=<span class="str">"https://api.meuservico.com"</span>)
+<span class="cm"># Gera servidor MCP a partir de qualquer OpenAPI spec</span>
+mcp = <span class="tp">FastMCP</span>.<span class="fn">from_openapi</span>(
+    openapi_url=<span class="st">"https://api.meuservico.com/openapi.json"</span>,
+    client=httpx.<span class="tp">AsyncClient</span>(base_url=<span class="st">"https://api.meuservico.com"</span>)
 )
-<span class="cmt"># Cada endpoint vira uma tool automaticamente!</span></code></pre>
+<span class="cm"># Cada endpoint vira uma tool automaticamente!</span></code></pre>
+    </div>
   </section>
 
   <!-- ============================
        CLIENT
   ============================= -->
-  <section id="client">
-    <h2>FastMCP Client <span class="badge green">Client</span></h2>
+  <section class="section" id="client">
+    <div class="section-label">Client-Side</div>
+    <h2>FastMCP Client <span class="badge">Client</span></h2>
     <p>O <code>Client</code> é a interface programática para consumir qualquer servidor MCP — ideal para testes, agentes determinísticos e aplicações que precisam controlar chamadas MCP diretamente.</p>
 
     <h3>Conectando a servidores</h3>
-    <pre><code><span class="kw">import</span> asyncio
-<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">Client</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">import</span> asyncio
+<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">Client</span>
 
-<span class="cmt"># Em memória (mesmo processo — ideal para testes)</span>
-client = <span class="cls">Client</span>(meu_servidor)
+<span class="cm"># Em memória (mesmo processo — ideal para testes)</span>
+client = <span class="tp">Client</span>(meu_servidor)
 
-<span class="cmt"># HTTP remoto</span>
-client = <span class="cls">Client</span>(<span class="str">"https://mcp.meuservico.com/mcp"</span>)
+<span class="cm"># HTTP remoto</span>
+client = <span class="tp">Client</span>(<span class="st">"https://mcp.meuservico.com/mcp"</span>)
 
-<span class="cmt"># Script local (lança como subprocess via STDIO)</span>
-client = <span class="cls">Client</span>(<span class="str">"./servidor.py"</span>, env={<span class="str">"API_KEY"</span>: <span class="str">"..."</span>})
+<span class="cm"># Script local (lança como subprocess via STDIO)</span>
+client = <span class="tp">Client</span>(<span class="st">"./servidor.py"</span>, env={<span class="st">"API_KEY"</span>: <span class="st">"..."</span>})
 
-<span class="cmt"># Multi-servidor via config</span>
-client = <span class="cls">Client</span>({
-    <span class="str">"mcpServers"</span>: {
-        <span class="str">"db"</span>: {<span class="str">"url"</span>: <span class="str">"https://db.exemplo.com/mcp"</span>},
-        <span class="str">"files"</span>: {<span class="str">"command"</span>: <span class="str">"python"</span>, <span class="str">"args"</span>: [<span class="str">"./files.py"</span>]}
+<span class="cm"># Multi-servidor via config</span>
+client = <span class="tp">Client</span>({
+    <span class="st">"mcpServers"</span>: {
+        <span class="st">"db"</span>: {<span class="st">"url"</span>: <span class="st">"https://db.exemplo.com/mcp"</span>},
+        <span class="st">"files"</span>: {<span class="st">"command"</span>: <span class="st">"python"</span>, <span class="st">"args"</span>: [<span class="st">"./files.py"</span>]}
     }
 })</code></pre>
+    </div>
 
     <h3>Operações disponíveis</h3>
-    <pre><code><span class="kw">async with</span> <span class="cls">Client</span>(<span class="str">"https://mcp.exemplo.com/mcp"</span>) <span class="kw">as</span> client:
-    <span class="cmt"># Listar</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">async with</span> <span class="tp">Client</span>(<span class="st">"https://mcp.exemplo.com/mcp"</span>) <span class="kw">as</span> client:
+    <span class="cm"># Listar</span>
     tools     = <span class="kw">await</span> client.<span class="fn">list_tools</span>()
     resources = <span class="kw">await</span> client.<span class="fn">list_resources</span>()
     prompts   = <span class="kw">await</span> client.<span class="fn">list_prompts</span>()
-    
-    <span class="cmt"># Chamar tool</span>
-    resultado = <span class="kw">await</span> client.<span class="fn">call_tool</span>(<span class="str">"buscar_cliente"</span>, {<span class="str">"cliente_id"</span>: <span class="str">"123"</span>})
+
+    <span class="cm"># Chamar tool</span>
+    resultado = <span class="kw">await</span> client.<span class="fn">call_tool</span>(<span class="st">"buscar_cliente"</span>, {<span class="st">"cliente_id"</span>: <span class="st">"123"</span>})
     <span class="fn">print</span>(resultado.data)
-    
-    <span class="cmt"># Ler resource</span>
-    conteudo = <span class="kw">await</span> client.<span class="fn">read_resource</span>(<span class="str">"usuario://123/perfil"</span>)
-    <span class="fn">print</span>(conteudo[<span class="num">0</span>].text)
-    
-    <span class="cmt"># Renderizar prompt</span>
-    msgs = <span class="kw">await</span> client.<span class="fn">get_prompt</span>(<span class="str">"analisar_dados"</span>, {<span class="str">"pontos"</span>: [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]})
-    
-    <span class="cmt"># Ping</span>
+
+    <span class="cm"># Ler resource</span>
+    conteudo = <span class="kw">await</span> client.<span class="fn">read_resource</span>(<span class="st">"usuario://123/perfil"</span>)
+    <span class="fn">print</span>(conteudo[<span class="nb">0</span>].text)
+
+    <span class="cm"># Renderizar prompt</span>
+    msgs = <span class="kw">await</span> client.<span class="fn">get_prompt</span>(<span class="st">"analisar_dados"</span>, {<span class="st">"pontos"</span>: [<span class="nb">1</span>, <span class="nb">2</span>, <span class="nb">3</span>]})
+
+    <span class="cm"># Ping</span>
     <span class="kw">await</span> client.<span class="fn">ping</span>()</code></pre>
+    </div>
 
     <h3>Integração com LangChain/LangGraph</h3>
-    <pre><code><span class="kw">from</span> langchain_mcp_adapters.client <span class="kw">import</span> <span class="cls">MultiServerMCPClient</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> langchain_mcp_adapters.client <span class="kw">import</span> <span class="tp">MultiServerMCPClient</span>
 
-<span class="kw">async with</span> <span class="cls">MultiServerMCPClient</span>({
-    <span class="str">"agente_especialista"</span>: {
-        <span class="str">"url"</span>: <span class="str">"https://agent.interno/mcp"</span>,
-        <span class="str">"transport"</span>: <span class="str">"streamable_http"</span>,
-        <span class="str">"headers"</span>: {<span class="str">"Authorization"</span>: f<span class="str">"Bearer {token}"</span>}
+<span class="kw">async with</span> <span class="tp">MultiServerMCPClient</span>({
+    <span class="st">"agente_especialista"</span>: {
+        <span class="st">"url"</span>: <span class="st">"https://agent.interno/mcp"</span>,
+        <span class="st">"transport"</span>: <span class="st">"streamable_http"</span>,
+        <span class="st">"headers"</span>: {<span class="st">"Authorization"</span>: f<span class="st">"Bearer {token}"</span>}
     }
 }) <span class="kw">as</span> client:
-    tools = client.<span class="fn">get_tools</span>()  <span class="cmt"># LangChain BaseTool list</span>
+    tools = client.<span class="fn">get_tools</span>()  <span class="cm"># LangChain BaseTool list</span>
     agent = <span class="fn">create_react_agent</span>(llm, tools)</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        CALLBACKS
   ============================= -->
-  <section id="callbacks">
-    <h2>Callbacks do Client <span class="badge green">Client</span></h2>
+  <section class="section" id="callbacks">
+    <div class="section-label">Client-Side</div>
+    <h2>Callbacks do Client <span class="badge">Client</span></h2>
 
-    <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">Client</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">Client</span>
 
 <span class="kw">async def</span> <span class="fn">on_log</span>(msg):
-    <span class="fn">print</span>(f<span class="str">"[SERVER] {msg.level}: {msg.data}"</span>)
+    <span class="fn">print</span>(f<span class="st">"[SERVER] {msg.level}: {msg.data}"</span>)
 
 <span class="kw">async def</span> <span class="fn">on_progress</span>(progress, total, msg):
-    pct = <span class="fn">int</span>(progress / total * <span class="num">100</span>) <span class="kw">if</span> total <span class="kw">else</span> <span class="str">"?"</span>
-    <span class="fn">print</span>(f<span class="str">"[PROGRESSO] {pct}% — {msg}"</span>)
+    pct = <span class="fn">int</span>(progress / total * <span class="nb">100</span>) <span class="kw">if</span> total <span class="kw">else</span> <span class="st">"?"</span>
+    <span class="fn">print</span>(f<span class="st">"[PROGRESSO] {pct}% — {msg}"</span>)
 
-client = <span class="cls">Client</span>(
-    <span class="str">"https://mcp.exemplo.com/mcp"</span>,
+client = <span class="tp">Client</span>(
+    <span class="st">"https://mcp.exemplo.com/mcp"</span>,
     log_handler=on_log,
     progress_handler=on_progress,
-    timeout=<span class="num">60.0</span>
+    timeout=<span class="nb">60.0</span>
 )</code></pre>
+    </div>
 
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Callback</th><th>Quando dispara</th></tr></thead>
       <tbody>
@@ -788,105 +609,139 @@ client = <span class="cls">Client</span>(
         <tr><td><code>elicitation_handler</code></td><td>Server pede input interativo do usuário</td></tr>
       </tbody>
     </table>
+    </div>
   </section>
 
   <!-- ============================
        SAMPLING
   ============================= -->
-  <section id="sampling">
-    <h2>Sampling <span class="badge amber">Advanced</span></h2>
+  <section class="section" id="sampling">
+    <div class="section-label">Client-Side</div>
+    <h2>Sampling <span class="badge">Advanced</span></h2>
     <p>Sampling permite que o <em>servidor</em> peça ao LLM do cliente para gerar texto — inversão do fluxo normal. Útil para agentes que precisam de raciocínio intermediário sem expor credenciais do LLM no servidor.</p>
 
-    <pre><code><span class="cmt"># No SERVIDOR: pede ao cliente para gerar texto</span>
-<span class="dec">@mcp.tool</span>
-<span class="kw">async def</span> <span class="fn">classificar</span>(texto: <span class="cls">str</span>, ctx: <span class="cls">Context</span>) -> <span class="cls">str</span>:
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="cm"># No SERVIDOR: pede ao cliente para gerar texto</span>
+<span class="dc">@mcp.tool</span>
+<span class="kw">async def</span> <span class="fn">classificar</span>(texto: <span class="tp">str</span>, ctx: <span class="tp">Context</span>) -> <span class="tp">str</span>:
     resposta = <span class="kw">await</span> ctx.<span class="fn">sample</span>(
-        f<span class="str">"Classifique este texto em: positivo/negativo/neutro.\nTexto: {texto}"</span>,
-        max_tokens=<span class="num">50</span>
+        f<span class="st">"Classifique este texto em: positivo/negativo/neutro.\nTexto: {texto}"</span>,
+        max_tokens=<span class="nb">50</span>
     )
     <span class="kw">return</span> resposta.text
 
-<span class="cmt"># No CLIENTE: provê o handler de sampling</span>
+<span class="cm"># No CLIENTE: provê o handler de sampling</span>
 <span class="kw">async def</span> <span class="fn">sampling_handler</span>(messages, params, context):
     response = <span class="kw">await</span> llm.<span class="fn">ainvoke</span>(messages)
     <span class="kw">return</span> response.content
 
-client = <span class="cls">Client</span>(mcp, sampling_handler=sampling_handler)</code></pre>
+client = <span class="tp">Client</span>(mcp, sampling_handler=sampling_handler)</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        HTTP DEPLOY
   ============================= -->
-  <section id="http">
-    <h2>Deploy HTTP <span class="badge amber">Produção</span></h2>
+  <section class="section" id="http">
+    <div class="section-label">Produção</div>
+    <h2>Deploy HTTP <span class="badge">Produção</span></h2>
 
     <h3>Standalone</h3>
-    <pre><code><span class="cmt"># server.py</span>
-<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — server.py</span>
+      </div>
+      <pre><code><span class="cm"># server.py</span>
+<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>
 
-mcp = <span class="cls">FastMCP</span>(<span class="str">"MeuServidor"</span>)
+mcp = <span class="tp">FastMCP</span>(<span class="st">"MeuServidor"</span>)
 
-<span class="dec">@mcp.custom_route</span>(<span class="str">"/health"</span>, methods=[<span class="str">"GET"</span>])
+<span class="dc">@mcp.custom_route</span>(<span class="st">"/health"</span>, methods=[<span class="st">"GET"</span>])
 <span class="kw">async def</span> <span class="fn">health</span>(request):
-    <span class="kw">from</span> starlette.responses <span class="kw">import</span> <span class="cls">JSONResponse</span>
-    <span class="kw">return</span> <span class="cls">JSONResponse</span>({<span class="str">"status"</span>: <span class="str">"ok"</span>})
+    <span class="kw">from</span> starlette.responses <span class="kw">import</span> <span class="tp">JSONResponse</span>
+    <span class="kw">return</span> <span class="tp">JSONResponse</span>({<span class="st">"status"</span>: <span class="st">"ok"</span>})
 
-<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
-    mcp.run(transport=<span class="str">"http"</span>, host=<span class="str">"0.0.0.0"</span>, port=<span class="num">8000</span>)
-<span class="cmt"># Endpoint MCP: http://host:8000/mcp</span></code></pre>
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    mcp.run(transport=<span class="st">"http"</span>, host=<span class="st">"0.0.0.0"</span>, port=<span class="nb">8000</span>)
+<span class="cm"># Endpoint MCP: http://host:8000/mcp</span></code></pre>
+    </div>
 
     <h3>ASGI (produção com Uvicorn/ECS)</h3>
-    <pre><code><span class="cmt"># app.py</span>
-app = mcp.http_app(path=<span class="str">"/mcp"</span>)
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — app.py</span>
+      </div>
+      <pre><code><span class="cm"># app.py</span>
+app = mcp.http_app(path=<span class="st">"/mcp"</span>)
 
-<span class="cmt"># Dockerfile / ECS task</span>
-<span class="cmt"># uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4</span></code></pre>
+<span class="cm"># Dockerfile / ECS task</span>
+<span class="cm"># uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4</span></code></pre>
+    </div>
 
     <h3>Montado em FastAPI</h3>
-    <pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> <span class="cls">FastAPI</span>
-<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> <span class="tp">FastAPI</span>
+<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>
 
-api = <span class="cls">FastAPI</span>()
-mcp = <span class="cls">FastMCP</span>(<span class="str">"MeuMCP"</span>)
+api = <span class="tp">FastAPI</span>()
+mcp = <span class="tp">FastMCP</span>(<span class="st">"MeuMCP"</span>)
 
-<span class="cmt"># Suas rotas REST normais</span>
-<span class="dec">@api.get</span>(<span class="str">"/usuarios"</span>)
+<span class="cm"># Suas rotas REST normais</span>
+<span class="dc">@api.get</span>(<span class="st">"/usuarios"</span>)
 <span class="kw">async def</span> <span class="fn">usuarios</span>(): ...
 
-<span class="cmt"># MCP montado em /mcp</span>
+<span class="cm"># MCP montado em /mcp</span>
 mcp_app = mcp.http_app()
-api.<span class="fn">mount</span>(<span class="str">"/mcp"</span>, mcp_app)
-<span class="cmt"># uvicorn main:api</span></code></pre>
+api.<span class="fn">mount</span>(<span class="st">"/mcp"</span>, mcp_app)
+<span class="cm"># uvicorn main:api</span></code></pre>
+    </div>
   </section>
 
   <!-- ============================
        AUTENTICAÇÃO
   ============================= -->
-  <section id="autenticacao">
-    <h2>Autenticação <span class="badge amber">Produção</span></h2>
+  <section class="section" id="autenticacao">
+    <div class="section-label">Produção</div>
+    <h2>Autenticação <span class="badge">Produção</span></h2>
     <p>FastMCP suporta múltiplos mecanismos de autenticação para servidores HTTP. Relevante para sua arquitetura com JWT/Bearer:</p>
 
     <h3>Bearer Token (JWT via IdP externo — Okta/Auth0)</h3>
-    <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
-<span class="kw">from</span> fastmcp.server.auth <span class="kw">import</span> <span class="cls">BearerAuthProvider</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>
+<span class="kw">from</span> fastmcp.server.auth <span class="kw">import</span> <span class="tp">BearerAuthProvider</span>
 
-<span class="cmt"># Valida JWTs emitidos pelo seu IdP via JWKS</span>
-auth = <span class="cls">BearerAuthProvider</span>(
-    jwks_uri=<span class="str">"https://seu-idp.com/.well-known/jwks.json"</span>,
-    audience=<span class="str">"https://sua-api.com"</span>,
-    issuer=<span class="str">"https://seu-idp.com/"</span>
+<span class="cm"># Valida JWTs emitidos pelo seu IdP via JWKS</span>
+auth = <span class="tp">BearerAuthProvider</span>(
+    jwks_uri=<span class="st">"https://seu-idp.com/.well-known/jwks.json"</span>,
+    audience=<span class="st">"https://sua-api.com"</span>,
+    issuer=<span class="st">"https://seu-idp.com/"</span>
 )
 
-mcp = <span class="cls">FastMCP</span>(<span class="str">"SecureServer"</span>, auth=auth)
+mcp = <span class="tp">FastMCP</span>(<span class="st">"SecureServer"</span>, auth=auth)
 
-<span class="cmt"># Acessar claims do token dentro das tools:</span>
-<span class="dec">@mcp.tool</span>
-<span class="kw">async def</span> <span class="fn">minha_tool</span>(ctx: <span class="cls">Context</span>) -> <span class="cls">str</span>:
+<span class="cm"># Acessar claims do token dentro das tools:</span>
+<span class="dc">@mcp.tool</span>
+<span class="kw">async def</span> <span class="fn">minha_tool</span>(ctx: <span class="tp">Context</span>) -> <span class="tp">str</span>:
     token = ctx.<span class="fn">get_access_token</span>()
-    user_id = token.claims.get(<span class="str">"sub"</span>)
-    <span class="kw">return</span> f<span class="str">"Olá, {user_id}"</span></code></pre>
+    user_id = token.claims.get(<span class="st">"sub"</span>)
+    <span class="kw">return</span> f<span class="st">"Olá, {user_id}"</span></code></pre>
+    </div>
 
-    <div class="callout tip">
+    <div class="callout green">
       <strong>Para sua arquitetura</strong>
       Isso é exatamente o padrão que você já usa no API Gateway com JWT Authorizer. O FastMCP faz a mesma validação via JWKS — você pode usar o mesmo token Bearer que o API Gateway valida.
     </div>
@@ -895,95 +750,122 @@ mcp = <span class="cls">FastMCP</span>(<span class="str">"SecureServer"</span>, 
     <p>FastMCP tem integrações prontas para: Auth0, Okta, AWS Cognito, Azure Entra ID, Google, GitHub, Discord, Keycloak, Supabase, e mais. Cada uma tem uma página de docs em <code>gofastmcp.com/integrations/</code>.</p>
 
     <h3>Client com Bearer</h3>
-    <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">Client</span>
-<span class="kw">from</span> fastmcp.client.auth <span class="kw">import</span> <span class="cls">BearerAuth</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">Client</span>
+<span class="kw">from</span> fastmcp.client.auth <span class="kw">import</span> <span class="tp">BearerAuth</span>
 
-client = <span class="cls">Client</span>(
-    <span class="str">"https://mcp.meuservico.com/mcp"</span>,
-    auth=<span class="cls">BearerAuth</span>(token=<span class="str">"eyJ..."</span>)
+client = <span class="tp">Client</span>(
+    <span class="st">"https://mcp.meuservico.com/mcp"</span>,
+    auth=<span class="tp">BearerAuth</span>(token=<span class="st">"eyJ..."</span>)
 )</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        MIDDLEWARE
   ============================= -->
-  <section id="middleware">
-    <h2>Middleware <span class="badge purple">Server</span></h2>
+  <section class="section" id="middleware">
+    <div class="section-label">Produção</div>
+    <h2>Middleware <span class="badge">Server</span></h2>
     <p>Middleware intercepta toda mensagem MCP (requests, responses, notifications) — ideal para logging, rate limiting, tracing:</p>
 
-    <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
-<span class="kw">from</span> fastmcp.server.middleware <span class="kw">import</span> <span class="cls">Middleware</span>, <span class="cls">MiddlewareContext</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>
+<span class="kw">from</span> fastmcp.server.middleware <span class="kw">import</span> <span class="tp">Middleware</span>, <span class="tp">MiddlewareContext</span>
 
-<span class="kw">class</span> <span class="cls">LoggingMiddleware</span>(<span class="cls">Middleware</span>):
-    <span class="kw">async def</span> <span class="fn">on_request</span>(self, ctx: <span class="cls">MiddlewareContext</span>, call_next):
-        <span class="fn">print</span>(f<span class="str">"→ {ctx.method} | client={ctx.client_id}"</span>)
+<span class="kw">class</span> <span class="tp">LoggingMiddleware</span>(<span class="tp">Middleware</span>):
+    <span class="kw">async def</span> <span class="fn">on_request</span>(self, ctx: <span class="tp">MiddlewareContext</span>, call_next):
+        <span class="fn">print</span>(f<span class="st">"→ {ctx.method} | client={ctx.client_id}"</span>)
         response = <span class="kw">await</span> <span class="fn">call_next</span>(ctx)
-        <span class="fn">print</span>(f<span class="str">"← {ctx.method} ok"</span>)
+        <span class="fn">print</span>(f<span class="st">"← {ctx.method} ok"</span>)
         <span class="kw">return</span> response
 
-mcp = <span class="cls">FastMCP</span>(<span class="str">"App"</span>, middleware=[<span class="cls">LoggingMiddleware</span>()])
+mcp = <span class="tp">FastMCP</span>(<span class="st">"App"</span>, middleware=[<span class="tp">LoggingMiddleware</span>()])
 
-<span class="cmt"># CORS para HTTP (necessário apenas para clientes browser)</span>
-<span class="kw">from</span> starlette.middleware.cors <span class="kw">import</span> <span class="cls">CORSMiddleware</span>
-<span class="kw">from</span> starlette.middleware <span class="kw">import</span> <span class="cls">Middleware</span> <span class="kw">as</span> <span class="cls">StarletteMiddleware</span>
+<span class="cm"># CORS para HTTP (necessário apenas para clientes browser)</span>
+<span class="kw">from</span> starlette.middleware.cors <span class="kw">import</span> <span class="tp">CORSMiddleware</span>
+<span class="kw">from</span> starlette.middleware <span class="kw">import</span> <span class="tp">Middleware</span> <span class="kw">as</span> <span class="tp">StarletteMiddleware</span>
 
 app = mcp.http_app(middleware=[
-    <span class="cls">StarletteMiddleware</span>(<span class="cls">CORSMiddleware</span>, allow_origins=[<span class="str">"*"</span>], allow_methods=[<span class="str">"*"</span>],
-        allow_headers=[<span class="str">"mcp-protocol-version"</span>, <span class="str">"mcp-session-id"</span>, <span class="str">"Authorization"</span>],
-        expose_headers=[<span class="str">"mcp-session-id"</span>])
+    <span class="tp">StarletteMiddleware</span>(<span class="tp">CORSMiddleware</span>, allow_origins=[<span class="st">"*"</span>], allow_methods=[<span class="st">"*"</span>],
+        allow_headers=[<span class="st">"mcp-protocol-version"</span>, <span class="st">"mcp-session-id"</span>, <span class="st">"Authorization"</span>],
+        expose_headers=[<span class="st">"mcp-session-id"</span>])
 ])</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        BACKGROUND TASKS
   ============================= -->
-  <section id="background">
-    <h2>Background Tasks <span class="badge amber">v2.14+</span></h2>
+  <section class="section" id="background">
+    <div class="section-label">Produção</div>
+    <h2>Background Tasks <span class="badge">v2.14+</span></h2>
     <p>Operações longas podem rodar assincronamente enquanto o cliente faz polling do resultado — evita timeout de load balancers:</p>
 
-    <pre><code><span class="cmt"># Habilitar no servidor</span>
-mcp = <span class="cls">FastMCP</span>(<span class="str">"App"</span>, tasks=<span class="kw">True</span>)
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="cm"># Habilitar no servidor</span>
+mcp = <span class="tp">FastMCP</span>(<span class="st">"App"</span>, tasks=<span class="kw">True</span>)
 
-<span class="dec">@mcp.tool</span>
-<span class="kw">async def</span> <span class="fn">processar_video</span>(url: <span class="cls">str</span>, task=<span class="kw">True</span>) -> <span class="cls">str</span>:
-    <span class="str">"""Processa vídeo de forma assíncrona."""</span>
-    <span class="cmt"># Retorna imediatamente, roda em background</span>
+<span class="dc">@mcp.tool</span>
+<span class="kw">async def</span> <span class="fn">processar_video</span>(url: <span class="tp">str</span>, task=<span class="kw">True</span>) -> <span class="tp">str</span>:
+    <span class="st">"""Processa vídeo de forma assíncrona."""</span>
+    <span class="cm"># Retorna imediatamente, roda em background</span>
     resultado = <span class="kw">await</span> <span class="fn">download_e_processar</span>(url)
     <span class="kw">return</span> resultado
 
-<span class="cmt"># Cliente: chama e observa progresso</span>
+<span class="cm"># Cliente: chama e observa progresso</span>
 <span class="kw">async with</span> client:
-    task = <span class="kw">await</span> client.<span class="fn">call_tool</span>(<span class="str">"processar_video"</span>, {<span class="str">"url"</span>: <span class="str">"..."</span>})
+    task = <span class="kw">await</span> client.<span class="fn">call_tool</span>(<span class="st">"processar_video"</span>, {<span class="st">"url"</span>: <span class="st">"..."</span>})
     resultado = <span class="kw">await</span> client.<span class="fn">wait_for_task</span>(task.task_id)</code></pre>
+    </div>
   </section>
 
   <!-- ============================
        OPENAPI
   ============================= -->
-  <section id="openapi">
-    <h2>OpenAPI → MCP <span class="badge green">Integração</span></h2>
+  <section class="section" id="openapi">
+    <div class="section-label">Produção</div>
+    <h2>OpenAPI → MCP <span class="badge">Integração</span></h2>
     <p>FastMCP pode gerar um servidor MCP completo a partir de qualquer OpenAPI spec — cada endpoint vira uma tool automaticamente:</p>
 
-    <pre><code><span class="kw">import</span> httpx
-<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="cls">FastMCP</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="kw">import</span> httpx
+<span class="kw">from</span> fastmcp <span class="kw">import</span> <span class="tp">FastMCP</span>
 
-<span class="cmt"># A partir de URL</span>
-mcp = <span class="cls">FastMCP</span>.<span class="fn">from_openapi</span>(
-    openapi_url=<span class="str">"https://api.exemplo.com/openapi.json"</span>,
-    client=httpx.<span class="cls">AsyncClient</span>(
-        base_url=<span class="str">"https://api.exemplo.com"</span>,
-        headers={<span class="str">"Authorization"</span>: <span class="str">"Bearer ..."</span>}
+<span class="cm"># A partir de URL</span>
+mcp = <span class="tp">FastMCP</span>.<span class="fn">from_openapi</span>(
+    openapi_url=<span class="st">"https://api.exemplo.com/openapi.json"</span>,
+    client=httpx.<span class="tp">AsyncClient</span>(
+        base_url=<span class="st">"https://api.exemplo.com"</span>,
+        headers={<span class="st">"Authorization"</span>: <span class="st">"Bearer ..."</span>}
     ),
-    name=<span class="str">"ExemploAPI"</span>
+    name=<span class="st">"ExemploAPI"</span>
 )
 
-<span class="cmt"># A partir de dict/arquivo local</span>
-<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"openapi.json"</span>) <span class="kw">as</span> f:
+<span class="cm"># A partir de dict/arquivo local</span>
+<span class="kw">with</span> <span class="fn">open</span>(<span class="st">"openapi.json"</span>) <span class="kw">as</span> f:
     spec = json.<span class="fn">load</span>(f)
 
-mcp = <span class="cls">FastMCP</span>.<span class="fn">from_openapi</span>(openapi=spec, client=httpx.<span class="cls">AsyncClient</span>(...))</code></pre>
+mcp = <span class="tp">FastMCP</span>.<span class="fn">from_openapi</span>(openapi=spec, client=httpx.<span class="tp">AsyncClient</span>(...))</code></pre>
+    </div>
 
-    <div class="callout info">
+    <div class="callout">
       <strong>Caso de uso</strong>
       Expor suas APIs REST internas como tools MCP sem reescrever nada. Útil para o seu BFF MCP Server que chama sistemas externos.
     </div>
@@ -992,37 +874,39 @@ mcp = <span class="cls">FastMCP</span>.<span class="fn">from_openapi</span>(open
   <!-- ============================
        LIMITES
   ============================= -->
-  <section id="limites">
+  <section class="section" id="limites">
+    <div class="section-label">Limites & Dicas</div>
     <h2>Limites e Considerações</h2>
 
     <div class="grid-2">
-      <div class="card">
+      <div class="info-card">
         <h4>⚠️ Sem estado por padrão</h4>
         <p>MCP servers HTTP são stateless entre requisições. Use <code>session_state_store</code> ou Redis externo para estado de sessão.</p>
       </div>
-      <div class="card">
+      <div class="info-card">
         <h4>⚠️ Timeout de LB</h4>
         <p>Tools lentas podem causar timeout em ALBs (padrão 60s). Use Background Tasks ou aumente o idle timeout no ALB.</p>
       </div>
-      <div class="card">
+      <div class="info-card">
         <h4>⚠️ Schema de tools</h4>
         <p>O LLM vê o JSON Schema das tools. Inputs muito complexos (schemas aninhados profundos) podem confundir o modelo. Prefira tipos simples ou Pydantic models bem documentados.</p>
       </div>
-      <div class="card">
+      <div class="info-card">
         <h4>⚠️ Erro handling</h4>
         <p>Em produção, use <code>mask_error_details=True</code> para não vazar detalhes internos de erro para o LLM/cliente.</p>
       </div>
-      <div class="card">
+      <div class="info-card">
         <h4>⚠️ CORS</h4>
         <p>Só necessário se o cliente MCP roda no browser. Claude Desktop, agentes LangGraph e API calls não precisam de CORS.</p>
       </div>
-      <div class="card">
+      <div class="info-card">
         <h4>⚠️ SSE deprecado</h4>
         <p>Transport SSE está deprecado. Use Streamable HTTP (<code>transport="http"</code>) para novos deployments.</p>
       </div>
     </div>
 
     <h3>Limites de tamanho</h3>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Item</th><th>Limite / Comportamento</th></tr></thead>
       <tbody>
@@ -1033,29 +917,33 @@ mcp = <span class="cls">FastMCP</span>.<span class="fn">from_openapi</span>(open
         <tr><td>Sessões simultâneas</td><td>Limitado pelo número de workers (Uvicorn/Gunicorn)</td></tr>
       </tbody>
     </table>
+    </div>
   </section>
 
   <!-- ============================
        INTEGRAÇÕES
   ============================= -->
-  <section id="integracoes">
+  <section class="section" id="integracoes">
+    <div class="section-label">Limites & Dicas</div>
     <h2>Clientes MCP compatíveis</h2>
     <p>Qualquer servidor FastMCP é automaticamente compatível com:</p>
 
     <div class="grid-3">
-      <div class="card"><h4>LLM Hosts</h4><p>Claude Desktop, Claude Code, ChatGPT, Gemini CLI, Cursor, Goose</p></div>
-      <div class="card"><h4>SDKs</h4><p>Anthropic API, OpenAI API, Gemini SDK, Pydantic AI</p></div>
-      <div class="card"><h4>Agentes</h4><p>LangChain/LangGraph (via langchain-mcp-adapters), Pydantic AI, qualquer cliente MCP custom</p></div>
+      <div class="info-card"><h4>LLM Hosts</h4><p>Claude Desktop, Claude Code, ChatGPT, Gemini CLI, Cursor, Goose</p></div>
+      <div class="info-card"><h4>SDKs</h4><p>Anthropic API, OpenAI API, Gemini SDK, Pydantic AI</p></div>
+      <div class="info-card"><h4>Agentes</h4><p>LangChain/LangGraph (via langchain-mcp-adapters), Pydantic AI, qualquer cliente MCP custom</p></div>
     </div>
   </section>
 
   <!-- ============================
        NA SUA ARQUITETURA
   ============================= -->
-  <section id="arquitetura">
+  <section class="section" id="arquitetura">
+    <div class="section-label">Limites & Dicas</div>
     <h2>Na sua arquitetura multi-agente AWS</h2>
     <p>Mapeando o MCP para os três accounts que você opera:</p>
 
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Account / Componente</th><th>Papel MCP</th><th>Padrão recomendado</th></tr></thead>
       <tbody>
@@ -1076,61 +964,79 @@ mcp = <span class="cls">FastMCP</span>.<span class="fn">from_openapi</span>(open
         </tr>
       </tbody>
     </table>
+    </div>
 
     <h3>Padrão de auth cross-account</h3>
-    <pre><code><span class="cmt"># Supervisor → Specialist (via Bearer JWT do IdP)</span>
-<span class="kw">from</span> langchain_mcp_adapters.client <span class="kw">import</span> <span class="cls">MultiServerMCPClient</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><code><span class="cm"># Supervisor → Specialist (via Bearer JWT do IdP)</span>
+<span class="kw">from</span> langchain_mcp_adapters.client <span class="kw">import</span> <span class="tp">MultiServerMCPClient</span>
 
-<span class="cmt"># Token obtido do IdP (Okta/Auth0) com escopo do agente</span>
-token = <span class="kw">await</span> <span class="fn">get_agent_token</span>(scope=<span class="str">"specialist:financeiro"</span>)
+<span class="cm"># Token obtido do IdP (Okta/Auth0) com escopo do agente</span>
+token = <span class="kw">await</span> <span class="fn">get_agent_token</span>(scope=<span class="st">"specialist:financeiro"</span>)
 
-client = <span class="cls">MultiServerMCPClient</span>({
-    <span class="str">"financeiro"</span>: {
-        <span class="str">"url"</span>: <span class="str">"https://financeiro-agent.interno/mcp"</span>,
-        <span class="str">"transport"</span>: <span class="str">"streamable_http"</span>,
-        <span class="str">"headers"</span>: {<span class="str">"Authorization"</span>: f<span class="str">"Bearer {token}"</span>}
+client = <span class="tp">MultiServerMCPClient</span>({
+    <span class="st">"financeiro"</span>: {
+        <span class="st">"url"</span>: <span class="st">"https://financeiro-agent.interno/mcp"</span>,
+        <span class="st">"transport"</span>: <span class="st">"streamable_http"</span>,
+        <span class="st">"headers"</span>: {<span class="st">"Authorization"</span>: f<span class="st">"Bearer {token}"</span>}
     }
 })
 
-<span class="cmt"># No specialist server: valida o JWT</span>
-auth = <span class="cls">BearerAuthProvider</span>(
-    jwks_uri=<span class="str">"https://seu-idp.com/.well-known/jwks.json"</span>,
-    audience=<span class="str">"specialist:financeiro"</span>
+<span class="cm"># No specialist server: valida o JWT</span>
+auth = <span class="tp">BearerAuthProvider</span>(
+    jwks_uri=<span class="st">"https://seu-idp.com/.well-known/jwks.json"</span>,
+    audience=<span class="st">"specialist:financeiro"</span>
 )
-mcp = <span class="cls">FastMCP</span>(<span class="str">"Financeiro"</span>, auth=auth)</code></pre>
+mcp = <span class="tp">FastMCP</span>(<span class="st">"Financeiro"</span>, auth=auth)</code></pre>
+    </div>
 
-    <div class="callout tip">
+    <div class="callout green">
       <strong>Dica para sua stack</strong>
       Use o <code>Lifespan</code> do FastMCP para inicializar a conexão com o OpenSearch Knowledge Base do specialist. O contexto fica disponível em todas as tools via <code>ctx.lifespan_context</code> — evita reconectar a cada chamada.
     </div>
 
     <h3>CLI úteis para dev e debug</h3>
-    <pre><code><span class="cmt"># Instalar servidor no Claude Desktop/Code</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">bash</span>
+      </div>
+      <pre><code><span class="cm"># Instalar servidor no Claude Desktop/Code</span>
 fastmcp install servidor.py
 
-<span class="cmt"># Inspecionar tools/resources de um servidor</span>
+<span class="cm"># Inspecionar tools/resources de um servidor</span>
 fastmcp inspect servidor.py
 
-<span class="cmt"># Chamar tool direto do terminal</span>
+<span class="cm"># Chamar tool direto do terminal</span>
 fastmcp call servidor.py buscar_cliente --cliente_id=123
 
-<span class="cmt"># Gerar CLI tipado a partir de um servidor MCP</span>
+<span class="cm"># Gerar CLI tipado a partir de um servidor MCP</span>
 fastmcp generate-cli servidor.py -o cli_tool.py</code></pre>
+    </div>
   </section>
 
-</main>
+  <div class="doc-footer">
+    <a href="../index.html">← Voltar para DevDocs</a>
+    <span>MCP & FastMCP</span>
+  </div>
+
 </div>
+</main>
 
 <script>
   // Active nav link on scroll
   const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('nav a');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         navLinks.forEach(l => l.classList.remove('active'));
-        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
         if (active) active.classList.add('active');
       }
     });
