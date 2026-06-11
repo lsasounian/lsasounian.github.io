@@ -84,6 +84,19 @@
   .badge::before { content: '●'; font-size: 8px; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    margin-bottom: 24px;
+    transition: color .2s;
+  }
+  .back-link:hover { color: var(--blue); }
+
   h1 {
     font-size: clamp(2rem, 5vw, 3.2rem);
     font-weight: 700;
@@ -260,6 +273,7 @@
 <div class="wrapper">
 
   <header>
+    <a href="../../index.html" class="back-link">← DevDocs</a>
     <div class="badge">Documentação Técnica</div>
     <h1>Multi-Agent AI<br/><span>Systems Architecture</span></h1>
     <p class="subtitle">Documentação de referência para implementação de sistemas multi-agentes com LangChain, LangGraph e MCP em ambiente AWS multi-conta.</p>

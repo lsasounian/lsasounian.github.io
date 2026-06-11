@@ -71,6 +71,18 @@
     margin-top: 2px;
   }
 
+  nav .back-link {
+    display: block;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 0 20px 14px;
+    transition: color 0.15s;
+  }
+
+  nav .back-link:hover { color: var(--accent); }
+
   nav a {
     display: block;
     padding: 6px 20px;
@@ -320,6 +332,7 @@
 
 <!-- NAV -->
 <nav>
+  <a href="../index.html" class="back-link">← DevDocs</a>
   <div class="logo">
     <h1>MCP Guide</h1>
     <p>FastMCP · 2025/2026</p>
