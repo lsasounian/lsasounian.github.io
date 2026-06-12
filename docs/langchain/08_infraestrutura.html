@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infraestrutura — Multi-Agent AWS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #0a0e14;
+    --surface: #0f1520;
+    --border: #1e2d40;
+    --accent: #e07840;
+    --accent2: #f0a060;
+    --text: #c8d8e8;
+    --muted: #5a7a9a;
+    --green: #3ecf8e;
+    --red: #e05a5a;
+    --yellow: #f0c060;
+    --blue: #60a8f0;
+    --purple: #a06af0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .hero {
+    padding: 80px 64px 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(224,120,64,0.08) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: #e8f0f8;
+    margin-bottom: 24px;
+  }
+
+  h1 strong { font-weight: 600; color: var(--accent); }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 560px;
+    font-weight: 300;
+  }
+
+  /* Cluster diagram */
+  .cluster-diagram {
+    margin-top: 48px;
+    max-width: 800px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .cluster-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+  }
+
+  .cluster-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .service-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+
+  .service-row:last-child { border-bottom: none; }
+
+  .service-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-green { background: var(--green); }
+  .dot-blue { background: var(--blue); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-orange { background: var(--accent); }
+
+  .service-name { color: var(--text); flex: 1; }
+  .service-detail { color: var(--muted); font-size: 11px; }
+
+  .redis-box {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    border-radius: 4px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  .redis-label { color: var(--accent2); font-weight: 600; }
+  .redis-detail { color: var(--muted); font-size: 12px; }
+
+  /* Content */
+  .content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 64px;
+  }
+
+  .section { margin-bottom: 64px; }
+
+  h2 {
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  h3 { font-size: 18px; font-weight: 600; color: #e8f0f8; margin-bottom: 12px; }
+
+  p { color: var(--muted); margin-bottom: 16px; max-width: 680px; }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+
+  .kw { color: #7eb8f0; }
+  .fn { color: #a8d8a8; }
+  .st { color: #f0c8a0; }
+  .cm { color: #4a6a8a; font-style: italic; }
+  .nb { color: #f0a060; }
+  .cls { color: #d0a8f0; }
+
+  /* ECS Services table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    margin-bottom: 32px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  tr:hover td { background: #0f1a28; }
+
+  /* Task definition card */
+  .task-def {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .task-def-header {
+    background: #0a1420;
+    padding: 12px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .task-def-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: rgba(224,120,64,0.12);
+    border: 1px solid rgba(224,120,64,0.3);
+    color: var(--accent);
+  }
+
+  .container-row {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .container-row:last-child { border-bottom: none; }
+
+  .container-badge {
+    flex: 0 0 120px;
+    padding: 16px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .container-badge.main { color: var(--blue); background: rgba(96,168,240,0.05); }
+  .container-badge.sidecar { color: var(--yellow); background: rgba(240,192,96,0.05); }
+
+  .container-details {
+    flex: 1;
+    padding: 16px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+
+  .container-name { color: #e8f0f8; font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+  .container-meta { color: var(--muted); }
+
+  .badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.08em;
+  }
+
+  .badge-green { background: rgba(62,207,142,0.12); color: var(--green); border: 1px solid rgba(62,207,142,0.3); }
+  .badge-blue { background: rgba(96,168,240,0.12); color: var(--blue); border: 1px solid rgba(96,168,240,0.3); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">Multi-Agent AWS · Padrões de Sistema</div>
+  <h1>Arquitetura de<br><strong>infraestrutura</strong></h1>
+  <p class="hero-sub">Dois ECS Services por cluster, uma imagem Docker, um Redis compartilhado. Sidecar X-Ray Daemon em cada task.</p>
+
+  <div class="cluster-diagram">
+    <div class="cluster-box">
+      <div class="cluster-title">ECS Cluster · booking</div>
+      <div class="service-row">
+        <div class="service-dot dot-blue"></div>
+        <span class="service-name">booking-agent</span>
+        <span class="service-detail">desired_count: 3</span>
+      </div>
+      <div class="service-row">
+        <div class="service-dot dot-orange"></div>
+        <span class="service-name">recovery-worker</span>
+        <span class="service-detail">desired_count: 1</span>
+      </div>
+    </div>
+    <div class="cluster-box">
+      <div class="cluster-title">ECS Cluster · search</div>
+      <div class="service-row">
+        <div class="service-dot dot-green"></div>
+        <span class="service-name">search-agent</span>
+        <span class="service-detail">desired_count: 5</span>
+      </div>
+      <div class="service-row">
+        <div class="service-dot dot-orange"></div>
+        <span class="service-name">recovery-worker</span>
+        <span class="service-detail">desired_count: 1</span>
+      </div>
+    </div>
+    <div class="redis-box">
+      <span class="redis-label">ElastiCache Redis</span>
+      <span class="redis-detail">compartilhado · checkpoints · heartbeats · locks · DLQ</span>
+      <span class="redis-label">Auth Service</span>
+      <span class="redis-detail">JWKS endpoint · emissão de tokens</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <h2>ECS Services — visão geral</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>desired_count</th>
+          <th>command</th>
+          <th>Função</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>booking-agent</td>
+          <td>3+</td>
+          <td><code>python app.py</code></td>
+          <td>FastAPI + LangGraph + heartbeat</td>
+        </tr>
+        <tr>
+          <td>search-agent</td>
+          <td>5+</td>
+          <td><code>python app.py</code></td>
+          <td>FastAPI + LangGraph + heartbeat</td>
+        </tr>
+        <tr>
+          <td>recovery-worker</td>
+          <td>1</td>
+          <td><code>python recovery_worker.py</code></td>
+          <td>OrphanScanner + RecoveryConsumer + QueueMonitor</td>
+        </tr>
+        <tr>
+          <td>auth-service</td>
+          <td>2</td>
+          <td><code>python auth_service/main.py</code></td>
+          <td>JWKS endpoint + emissão de tokens RS256</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Mesma imagem Docker para <code>booking-agent</code> e <code>recovery-worker</code>. O <code>command</code> no Terraform task definition determina o comportamento — sem necessidade de Dockerfiles separados.</p>
+  </div>
+
+  <div class="section">
+    <h2>Task Definition — containers por task</h2>
+    <div class="task-def">
+      <div class="task-def-header">
+        <span>booking-agent — task definition</span>
+        <span class="task-def-badge">2 containers por task</span>
+      </div>
+      <div class="container-row">
+        <div class="container-badge main">principal</div>
+        <div class="container-details">
+          <div class="container-name">agent</div>
+          <div class="container-meta">
+            image: {ECR_URL}/agent:latest<br>
+            command: ["python", "app.py"]<br>
+            env: REDIS_URL, SERVICE_NAME, OTLP_ENDPOINT=http://localhost:4317<br>
+            port: 8000
+          </div>
+        </div>
+      </div>
+      <div class="container-row">
+        <div class="container-badge sidecar">sidecar</div>
+        <div class="container-details">
+          <div class="container-name">xray-daemon</div>
+          <div class="container-meta">
+            image: amazon/aws-xray-daemon:latest<br>
+            port 4317 (OTLP gRPC) · port 2000/udp (X-Ray nativo)<br>
+            sem port no host — só acessível via localhost
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Terraform — task definitions</h2>
+    <pre><code><span class="cm"># Agent task</span>
+container_definitions = jsonencode([
+  {
+    name    = <span class="st">"agent"</span>
+    image   = <span class="st">"${aws_ecr_repository.app.repository_url}:latest"</span>
+    command = [<span class="st">"python"</span>, <span class="st">"app.py"</span>]
+    environment = [
+      { name = <span class="st">"REDIS_URL"</span>,      value = var.redis_url },
+      { name = <span class="st">"SERVICE_NAME"</span>,   value = <span class="st">"booking-agent"</span> },
+      { name = <span class="st">"OTLP_ENDPOINT"</span>, value = <span class="st">"http://localhost:4317"</span> },
+    ]
+    stopTimeout = <span class="nb">120</span>  <span class="cm"># aguarda tasks ativas terminarem</span>
+  },
+  {
+    name  = <span class="st">"xray-daemon"</span>
+    image = <span class="st">"amazon/aws-xray-daemon:latest"</span>
+    portMappings = [
+      { containerPort = <span class="nb">4317</span>, protocol = <span class="st">"tcp"</span> },  <span class="cm"># OTLP</span>
+      { containerPort = <span class="nb">2000</span>, protocol = <span class="st">"udp"</span> },  <span class="cm"># X-Ray nativo</span>
+    ]
+  }
+])
+
+<span class="cm"># Recovery Worker task — mesma imagem, comando diferente</span>
+container_definitions = jsonencode([{
+  name    = <span class="st">"recovery-worker"</span>
+  image   = <span class="st">"${aws_ecr_repository.app.repository_url}:latest"</span>
+  command = [<span class="st">"python"</span>, <span class="st">"recovery_worker.py"</span>]
+  environment = [
+    { name = <span class="st">"REDIS_URL"</span>,               value = var.redis_url },
+    { name = <span class="st">"RECOVERY_MAX_ATTEMPTS"</span>,   value = <span class="st">"3"</span> },
+    { name = <span class="st">"RECOVERY_QUEUE_MAX_SIZE"</span>, value = <span class="st">"100"</span> },
+  ]
+}])</code></pre>
+  </div>
+
+  <div class="section">
+    <h2>Dockerfile — entrypoint flexível</h2>
+    <pre><code><span class="cm"># Sem CMD fixo — definido no ECS task definition via command[]</span>
+<span class="cm"># Permite reutilizar a mesma imagem para agent e recovery-worker</span>
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt --no-cache-dir
+
+COPY . .
+
+<span class="cm"># Sem CMD aqui — ECS passa ["python", "app.py"]</span>
+<span class="cm"># ou ["python", "recovery_worker.py"] via task definition</span></code></pre>
+
+    <p>Essa abordagem evita manter dois Dockerfiles sincronizados. O código base é o mesmo — só o entrypoint muda por environment.</p>
+  </div>
+
+  <div class="section">
+    <h2>Por que o Recovery Worker não fala com o Agent Task</h2>
+    <p>É um equívoco comum imaginar que o worker precisaria "avisar" o agente. Ele não se comunica com nenhum ECS task — apenas com o Redis.</p>
+    <pre><code><span class="cm"># O estado vive no Redis, não no processo</span>
+<span class="cm"># Quando o ECS task morre:</span>
+<span class="cm">#   - Processo: perdido</span>
+<span class="cm">#   - Checkpoint (Redis): intacto</span>
+<span class="cm">#   - Heartbeat (Redis): expira em 30s</span>
+<span class="cm">#</span>
+<span class="cm"># Recovery Worker detecta: heartbeat expirou, checkpoint existe</span>
+<span class="cm"># Recovery Worker age: ainvoke(None, thread_id)</span>
+<span class="cm"># LangGraph age: lê checkpoint do Redis → continua</span>
+<span class="cm">#</span>
+<span class="cm"># Nenhuma comunicação inter-processo necessária.</span></code></pre>
+  </div>
+
+</div>
+</body>
+</html>

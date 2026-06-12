@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Observabilidade — Multi-Agent AWS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #0a0e14;
+    --surface: #0f1520;
+    --border: #1e2d40;
+    --accent: #60a8f0;
+    --accent2: #90c8f8;
+    --text: #c8d8e8;
+    --muted: #5a7a9a;
+    --green: #3ecf8e;
+    --red: #e05a5a;
+    --yellow: #f0c060;
+    --orange: #e07840;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .hero {
+    padding: 80px 64px 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(96,168,240,0.08) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: #e8f0f8;
+    margin-bottom: 24px;
+  }
+
+  h1 strong { font-weight: 600; color: var(--accent); }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 560px;
+    font-weight: 300;
+  }
+
+  /* Trace tree */
+  .trace-tree {
+    margin-top: 48px;
+    max-width: 720px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  .trace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .trace-id {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+
+  .trace-duration {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .span-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 0;
+  }
+
+  .span-name { color: var(--text); flex: 0 0 300px; }
+  .span-bar-wrap { flex: 1; position: relative; height: 16px; }
+
+  .span-bar {
+    position: absolute;
+    height: 10px;
+    top: 3px;
+    border-radius: 2px;
+    opacity: 0.8;
+  }
+
+  .span-duration {
+    font-size: 11px;
+    color: var(--muted);
+    flex: 0 0 40px;
+    text-align: right;
+  }
+
+  .svc-a { background: var(--accent); }
+  .svc-b { background: var(--green); }
+  .svc-c { background: var(--orange); }
+
+  .span-indent { color: var(--muted); }
+
+  /* Content */
+  .content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 64px;
+  }
+
+  .section { margin-bottom: 64px; }
+
+  h2 {
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e8f0f8;
+    margin-bottom: 12px;
+  }
+
+  p {
+    color: var(--muted);
+    margin-bottom: 16px;
+    max-width: 680px;
+  }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+
+  .kw { color: #7eb8f0; }
+  .fn { color: #a8d8a8; }
+  .st { color: #f0c8a0; }
+  .cm { color: #4a6a8a; font-style: italic; }
+  .nb { color: #f0a060; }
+  .cls { color: #d0a8f0; }
+
+  /* Stack diagram */
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    max-width: 600px;
+    margin-bottom: 48px;
+  }
+
+  .stack-layer {
+    background: var(--surface);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .stack-arrow {
+    background: transparent;
+    padding: 4px 24px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .stack-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    flex: 0 0 24px;
+  }
+
+  .stack-name {
+    font-weight: 600;
+    color: #e8f0f8;
+    flex: 1;
+    font-size: 14px;
+  }
+
+  .stack-detail {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Sampling table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    margin-bottom: 32px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  tr:hover td { background: #0f1a28; }
+
+  .flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  .ok { color: var(--green); }
+  .err { color: var(--red); }
+  .warn { color: var(--yellow); }
+  .dim { color: var(--muted); }
+  .blue-t { color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">Multi-Agent AWS · Padrões de Sistema</div>
+  <h1>Observabilidade<br><strong>distribuída</strong></h1>
+  <p class="hero-sub">Um trace_id único atravessa múltiplos agentes ECS. OpenTelemetry propaga o contexto, X-Ray unifica a visão.</p>
+
+  <div class="trace-tree">
+    <div class="trace-header">
+      <span class="trace-id">Trace: 1-abc123 · travel-booking</span>
+      <span class="trace-duration">duração total: 2.3s</span>
+    </div>
+
+    <div class="span-row">
+      <span class="span-name">[booking-agent] POST /invoke</span>
+      <div class="span-bar-wrap"><div class="span-bar svc-a" style="left:0%; width:100%;"></div></div>
+      <span class="span-duration">2.3s</span>
+    </div>
+    <div class="span-row">
+      <span class="span-name"><span class="span-indent">├── </span>langgraph.node.router</span>
+      <div class="span-bar-wrap"><div class="span-bar svc-a" style="left:0%; width:5%;"></div></div>
+      <span class="span-duration">0.1s</span>
+    </div>
+    <div class="span-row">
+      <span class="span-name"><span class="span-indent">├── </span>langgraph.node.search</span>
+      <div class="span-bar-wrap"><div class="span-bar svc-a" style="left:5%; width:17%;"></div></div>
+      <span class="span-duration">0.4s</span>
+    </div>
+    <div class="span-row">
+      <span class="span-name"><span class="span-indent">├── </span>langgraph.node.book_hotel</span>
+      <div class="span-bar-wrap"><div class="span-bar svc-a" style="left:22%; width:48%;"></div></div>
+      <span class="span-duration">1.1s</span>
+    </div>
+    <div class="span-row">
+      <span class="span-name"><span class="span-indent">│&nbsp;&nbsp;&nbsp;└── </span>HTTP POST hotel-api</span>
+      <div class="span-bar-wrap"><div class="span-bar svc-c" style="left:26%; width:39%;"></div></div>
+      <span class="span-duration">0.9s</span>
+    </div>
+    <div class="span-row">
+      <span class="span-name"><span class="span-indent">└── </span>[search-agent] A2A</span>
+      <div class="span-bar-wrap"><div class="span-bar svc-b" style="left:70%; width:35%;"></div></div>
+      <span class="span-duration">0.8s</span>
+    </div>
+    <div class="span-row">
+      <span class="span-name"><span class="span-indent">&nbsp;&nbsp;&nbsp;&nbsp;└── </span>langgraph.node.search</span>
+      <div class="span-bar-wrap"><div class="span-bar svc-b" style="left:72%; width:21%;"></div></div>
+      <span class="span-duration">0.5s</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <h2>Stack de componentes</h2>
+    <div class="stack">
+      <div class="stack-layer">
+        <span class="stack-num">1</span>
+        <span class="stack-name">AWS X-Ray</span>
+        <span class="stack-detail">visualização · service map · traces</span>
+      </div>
+      <div class="stack-arrow">↑ recebe via OTLP</div>
+      <div class="stack-layer">
+        <span class="stack-num">2</span>
+        <span class="stack-name">X-Ray Daemon</span>
+        <span class="stack-detail">sidecar ECS · porta 4317 (gRPC)</span>
+      </div>
+      <div class="stack-arrow">↑ exporta BatchSpanProcessor</div>
+      <div class="stack-layer">
+        <span class="stack-num">3</span>
+        <span class="stack-name">OTLPSpanExporter</span>
+        <span class="stack-detail">opentelemetry-exporter-otlp-proto-grpc</span>
+      </div>
+      <div class="stack-arrow">↑ cria spans</div>
+      <div class="stack-layer">
+        <span class="stack-num">4</span>
+        <span class="stack-name">@traced_node decorator</span>
+        <span class="stack-detail">cada nó LangGraph → span filho</span>
+      </div>
+      <div class="stack-arrow">↑ cria root span</div>
+      <div class="stack-layer">
+        <span class="stack-num">5</span>
+        <span class="stack-name">FastAPIInstrumentor</span>
+        <span class="stack-detail">automático por request · propaga entre agentes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Propagação A2A — W3C TraceContext</h2>
+    <pre><code><span class="cm"># Agente A — injeta no header antes de chamar Agente B</span>
+<span class="kw">from</span> opentelemetry.propagate <span class="kw">import</span> inject
+
+headers = {<span class="st">"Authorization"</span>: <span class="st">f"Bearer {token}"</span>}
+inject(headers)  <span class="cm"># adiciona traceparent: 00-{trace_id}-{span_id}-01</span>
+
+<span class="cm"># HTTPXClientInstrumentor faz isso automaticamente para httpx</span>
+
+<span class="cm"># Agente B — extrai e continua o mesmo trace</span>
+<span class="kw">from</span> opentelemetry.propagate <span class="kw">import</span> extract
+
+ctx = extract(dict(request.headers))  <span class="cm"># FastAPIInstrumentor faz automaticamente</span>
+
+<span class="kw">with</span> tracer.start_as_current_span(<span class="st">"agent_b.invoke"</span>, context=ctx,
+        kind=SpanKind.SERVER) <span class="kw">as</span> span:
+    span.set_attribute(<span class="st">"langgraph.thread_id"</span>, body.thread_id)
+    <span class="cm"># mesmo trace_id — árvore unificada no X-Ray</span></code></pre>
+  </div>
+
+  <div class="section">
+    <h2>Sampling strategies</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Ambiente</th>
+          <th>Sampler</th>
+          <th>Ratio</th>
+          <th>Comportamento</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>dev</td>
+          <td>TraceIdRatioBased</td>
+          <td>1.0</td>
+          <td>captura 100% — visibilidade total</td>
+        </tr>
+        <tr>
+          <td>staging</td>
+          <td>ParentBased(Ratio)</td>
+          <td>0.5</td>
+          <td>respeita decisão do pai A2A</td>
+        </tr>
+        <tr>
+          <td>prod baixo volume</td>
+          <td>ParentBased(Ratio)</td>
+          <td>0.1</td>
+          <td>10% · pai decide para a cadeia</td>
+        </tr>
+        <tr>
+          <td>prod alto volume</td>
+          <td>ErrorAwareSampler</td>
+          <td>0.01</td>
+          <td>1% normal · 100% em erros</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong style="color:#e8f0f8;">ParentBased</strong> é a chave para multi-agent: se o orquestrador samplea o trace, todos os agentes filhos na cadeia seguem a mesma decisão. O trace_id é sempre o mesmo — só a decisão de exportar ou não muda.</p>
+  </div>
+
+  <div class="section">
+    <h2>@traced_node — decorator para nós LangGraph</h2>
+    <pre><code><span class="kw">def</span> <span class="fn">traced_node</span>(node_name, attributes=<span class="kw">None</span>):
+    <span class="kw">def</span> decorator(func):
+        <span class="kw">@wraps</span>(func)
+        <span class="kw">async def</span> wrapper(state, config, *args, **kwargs):
+            thread_id = config[<span class="st">"configurable"</span>][<span class="st">"thread_id"</span>]
+
+            <span class="kw">with</span> tracer.start_as_current_span(
+                <span class="st">f"langgraph.node.{node_name}"</span>,
+                kind=SpanKind.INTERNAL
+            ) <span class="kw">as</span> span:
+                span.set_attribute(<span class="st">"langgraph.node"</span>, node_name)
+                span.set_attribute(<span class="st">"langgraph.thread_id"</span>, thread_id)
+                <span class="kw">try</span>:
+                    result = <span class="kw">await</span> func(state, config, *args, **kwargs)
+                    span.set_status(Status(StatusCode.OK))
+                    <span class="kw">return</span> result
+                <span class="kw">except</span> <span class="cls">Exception</span> <span class="kw">as</span> exc:
+                    span.record_exception(exc)
+                    span.set_status(Status(StatusCode.ERROR))
+                    <span class="kw">raise</span>
+        <span class="kw">return</span> wrapper
+    <span class="kw">return</span> decorator
+
+<span class="cm"># Uso — compõe com outros decorators</span>
+<span class="kw">@</span><span class="fn">traced_node</span>(<span class="st">"book_hotel"</span>, attributes={<span class="st">"agent.capability"</span>: <span class="st">"booking"</span>})
+<span class="kw">@</span><span class="fn">idempotent_node</span>(redis, <span class="st">"book_hotel"</span>, key_fields=[<span class="st">"hotel_id"</span>])
+<span class="kw">async def</span> <span class="fn">book_hotel_node</span>(state, config): ...</code></pre>
+  </div>
+
+  <div class="section">
+    <h2>Logging estruturado — CloudWatch Logs Insights</h2>
+    <pre><code><span class="cm"># QueueMonitor emite JSON — Logs Insights parseia automaticamente</span>
+logger.info(<span class="st">"METRICS %s"</span>, json.dumps({
+    <span class="st">"recovery_queue_size"</span>: <span class="nb">12</span>,
+    <span class="st">"recovery_queue_max"</span>: <span class="nb">100</span>,
+    <span class="st">"recovery_queue_utilization"</span>: <span class="nb">0.12</span>,
+    <span class="st">"dlq_size"</span>: <span class="nb">0</span>,
+    <span class="st">"threads_in_progress"</span>: <span class="nb">8</span>,
+}))
+
+<span class="cm"># Query no Logs Insights:</span>
+<span class="cm"># fields @timestamp, recovery_queue_size, dlq_size</span>
+<span class="cm"># | filter ispresent(recovery_queue_size)</span>
+<span class="cm"># | sort @timestamp desc</span></code></pre>
+  </div>
+
+</div>
+</body>
+</html>
