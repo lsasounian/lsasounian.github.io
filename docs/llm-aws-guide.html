@@ -1,799 +1,261 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LLMs Open Source na AWS — Guia de Arquitetura</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LLMs Open Source na AWS — Documentação</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-  :root {
-    --bg:       #0A0F1E;
-    --surface1: #111827;
-    --surface2: #1E2A3A;
-    --surface3: #243347;
-    --border:   #1F3050;
-    --text:     #E2E8F7;
-    --muted:    #6B8AAD;
-    --cyan:     #00D9FF;
-    --purple:   #7C3AED;
-    --purple-l: #A78BFA;
-    --green:    #10B981;
-    --amber:    #F59E0B;
-    --red:      #EF4444;
-    --mono:     'JetBrains Mono', monospace;
-    --sans:     'Inter', sans-serif;
-    --sidebar:  260px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.7;
-    display: flex;
-  }
-
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: var(--sidebar);
-    min-height: 100vh;
-    background: var(--surface1);
-    border-right: 1px solid var(--border);
-    position: fixed;
-    top: 0; left: 0;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    z-index: 100;
-  }
-
-  .sidebar-logo {
-    padding: 24px 20px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sidebar-logo .logo-tag {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--cyan);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
-  .sidebar-logo h1 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.4;
-  }
-
-  .sidebar-nav { padding: 16px 0; flex: 1; }
-
-  .nav-section-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 12px 20px 6px;
-  }
-
-  .nav-link {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 20px;
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 400;
-    transition: all 0.15s;
-    border-left: 2px solid transparent;
-    cursor: pointer;
-  }
-
-  .nav-link:hover { color: var(--text); background: var(--surface2); }
-  .nav-link.active { color: var(--cyan); border-left-color: var(--cyan); background: rgba(0,217,255,0.06); }
-
-  .nav-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    flex-shrink: 0;
-    opacity: 0.5;
-  }
-  .nav-link.active .nav-dot { opacity: 1; }
-
-  .sidebar-footer {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border);
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  .status-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    background: var(--green);
-    border-radius: 50%;
-    margin-right: 6px;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
-  /* ── MAIN ── */
-  .main {
-    margin-left: var(--sidebar);
-    flex: 1;
-    max-width: calc(100vw - var(--sidebar));
-  }
-
-  /* ── HERO ── */
-  .hero {
-    padding: 64px 64px 48px;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, var(--bg) 0%, #0D1830 100%);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -100px; right: -100px;
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(0,217,255,0.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .hero-eyebrow {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--cyan);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-  }
-
-  .hero h2 {
-    font-size: 36px;
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 16px;
-    background: linear-gradient(135deg, var(--text) 0%, var(--cyan) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .hero p {
-    color: var(--muted);
-    max-width: 600px;
-    font-size: 15px;
-    margin-bottom: 32px;
-  }
-
-  .hero-badges {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .badge {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 4px;
-    border: 1px solid;
-    letter-spacing: 0.05em;
-  }
-
-  .badge-cyan  { color: var(--cyan);    border-color: rgba(0,217,255,0.3);  background: rgba(0,217,255,0.06); }
-  .badge-purple{ color: var(--purple-l);border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.06); }
-  .badge-green { color: var(--green);   border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.06); }
-  .badge-amber { color: var(--amber);   border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.06); }
-
-  /* ── SECTIONS ── */
-  .section {
-    padding: 56px 64px;
-    border-bottom: 1px solid var(--border);
-    scroll-margin-top: 24px;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 36px;
-  }
-
-  .section-icon {
-    width: 40px; height: 40px;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  .icon-cyan   { background: rgba(0,217,255,0.1);  border: 1px solid rgba(0,217,255,0.2); }
-  .icon-purple { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2); }
-  .icon-green  { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); }
-  .icon-amber  { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); }
-
-  .section-header h2 {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-
-  .section-header p { color: var(--muted); font-size: 14px; }
-
-  /* ── MODEL CARDS ── */
-  .model-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-    margin-bottom: 8px;
-  }
-
-  .model-card {
-    background: var(--surface1);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s, transform 0.2s;
-    cursor: default;
-  }
-
-  .model-card:hover {
-    border-color: var(--surface3);
-    transform: translateY(-2px);
-  }
-
-  .model-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-
-  .model-card.llama::before    { background: linear-gradient(90deg, #00D9FF, #0088AA); }
-  .model-card.deepseek::before { background: linear-gradient(90deg, #7C3AED, #A78BFA); }
-  .model-card.mistral::before  { background: linear-gradient(90deg, #F59E0B, #D97706); }
-  .model-card.qwen::before     { background: linear-gradient(90deg, #10B981, #059669); }
-
-  .model-name {
-    font-weight: 600;
-    font-size: 16px;
-    margin-bottom: 4px;
-  }
-
-  .model-org {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
-
-  .model-stats {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-
-  .stat {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .stat-value {
-    font-family: var(--mono);
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .stat-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .model-desc {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.6;
-    margin-bottom: 14px;
-  }
-
-  .model-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-
-  .tag {
-    font-family: var(--mono);
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 3px;
-    background: var(--surface2);
-    color: var(--muted);
-    border: 1px solid var(--border);
-  }
-
-  /* ── HOSTING OPTIONS ── */
-  .hosting-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  .hosting-card {
-    background: var(--surface1);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 24px;
-    position: relative;
-    transition: border-color 0.2s;
-  }
-
-  .hosting-card:hover { border-color: var(--surface3); }
-
-  .hosting-card.recommended { border-color: rgba(0,217,255,0.3); }
-
-  .recommended-badge {
-    position: absolute;
-    top: 16px; right: 16px;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--cyan);
-    background: rgba(0,217,255,0.1);
-    border: 1px solid rgba(0,217,255,0.2);
-    padding: 2px 8px;
-    border-radius: 3px;
-    letter-spacing: 0.08em;
-  }
-
-  .hosting-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .hosting-subtitle {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  .hosting-meta {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .meta-item { display: flex; flex-direction: column; gap: 2px; }
-
-  .meta-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .meta-value { font-size: 13px; font-weight: 500; }
-
-  .meta-value.good  { color: var(--green); }
-  .meta-value.warn  { color: var(--amber); }
-  .meta-value.bad   { color: var(--red);   }
-  .meta-value.muted { color: var(--muted); }
-
-  .hosting-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
-
-  /* ── GPU TABLE ── */
-  .gpu-table-wrap {
-    background: var(--surface1);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 32px;
-  }
-
-  .gpu-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-
-  .gpu-table thead {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .gpu-table th {
-    padding: 12px 16px;
-    text-align: left;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .gpu-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-  }
-
-  .gpu-table tr:last-child td { border-bottom: none; }
-  .gpu-table tr:hover td { background: var(--surface2); }
-
-  .gpu-table td:first-child { font-family: var(--mono); color: var(--cyan); }
-
-  /* ── CODE BLOCKS ── */
-  .code-block {
-    background: #080D18;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 20px 0;
-    position: relative;
-  }
-
-  .code-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .code-lang {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .copy-btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 3px 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .copy-btn:hover { color: var(--cyan); border-color: var(--cyan); }
-  .copy-btn.copied { color: var(--green); border-color: var(--green); }
-
-  pre {
-    padding: 20px;
-    overflow-x: auto;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.7;
-    color: #CBD5E1;
-  }
-
-  .kw  { color: #7C3AED; }
-  .str { color: #10B981; }
-  .cm  { color: #4B6070; font-style: italic; }
-  .fn  { color: #00D9FF; }
-  .nm  { color: #F59E0B; }
-  .op  { color: #6B8AAD; }
-
-  /* ── ARCH DIAGRAM ── */
-  .arch-diagram {
-    background: #080D18;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 32px;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.9;
-    color: #6B8AAD;
-    overflow-x: auto;
-    position: relative;
-  }
-
-  .arch-diagram .arch-cyan   { color: var(--cyan); }
-  .arch-diagram .arch-purple { color: var(--purple-l); }
-  .arch-diagram .arch-green  { color: var(--green); }
-  .arch-diagram .arch-amber  { color: var(--amber); }
-  .arch-diagram .arch-muted  { color: #4B6070; }
-
-  /* ── TIMELINE ── */
-  .timeline {
-    position: relative;
-    padding-left: 32px;
-    margin: 24px 0;
-  }
-
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 11px; top: 0; bottom: 0;
-    width: 1px;
-    background: var(--border);
-  }
-
-  .timeline-item {
-    position: relative;
-    margin-bottom: 20px;
-  }
-
-  .timeline-item::before {
-    content: '';
-    position: absolute;
-    left: -25px; top: 7px;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    border: 2px solid var(--cyan);
-    background: var(--bg);
-  }
-
-  .timeline-item.done::before { background: var(--cyan); }
-
-  .timeline-time {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--cyan);
-    margin-bottom: 4px;
-  }
-
-  .timeline-label { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
-  .timeline-desc  { font-size: 13px; color: var(--muted); }
-
-  /* ── CALLOUTS ── */
-  .callout {
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin: 20px 0;
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-  }
-
-  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-
-  .callout-body { flex: 1; }
-  .callout-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-  .callout-text  { font-size: 13px; line-height: 1.6; }
-
-  .callout.info   { background: rgba(0,217,255,0.06);  border: 1px solid rgba(0,217,255,0.15); }
-  .callout.warn   { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15); }
-  .callout.tip    { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15); }
-
-  .callout.info .callout-title   { color: var(--cyan); }
-  .callout.warn .callout-title   { color: var(--amber); }
-  .callout.tip  .callout-title   { color: var(--green); }
-  .callout-text { color: var(--muted); }
-
-  /* ── COMPARISON TABLE ── */
-  .compare-wrap {
-    background: var(--surface1);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 20px 0;
-  }
-
-  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-
-  .compare-table thead {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .compare-table th {
-    padding: 12px 16px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    font-weight: 500;
-    text-align: left;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .compare-table th:first-child { color: var(--text); }
-
-  .compare-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .compare-table tr:last-child td { border-bottom: none; }
-  .compare-table tr:hover td { background: rgba(255,255,255,0.02); }
-  .compare-table td:first-child { font-weight: 500; }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 900px) {
-    .sidebar { display: none; }
-    .main { margin-left: 0; max-width: 100vw; }
-    .hero, .section { padding: 32px 24px; }
-    .hosting-grid { grid-template-columns: 1fr; }
-    .model-grid { grid-template-columns: 1fr; }
-  }
-
-  /* ── SCROLL INDICATOR ── */
-  .progress-bar {
-    position: fixed;
-    top: 0; left: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--cyan), var(--purple-l));
-    z-index: 999;
-    transition: width 0.1s;
-  }
-
-  /* ── LORA FLOW ── */
-  .lora-flow {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr auto 1fr;
-    align-items: center;
-    gap: 0;
-    background: var(--surface1);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 20px 0;
-  }
-
-  .lora-node {
-    padding: 20px;
-    text-align: center;
-  }
-
-  .lora-node-title {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .lora-node-value { font-size: 13px; font-weight: 500; }
-
-  .lora-arrow {
-    color: var(--border);
-    font-size: 20px;
-    padding: 0 4px;
-  }
-
-  .lora-center {
-    background: var(--surface2);
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    padding: 20px;
-    text-align: center;
-  }
-
-  .lora-center-title {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--cyan);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 8px;
-  }
-
-  .lora-adapters { display: flex; flex-direction: column; gap: 4px; }
-
-  .lora-adapter {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 3px;
-    background: rgba(124,58,237,0.12);
-    border: 1px solid rgba(124,58,237,0.25);
-    color: var(--purple-l);
-  }
+:root { --accent: var(--amber); --accent-dim: var(--amber-dim); }
+
+/* ── MODEL CARDS ── */
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.model-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s, transform .2s;
+}
+.model-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+.model-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.model-card.llama::before    { background: linear-gradient(90deg, var(--cyan), #0088AA); }
+.model-card.deepseek::before { background: linear-gradient(90deg, var(--purple), #A78BFA); }
+.model-card.mistral::before  { background: linear-gradient(90deg, var(--amber), #D97706); }
+.model-card.qwen::before     { background: linear-gradient(90deg, var(--green), #059669); }
+
+.model-name { font-weight: 600; font-size: 1rem; color: var(--text); margin-bottom: 2px; }
+.model-org {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.model-stats { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+.stat { display: flex; flex-direction: column; gap: 2px; }
+.stat-value {
+  font-family: var(--mono);
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.model-desc { font-size: .85rem; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+.model-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── HOSTING OPTIONS ── */
+.hosting-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+.hosting-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  transition: border-color .2s;
+}
+.hosting-card:hover { border-color: var(--border-hi); }
+.hosting-card.recommended { border-color: var(--accent); }
+.recommended-badge {
+  position: absolute;
+  top: 16px; right: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.hosting-title { font-size: 1rem; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+.hosting-subtitle {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.hosting-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.meta-item { display: flex; flex-direction: column; gap: 2px; }
+.meta-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.meta-value { font-size: .85rem; font-weight: 500; }
+.meta-value.good  { color: var(--green); }
+.meta-value.warn  { color: var(--amber); }
+.meta-value.bad   { color: var(--red); }
+.meta-value.muted { color: var(--muted); }
+.hosting-desc { font-size: .85rem; color: var(--muted); line-height: 1.6; margin-bottom: 0; }
+
+/* ── TIMELINE ── */
+.timeline {
+  position: relative;
+  padding-left: 32px;
+  margin: 28px 0;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px; top: 4px; bottom: 4px;
+  width: 1px;
+  background: var(--border-hi);
+}
+.timeline-item { position: relative; margin-bottom: 22px; }
+.timeline-item:last-child { margin-bottom: 0; }
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -25px; top: 6px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  background: var(--bg);
+}
+.timeline-item.done::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.timeline-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.timeline-label { font-size: .92rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.timeline-desc { font-size: .85rem; color: var(--muted); }
+
+/* ── LORA FLOW ── */
+.lora-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 24px 0;
+}
+.lora-node { padding: 20px; text-align: center; }
+.lora-node-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.lora-node-value { font-size: .85rem; font-weight: 500; }
+.lora-arrow { color: var(--border-hi); font-size: 20px; padding: 0 4px; text-align: center; }
+.lora-center {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  text-align: center;
+}
+.lora-center-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+.lora-adapters { display: flex; flex-direction: column; gap: 4px; }
+.lora-adapter {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--purple) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--purple) 25%, transparent);
+  color: var(--purple);
+}
+
+@media (max-width: 860px) {
+  .hosting-grid { grid-template-columns: 1fr; }
+  .lora-flow { grid-template-columns: 1fr; }
+  .lora-arrow { transform: rotate(90deg); }
+}
 </style>
 </head>
 <body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
 
-<div class="progress-bar" id="progress"></div>
-
-<!-- ── SIDEBAR ── -->
 <aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-tag">// Arquitetura</div>
-    <h1>LLMs Open Source<br>na AWS</h1>
-  </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-label">Conteúdo</div>
-    <a class="nav-link active" href="#modelos" onclick="setActive(this)">
-      <span class="nav-dot"></span>Modelos Open Source
-    </a>
-    <a class="nav-link" href="#hospedagem" onclick="setActive(this)">
-      <span class="nav-dot"></span>Opções na AWS
-    </a>
-    <a class="nav-link" href="#instancias" onclick="setActive(this)">
-      <span class="nav-dot"></span>Instâncias GPU
-    </a>
-    <a class="nav-link" href="#langchain" onclick="setActive(this)">
-      <span class="nav-dot"></span>Integração LangChain
-    </a>
-    <a class="nav-link" href="#ecs-gpu" onclick="setActive(this)">
-      <span class="nav-dot"></span>ECS Task Definition GPU
-    </a>
-    <a class="nav-link" href="#multi-lora" onclick="setActive(this)">
-      <span class="nav-dot"></span>Multi-LoRA
-    </a>
-    <a class="nav-link" href="#warm-pool" onclick="setActive(this)">
-      <span class="nav-dot"></span>Warm Pool ASG
-    </a>
-    <a class="nav-link" href="#lora-warmup" onclick="setActive(this)">
-      <span class="nav-dot"></span>LoRA Warmup Script
-    </a>
-    <a class="nav-link" href="#arquitetura" onclick="setActive(this)">
-      <span class="nav-dot"></span>Arquitetura Completa
-    </a>
-    <a class="nav-link" href="#timeline" onclick="setActive(this)">
-      <span class="nav-dot"></span>Timeline de Cold Start
-    </a>
+  <a href="../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">LLM</span>
+    <span class="doc-title">Self-Hosted AWS</span>
+  </a>
+  <nav>
+    <div class="nav-section">Modelos &amp; Hospedagem</div>
+    <a href="#modelos">Modelos Open Source</a>
+    <a href="#hospedagem">Opções de Hospedagem</a>
+    <a href="#instancias">Instâncias GPU</a>
+
+    <div class="nav-section">Implementação</div>
+    <a href="#langchain">Integração LangChain</a>
+    <a href="#ecs-gpu">ECS Task Definition GPU</a>
+    <a href="#multi-lora">Multi-LoRA no vLLM</a>
+    <a href="#warm-pool">Warm Pool ASG</a>
+    <a href="#lora-warmup">LoRA Warmup Script</a>
+
+    <div class="nav-section">Arquitetura &amp; Roadmap</div>
+    <a href="#arquitetura">Arquitetura Completa</a>
+    <a href="#timeline">Timeline de Cold Start</a>
   </nav>
-  <div class="sidebar-footer">
-    <span class="status-dot"></span>vLLM OpenAI-Compatible
-  </div>
 </aside>
 
-<!-- ── MAIN ── -->
 <main class="main">
+<div class="wrapper">
 
-  <!-- HERO -->
-  <div class="hero">
-    <div class="hero-eyebrow">// Self-Hosted LLM Architecture</div>
-    <h2>LLMs Open Source<br>Self-Hosted na AWS</h2>
-    <p>Guia completo: modelos, hospedagem, integração com LangChain/LangGraph, ECS com GPU, Multi-LoRA e otimizações de cold start para produção.</p>
-    <div class="hero-badges">
-      <span class="badge badge-cyan">vLLM</span>
-      <span class="badge badge-purple">Multi-LoRA</span>
-      <span class="badge badge-green">LangChain / LangGraph</span>
-      <span class="badge badge-amber">ECS + EC2 GPU</span>
-      <span class="badge badge-cyan">Warm Pool ASG</span>
-      <span class="badge badge-purple">OpenAI-Compatible API</span>
-    </div>
-  </div>
+  <header class="doc-header">
+    <div class="doc-num">LLM Self-Hosted · AWS</div>
+    <h1>LLMs Open Source<br/><em>Self-Hosted na AWS</em></h1>
+    <p class="doc-lead">Guia completo: modelos, hospedagem, integração com LangChain/LangGraph, ECS com GPU, Multi-LoRA e otimizações de cold start para produção.</p>
+  </header>
 
-  <!-- ── MODELOS ── -->
+  <!-- SEÇÃO 1: MODELOS -->
   <section class="section" id="modelos">
-    <div class="section-header">
-      <div class="section-icon icon-cyan">🧠</div>
-      <div>
-        <h2>Modelos Open Source em 2025/2026</h2>
-        <p>Os principais modelos self-hostáveis com licença permissiva e suporte a OpenAI-compatible API via vLLM</p>
-      </div>
-    </div>
+    <div class="section-label">Modelos &amp; Hospedagem</div>
+    <h2>Modelos Open Source em <em>2025/2026</em></h2>
+
+    <p>Os principais modelos self-hostáveis com licença permissiva e suporte a OpenAI-compatible API via vLLM.</p>
 
     <div class="model-grid">
       <div class="model-card llama">
@@ -893,28 +355,21 @@
       </div>
     </div>
 
-    <div class="callout tip">
-      <div class="callout-icon">💡</div>
-      <div class="callout-body">
-        <div class="callout-title">Quantização 4-bit (Q4_K_M)</div>
-        <div class="callout-text">Reduz requisitos de VRAM pela metade com perda mínima de qualidade. Llama 3.3 70B com Q4_K_M roda em ~40GB de VRAM. Use 2 bytes/param para FP16 e 0.5 bytes/param para INT4 para estimar VRAM.</div>
-      </div>
+    <div class="callout green">
+      <strong>Quantização 4-bit (Q4_K_M):</strong> reduz requisitos de VRAM pela metade com perda mínima de qualidade. Llama 3.3 70B com Q4_K_M roda em ~40GB de VRAM. Use 2 bytes/param para FP16 e 0.5 bytes/param para INT4 para estimar VRAM.
     </div>
   </section>
 
-  <!-- ── HOSPEDAGEM ── -->
+  <!-- SEÇÃO 2: HOSPEDAGEM -->
   <section class="section" id="hospedagem">
-    <div class="section-header">
-      <div class="section-icon icon-amber">☁️</div>
-      <div>
-        <h2>Opções de Hospedagem na AWS</h2>
-        <p>Quatro caminhos para rodar seu LLM — cada um com trade-offs de controle, custo e operação</p>
-      </div>
-    </div>
+    <div class="section-label">Modelos &amp; Hospedagem</div>
+    <h2>Opções de <em>Hospedagem</em> na AWS</h2>
+
+    <p>Quatro caminhos para rodar seu LLM — cada um com trade-offs de controle, custo e operação.</p>
 
     <div class="hosting-grid">
       <div class="hosting-card recommended">
-        <span class="recommended-badge">RECOMENDADO</span>
+        <span class="recommended-badge">Recomendado</span>
         <div class="hosting-title">ECS + EC2 GPU</div>
         <div class="hosting-subtitle">vLLM em containers orquestrados</div>
         <div class="hosting-meta">
@@ -1012,246 +467,222 @@
     </div>
   </section>
 
-  <!-- ── INSTÂNCIAS GPU ── -->
+  <!-- SEÇÃO 3: INSTÂNCIAS GPU -->
   <section class="section" id="instancias">
-    <div class="section-header">
-      <div class="section-icon icon-green">⚡</div>
-      <div>
-        <h2>Instâncias GPU na AWS</h2>
-        <p>Referência de hardware por tamanho de modelo — com e sem quantização</p>
-      </div>
+    <div class="section-label">Modelos &amp; Hospedagem</div>
+    <h2><em>Instâncias GPU</em> na AWS</h2>
+
+    <p>Referência de hardware por tamanho de modelo — com e sem quantização.</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Instância</th>
+          <th>GPU</th>
+          <th>VRAM</th>
+          <th>Adequada para</th>
+          <th>Custo/h (~)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>g5.xlarge</td>
+          <td>A10G (1x)</td>
+          <td>24 GB</td>
+          <td>Modelos até ~13B (FP16) ou ~24B (INT4)</td>
+          <td style="color:var(--green)">$1.00</td>
+        </tr>
+        <tr>
+          <td>g5.12xlarge</td>
+          <td>A10G (4x)</td>
+          <td>96 GB</td>
+          <td>70B INT4 (~40GB) ou 30B FP16</td>
+          <td style="color:var(--amber)">$5.67</td>
+        </tr>
+        <tr>
+          <td>g5.48xlarge</td>
+          <td>A10G (8x)</td>
+          <td>192 GB</td>
+          <td>70B FP16 ou 120B INT4</td>
+          <td style="color:var(--amber)">$16.29</td>
+        </tr>
+        <tr>
+          <td>p4d.24xlarge</td>
+          <td>A100 (8x)</td>
+          <td>320 GB</td>
+          <td>180B+ INT4, multi-modelo</td>
+          <td style="color:var(--red)">$32.77</td>
+        </tr>
+        <tr>
+          <td>p5.48xlarge</td>
+          <td>H100 (8x)</td>
+          <td>640 GB</td>
+          <td>Modelos muito grandes, máx throughput</td>
+          <td style="color:var(--red)">$98.32</td>
+        </tr>
+        <tr>
+          <td>inf2.48xlarge</td>
+          <td>Inferentia2</td>
+          <td>384 GB</td>
+          <td>Produção cost-optimized (+40% perf/$)</td>
+          <td style="color:var(--green)">$12.98</td>
+        </tr>
+      </tbody>
+    </table>
     </div>
 
-    <div class="gpu-table-wrap">
-      <table class="gpu-table">
-        <thead>
-          <tr>
-            <th>Instância</th>
-            <th>GPU</th>
-            <th>VRAM</th>
-            <th>Adequada para</th>
-            <th>Custo/h (~)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>g5.xlarge</td>
-            <td>A10G (1x)</td>
-            <td>24 GB</td>
-            <td>Modelos até ~13B (FP16) ou ~24B (INT4)</td>
-            <td style="color:var(--green)">$1.00</td>
-          </tr>
-          <tr>
-            <td>g5.12xlarge</td>
-            <td>A10G (4x)</td>
-            <td>96 GB</td>
-            <td>70B INT4 (~40GB) ou 30B FP16</td>
-            <td style="color:var(--amber)">$5.67</td>
-          </tr>
-          <tr>
-            <td>g5.48xlarge</td>
-            <td>A10G (8x)</td>
-            <td>192 GB</td>
-            <td>70B FP16 ou 120B INT4</td>
-            <td style="color:var(--amber)">$16.29</td>
-          </tr>
-          <tr>
-            <td>p4d.24xlarge</td>
-            <td>A100 (8x)</td>
-            <td>320 GB</td>
-            <td>180B+ INT4, multi-modelo</td>
-            <td style="color:var(--red)">$32.77</td>
-          </tr>
-          <tr>
-            <td>p5.48xlarge</td>
-            <td>H100 (8x)</td>
-            <td>640 GB</td>
-            <td>Modelos muito grandes, máx throughput</td>
-            <td style="color:var(--red)">$98.32</td>
-          </tr>
-          <tr>
-            <td>inf2.48xlarge</td>
-            <td>Inferentia2</td>
-            <td>384 GB</td>
-            <td>Produção cost-optimized (+40% perf/$)</td>
-            <td style="color:var(--green)">$12.98</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout warn">
-      <div class="callout-icon">⚠️</div>
-      <div class="callout-body">
-        <div class="callout-title">Estimativa de VRAM</div>
-        <div class="callout-text">FP16 = 2 bytes × nº de parâmetros. INT4 = 0.5 bytes × nº de parâmetros. Some 10–20% para KV cache, ativações e overhead de framework. Exemplo: 70B FP16 = 140GB; 70B INT4 = 35GB + overhead ≈ 40–42GB.</div>
-      </div>
+    <div class="callout amber">
+      <strong>Estimativa de VRAM:</strong> FP16 = 2 bytes × nº de parâmetros. INT4 = 0.5 bytes × nº de parâmetros. Some 10–20% para KV cache, ativações e overhead de framework. Exemplo: 70B FP16 = 140GB; 70B INT4 = 35GB + overhead ≈ 40–42GB.
     </div>
   </section>
 
-  <!-- ── LANGCHAIN ── -->
+  <!-- SEÇÃO 4: LANGCHAIN -->
   <section class="section" id="langchain">
-    <div class="section-header">
-      <div class="section-icon icon-cyan">🔌</div>
-      <div>
-        <h2>Integração com LangChain / LangGraph</h2>
-        <p>vLLM expõe API OpenAI-compatible — substituição drop-in no ChatOpenAI</p>
-      </div>
+    <div class="section-label">Implementação</div>
+    <h2>Integração com <em>LangChain / LangGraph</em></h2>
+
+    <p>vLLM expõe API OpenAI-compatible — substituição drop-in no <code>ChatOpenAI</code>.</p>
+
+    <div class="callout blue">
+      <strong>Drop-in replacement:</strong> o vLLM implementa o mesmo contrato de API da OpenAI (<code>/v1/chat/completions</code>, <code>/v1/models</code>). No LangChain, basta mudar <code>base_url</code> — zero mudança de lógica.
     </div>
 
-    <div class="callout info">
-      <div class="callout-icon">ℹ️</div>
-      <div class="callout-body">
-        <div class="callout-title">Drop-in replacement</div>
-        <div class="callout-text">O vLLM implementa o mesmo contrato de API da OpenAI (<code>/v1/chat/completions</code>, <code>/v1/models</code>). No LangChain, basta mudar <code>base_url</code> — zero mudança de lógica.</div>
-      </div>
-    </div>
-
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">Python — ChatOpenAI apontando para vLLM self-hosted</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — ChatOpenAI apontando para vLLM self-hosted</span>
       </div>
-      <pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="fn">ChatOpenAI</span>
+      <pre><code><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="fn">ChatOpenAI</span>
 
 <span class="cm"># Aponta para o NLB interno — zero mudança de interface</span>
 llm <span class="op">=</span> <span class="fn">ChatOpenAI</span>(
-    base_url<span class="op">=</span><span class="str">"http://vllm-nlb.internal:8000/v1"</span>,
-    api_key<span class="op">=</span><span class="str">"EMPTY"</span>,                <span class="cm"># qualquer string</span>
-    model<span class="op">=</span><span class="str">"meta-llama/Meta-Llama-3.1-70B-Instruct"</span>,
-    temperature<span class="op">=</span><span class="nm">0</span>,
+    base_url<span class="op">=</span><span class="st">"http://vllm-nlb.internal:8000/v1"</span>,
+    api_key<span class="op">=</span><span class="st">"EMPTY"</span>,                <span class="cm"># qualquer string</span>
+    model<span class="op">=</span><span class="st">"meta-llama/Meta-Llama-3.1-70B-Instruct"</span>,
+    temperature<span class="op">=</span><span class="nb">0</span>,
 )
 
 <span class="cm"># Com LoRA específico — mesmo padrão</span>
 finance_llm <span class="op">=</span> <span class="fn">ChatOpenAI</span>(
-    base_url<span class="op">=</span><span class="str">"http://vllm-nlb.internal:8000/v1"</span>,
-    api_key<span class="op">=</span><span class="str">"EMPTY"</span>,
-    model<span class="op">=</span><span class="str">"finance-specialist"</span>,  <span class="cm"># nome do LoRA registrado</span>
-    temperature<span class="op">=</span><span class="nm">0</span>,
-)</pre>
+    base_url<span class="op">=</span><span class="st">"http://vllm-nlb.internal:8000/v1"</span>,
+    api_key<span class="op">=</span><span class="st">"EMPTY"</span>,
+    model<span class="op">=</span><span class="st">"finance-specialist"</span>,  <span class="cm"># nome do LoRA registrado</span>
+    temperature<span class="op">=</span><span class="nb">0</span>,
+)</code></pre>
     </div>
 
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">Python — LangGraph com vLLM self-hosted</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">python — LangGraph com vLLM self-hosted</span>
       </div>
-      <pre><span class="kw">from</span> langgraph.graph <span class="kw">import</span> <span class="fn">StateGraph</span>
+      <pre><code><span class="kw">from</span> langgraph.graph <span class="kw">import</span> <span class="fn">StateGraph</span>
 <span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="fn">ChatOpenAI</span>
 <span class="kw">from</span> typing <span class="kw">import</span> Literal
 
-VLLM_BASE <span class="op">=</span> <span class="str">"http://vllm-nlb.internal:8000/v1"</span>
+VLLM_BASE <span class="op">=</span> <span class="st">"http://vllm-nlb.internal:8000/v1"</span>
 
 <span class="kw">def</span> <span class="fn">make_agent_llm</span>(lora_name<span class="op">:</span> str <span class="op">|</span> <span class="kw">None</span> <span class="op">=</span> <span class="kw">None</span>) <span class="op">-></span> <span class="fn">ChatOpenAI</span>:
-    model <span class="op">=</span> lora_name <span class="kw">or</span> <span class="str">"meta-llama/Meta-Llama-3.1-70B-Instruct"</span>
-    <span class="kw">return</span> <span class="fn">ChatOpenAI</span>(base_url<span class="op">=</span>VLLM_BASE, api_key<span class="op">=</span><span class="str">"EMPTY"</span>, model<span class="op">=</span>model)
+    model <span class="op">=</span> lora_name <span class="kw">or</span> <span class="st">"meta-llama/Meta-Llama-3.1-70B-Instruct"</span>
+    <span class="kw">return</span> <span class="fn">ChatOpenAI</span>(base_url<span class="op">=</span>VLLM_BASE, api_key<span class="op">=</span><span class="st">"EMPTY"</span>, model<span class="op">=</span>model)
 
 <span class="kw">def</span> <span class="fn">finance_node</span>(state):
-    llm <span class="op">=</span> <span class="fn">make_agent_llm</span>(<span class="str">"finance-specialist"</span>)
+    llm <span class="op">=</span> <span class="fn">make_agent_llm</span>(<span class="st">"finance-specialist"</span>)
     <span class="cm"># lógica do agent finance...</span>
 
-<span class="kw">def</span> <span class="fn">route_to_specialist</span>(state) <span class="op">-></span> Literal[<span class="str">"finance"</span>, <span class="str">"legal"</span>, <span class="str">"support"</span>]:
-    <span class="kw">return</span> state[<span class="str">"specialist"</span>]
+<span class="kw">def</span> <span class="fn">route_to_specialist</span>(state) <span class="op">-></span> Literal[<span class="st">"finance"</span>, <span class="st">"legal"</span>, <span class="st">"support"</span>]:
+    <span class="kw">return</span> state[<span class="st">"specialist"</span>]
 
 graph <span class="op">=</span> <span class="fn">StateGraph</span>(AgentState)
-graph.<span class="fn">add_node</span>(<span class="str">"finance"</span>, finance_node)
-graph.<span class="fn">add_node</span>(<span class="str">"legal"</span>, legal_node)
-graph.<span class="fn">add_conditional_edges</span>(<span class="str">"supervisor"</span>, route_to_specialist, {
-    <span class="str">"finance"</span><span class="op">:</span> <span class="str">"finance"</span>,
-    <span class="str">"legal"</span><span class="op">:</span> <span class="str">"legal"</span>,
-})</pre>
+graph.<span class="fn">add_node</span>(<span class="st">"finance"</span>, finance_node)
+graph.<span class="fn">add_node</span>(<span class="st">"legal"</span>, legal_node)
+graph.<span class="fn">add_conditional_edges</span>(<span class="st">"supervisor"</span>, route_to_specialist, {
+    <span class="st">"finance"</span><span class="op">:</span> <span class="st">"finance"</span>,
+    <span class="st">"legal"</span><span class="op">:</span> <span class="st">"legal"</span>,
+})</code></pre>
     </div>
   </section>
 
-  <!-- ── ECS GPU ── -->
+  <!-- SEÇÃO 5: ECS TASK DEFINITION GPU -->
   <section class="section" id="ecs-gpu">
-    <div class="section-header">
-      <div class="section-icon icon-amber">🐳</div>
-      <div>
-        <h2>ECS Task Definition para GPU</h2>
-        <p>Configuração completa do container vLLM no ECS com EC2 GPU</p>
-      </div>
+    <div class="section-label">Implementação</div>
+    <h2>ECS Task Definition para <em>GPU</em></h2>
+
+    <p>Configuração completa do container vLLM no ECS com EC2 GPU.</p>
+
+    <div class="callout amber">
+      <strong>Fargate não suporta GPU:</strong> workloads GPU no ECS exigem EC2. Use a AMI otimizada para ECS com GPU (Amazon Linux 2023 GPU) — ela já inclui NVIDIA Container Toolkit configurado.
     </div>
 
-    <div class="callout warn">
-      <div class="callout-icon">⚠️</div>
-      <div class="callout-body">
-        <div class="callout-title">Fargate não suporta GPU</div>
-        <div class="callout-text">Workloads GPU no ECS exigem EC2. Use a AMI otimizada para ECS com GPU (Amazon Linux 2023 GPU) — ela já inclui NVIDIA Container Toolkit configurado.</div>
-      </div>
-    </div>
-
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">JSON — ECS Task Definition (pontos críticos)</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">json — ECS Task Definition (pontos críticos)</span>
       </div>
-      <pre>{
-  <span class="str">"family"</span>: <span class="str">"vllm-inference"</span>,
-  <span class="str">"networkMode"</span>: <span class="str">"awsvpc"</span>,
-  <span class="str">"requiresCompatibilities"</span>: [<span class="str">"EC2"</span>],   <span class="cm">// não Fargate</span>
-  <span class="str">"containerDefinitions"</span>: [{
-    <span class="str">"name"</span>: <span class="str">"vllm-server"</span>,
-    <span class="str">"image"</span>: <span class="str">"vllm/vllm-openai:latest"</span>,
-    <span class="str">"command"</span>: [
-      <span class="str">"--model"</span>, <span class="str">"meta-llama/Meta-Llama-3.1-70B-Instruct"</span>,
-      <span class="str">"--tensor-parallel-size"</span>, <span class="str">"4"</span>,       <span class="cm">// = nº GPUs</span>
-      <span class="str">"--max-model-len"</span>, <span class="str">"32768"</span>,
-      <span class="str">"--gpu-memory-utilization"</span>, <span class="str">"0.90"</span>,
-      <span class="str">"--enable-auto-tool-choice"</span>,           <span class="cm">// para tool calling</span>
-      <span class="str">"--tool-call-parser"</span>, <span class="str">"llama3_json"</span>
+      <pre><code>{
+  <span class="st">"family"</span>: <span class="st">"vllm-inference"</span>,
+  <span class="st">"networkMode"</span>: <span class="st">"awsvpc"</span>,
+  <span class="st">"requiresCompatibilities"</span>: [<span class="st">"EC2"</span>],   <span class="cm">// não Fargate</span>
+  <span class="st">"containerDefinitions"</span>: [{
+    <span class="st">"name"</span>: <span class="st">"vllm-server"</span>,
+    <span class="st">"image"</span>: <span class="st">"vllm/vllm-openai:latest"</span>,
+    <span class="st">"command"</span>: [
+      <span class="st">"--model"</span>, <span class="st">"meta-llama/Meta-Llama-3.1-70B-Instruct"</span>,
+      <span class="st">"--tensor-parallel-size"</span>, <span class="st">"4"</span>,       <span class="cm">// = nº GPUs</span>
+      <span class="st">"--max-model-len"</span>, <span class="st">"32768"</span>,
+      <span class="st">"--gpu-memory-utilization"</span>, <span class="st">"0.90"</span>,
+      <span class="st">"--enable-auto-tool-choice"</span>,           <span class="cm">// para tool calling</span>
+      <span class="st">"--tool-call-parser"</span>, <span class="st">"llama3_json"</span>
     ],
-    <span class="str">"resourceRequirements"</span>: [{
-      <span class="str">"type"</span>: <span class="str">"GPU"</span>,
-      <span class="str">"value"</span>: <span class="str">"4"</span>                           <span class="cm">// deve bater com tensor-parallel-size</span>
+    <span class="st">"resourceRequirements"</span>: [{
+      <span class="st">"type"</span>: <span class="st">"GPU"</span>,
+      <span class="st">"value"</span>: <span class="st">"4"</span>                           <span class="cm">// deve bater com tensor-parallel-size</span>
     }],
-    <span class="str">"healthCheck"</span>: {
-      <span class="str">"command"</span>: [<span class="str">"CMD-SHELL"</span>, <span class="str">"curl -f http://localhost:8000/health"</span>],
-      <span class="str">"startPeriod"</span>: <span class="nm">300</span>                     <span class="cm">// 5 min p/ modelo carregar</span>
+    <span class="st">"healthCheck"</span>: {
+      <span class="st">"command"</span>: [<span class="st">"CMD-SHELL"</span>, <span class="st">"curl -f http://localhost:8000/health"</span>],
+      <span class="st">"startPeriod"</span>: <span class="nb">300</span>                     <span class="cm">// 5 min p/ modelo carregar</span>
     },
-    <span class="str">"mountPoints"</span>: [{
-      <span class="str">"sourceVolume"</span>: <span class="str">"model-cache"</span>,
-      <span class="str">"containerPath"</span>: <span class="str">"/root/.cache/huggingface"</span>
+    <span class="st">"mountPoints"</span>: [{
+      <span class="st">"sourceVolume"</span>: <span class="st">"model-cache"</span>,
+      <span class="st">"containerPath"</span>: <span class="st">"/root/.cache/huggingface"</span>
     }]
   }],
-  <span class="str">"placementConstraints"</span>: [{
-    <span class="str">"type"</span>: <span class="str">"memberOf"</span>,
-    <span class="str">"expression"</span>: <span class="str">"attribute:ecs.instance-type =~ g5.*"</span>
+  <span class="st">"placementConstraints"</span>: [{
+    <span class="st">"type"</span>: <span class="st">"memberOf"</span>,
+    <span class="st">"expression"</span>: <span class="st">"attribute:ecs.instance-type =~ g5.*"</span>
   }]
-}</pre>
+}</code></pre>
     </div>
 
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">TypeScript CDK — ECS Service + NLB interno</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">typescript — CDK — ECS Service + NLB interno</span>
       </div>
-      <pre><span class="cm">// NLB interno — só acessível dentro do VPC</span>
-<span class="kw">const</span> nlb <span class="op">=</span> <span class="kw">new</span> elbv2.<span class="fn">NetworkLoadBalancer</span>(<span class="kw">this</span>, <span class="str">'VllmNlb'</span>, {
+      <pre><code><span class="cm">// NLB interno — só acessível dentro do VPC</span>
+<span class="kw">const</span> nlb <span class="op">=</span> <span class="kw">new</span> elbv2.<span class="fn">NetworkLoadBalancer</span>(<span class="kw">this</span>, <span class="st">'VllmNlb'</span>, {
   vpc,
   internetFacing<span class="op">:</span> <span class="kw">false</span>,        <span class="cm">// INTERNO — crítico</span>
 });
 
-<span class="kw">const</span> listener <span class="op">=</span> nlb.<span class="fn">addListener</span>(<span class="str">'VllmListener'</span>, { port<span class="op">:</span> <span class="nm">8000</span> });
-listener.<span class="fn">addTargets</span>(<span class="str">'VllmTargets'</span>, {
-  port<span class="op">:</span> <span class="nm">8000</span>,
+<span class="kw">const</span> listener <span class="op">=</span> nlb.<span class="fn">addListener</span>(<span class="st">'VllmListener'</span>, { port<span class="op">:</span> <span class="nb">8000</span> });
+listener.<span class="fn">addTargets</span>(<span class="st">'VllmTargets'</span>, {
+  port<span class="op">:</span> <span class="nb">8000</span>,
   protocol<span class="op">:</span> elbv2.Protocol.TCP,
   targets<span class="op">:</span> [service],
-  healthCheck<span class="op">:</span> { path<span class="op">:</span> <span class="str">'/health'</span>, port<span class="op">:</span> <span class="str">'8080'</span> }, <span class="cm">// porta do proxy</span>
-  deregistrationDelay<span class="op">:</span> <span class="fn">Duration</span>.<span class="fn">seconds</span>(<span class="nm">30</span>),
-});</pre>
+  healthCheck<span class="op">:</span> { path<span class="op">:</span> <span class="st">'/health'</span>, port<span class="op">:</span> <span class="st">'8080'</span> }, <span class="cm">// porta do proxy</span>
+  deregistrationDelay<span class="op">:</span> <span class="fn">Duration</span>.<span class="fn">seconds</span>(<span class="nb">30</span>),
+});</code></pre>
     </div>
   </section>
 
-  <!-- ── MULTI-LORA ── -->
+  <!-- SEÇÃO 6: MULTI-LORA -->
   <section class="section" id="multi-lora">
-    <div class="section-header">
-      <div class="section-icon icon-purple">🔀</div>
-      <div>
-        <h2>Multi-LoRA no vLLM</h2>
-        <p>Um único servidor GPU com múltiplos adaptadores por especialidade — sem instâncias separadas</p>
-      </div>
-    </div>
+    <div class="section-label">Implementação</div>
+    <h2><em>Multi-LoRA</em> no vLLM</h2>
+
+    <p>Um único servidor GPU com múltiplos adaptadores por especialidade — sem instâncias separadas.</p>
 
     <div class="lora-flow">
       <div class="lora-node">
@@ -1274,249 +705,229 @@ listener.<span class="fn">addTargets</span>(<span class="str">'VllmTargets'</spa
       </div>
     </div>
 
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">Shell — Flags de Multi-LoRA no vLLM</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">shell — Flags de Multi-LoRA no vLLM</span>
       </div>
-      <pre>python -m vllm.entrypoints.openai.api_server \
+      <pre><code>python -m vllm.entrypoints.openai.api_server \
   --model meta-llama/Meta-Llama-3.1-70B-Instruct \
-  --tensor-parallel-size <span class="nm">4</span> \
+  --tensor-parallel-size <span class="nb">4</span> \
   --enable-lora \
-  --max-loras <span class="nm">4</span>          <span class="cm"># simultâneos na GPU</span> \
-  --max-cpu-loras <span class="nm">8</span>      <span class="cm"># swap para CPU quando necessário</span> \
-  --max-lora-rank <span class="nm">64</span>     <span class="cm"># deve bater com o rank do fine-tuning</span> \
+  --max-loras <span class="nb">4</span>          <span class="cm"># simultâneos na GPU</span> \
+  --max-cpu-loras <span class="nb">8</span>      <span class="cm"># swap para CPU quando necessário</span> \
+  --max-lora-rank <span class="nb">64</span>     <span class="cm"># deve bater com o rank do fine-tuning</span> \
   --enable-auto-tool-choice \
-  --tool-call-parser llama3_json</pre>
+  --tool-call-parser llama3_json</code></pre>
     </div>
 
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">Shell — Gerenciamento de LoRAs via API REST (runtime)</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">shell — Gerenciamento de LoRAs via API REST (runtime)</span>
       </div>
-      <pre><span class="cm"># Registrar LoRA</span>
+      <pre><code><span class="cm"># Registrar LoRA</span>
 curl -X POST http://vllm:8000/v1/load_lora_adapter \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{"lora_name": "finance-specialist", "lora_path": "/loras/finance"}'</span>
+  -H <span class="st">"Content-Type: application/json"</span> \
+  -d <span class="st">'{"lora_name": "finance-specialist", "lora_path": "/loras/finance"}'</span>
 
 <span class="cm"># Listar LoRAs carregados</span>
 curl http://vllm:8000/v1/models
 
 <span class="cm"># Remover LoRA</span>
 curl -X POST http://vllm:8000/v1/unload_lora_adapter \
-  -d <span class="str">'{"lora_name": "finance-specialist"}'</span></pre>
+  -d <span class="st">'{"lora_name": "finance-specialist"}'</span></code></pre>
     </div>
   </section>
 
-  <!-- ── WARM POOL ── -->
+  <!-- SEÇÃO 7: WARM POOL -->
   <section class="section" id="warm-pool">
-    <div class="section-header">
-      <div class="section-icon icon-green">🔥</div>
-      <div>
-        <h2>Warm Pool no Auto Scaling Group</h2>
-        <p>Instâncias pré-aquecidas em standby — elimina cold start de 20+ minutos</p>
-      </div>
+    <div class="section-label">Implementação</div>
+    <h2>Warm Pool no <em>Auto Scaling Group</em></h2>
+
+    <p>Instâncias pré-aquecidas em standby — elimina cold start de 20+ minutos.</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Pool State</th>
+          <th>Custo idle</th>
+          <th>Tempo p/ InService</th>
+          <th>Uso recomendado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Stopped</td>
+          <td style="color:var(--green)">~$0.10/h (só EBS)</td>
+          <td style="color:var(--amber)">3–4 min</td>
+          <td>Produção econômica ✅</td>
+        </tr>
+        <tr>
+          <td>Running</td>
+          <td style="color:var(--red)">~$16/h (GPU idle)</td>
+          <td style="color:var(--green)">1–2 min</td>
+          <td>Latência crítica</td>
+        </tr>
+      </tbody>
+    </table>
     </div>
 
-    <div class="compare-wrap">
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th>Pool State</th>
-            <th>Custo idle</th>
-            <th>Tempo p/ InService</th>
-            <th>Uso recomendado</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Stopped</td>
-            <td style="color:var(--green)">~$0.10/h (só EBS)</td>
-            <td style="color:var(--amber)">3–4 min</td>
-            <td>Produção econômica ✅</td>
-          </tr>
-          <tr>
-            <td>Running</td>
-            <td style="color:var(--red)">~$16/h (GPU idle)</td>
-            <td style="color:var(--green)">1–2 min</td>
-            <td>Latência crítica</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">TypeScript CDK — Warm Pool com Lifecycle Hook</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">typescript — CDK — Warm Pool com Lifecycle Hook</span>
       </div>
-      <pre><span class="cm">// Warm Pool — instâncias paradas (paga só EBS)</span>
+      <pre><code><span class="cm">// Warm Pool — instâncias paradas (paga só EBS)</span>
 <span class="kw">const</span> cfnAsg <span class="op">=</span> asg.node.defaultChild <span class="kw">as</span> autoscaling.<span class="fn">CfnAutoScalingGroup</span>;
 cfnAsg.warmPool <span class="op">=</span> {
-  minSize<span class="op">:</span> <span class="nm">1</span>,
-  maxGroupPreparedCapacity<span class="op">:</span> <span class="nm">2</span>,
-  poolState<span class="op">:</span> <span class="str">'Stopped'</span>,              <span class="cm">// economiza GPU $$$</span>
+  minSize<span class="op">:</span> <span class="nb">1</span>,
+  maxGroupPreparedCapacity<span class="op">:</span> <span class="nb">2</span>,
+  poolState<span class="op">:</span> <span class="st">'Stopped'</span>,              <span class="cm">// economiza GPU $$$</span>
   instanceReusePolicy<span class="op">:</span> {
     reuseOnScaleIn<span class="op">:</span> <span class="kw">true</span>,             <span class="cm">// devolve ao pool, não termina</span>
   },
 };
 
 <span class="cm">// Lifecycle Hook — pausa até modelo estar pronto</span>
-asg.<span class="fn">addLifecycleHook</span>(<span class="str">'WaitForModelLoad'</span>, {
+asg.<span class="fn">addLifecycleHook</span>(<span class="st">'WaitForModelLoad'</span>, {
   lifecycleTransition<span class="op">:</span> autoscaling.LifecycleTransition.INSTANCE_LAUNCHING,
-  heartbeatTimeout<span class="op">:</span> <span class="fn">Duration</span>.<span class="fn">minutes</span>(<span class="nm">20</span>),
+  heartbeatTimeout<span class="op">:</span> <span class="fn">Duration</span>.<span class="fn">minutes</span>(<span class="nb">20</span>),
   defaultResult<span class="op">:</span> autoscaling.DefaultResult.ABANDON,  <span class="cm">// descarta se falhar</span>
   notificationTarget<span class="op">:</span> <span class="kw">new</span> hooks.<span class="fn">TopicHook</span>(warmupTopic),
-});</pre>
+});</code></pre>
     </div>
 
-    <div class="callout tip">
-      <div class="callout-icon">💡</div>
-      <div class="callout-body">
-        <div class="callout-title">EBS Snapshot Strategy</div>
-        <div class="callout-text">Crie um snapshot do EBS com o modelo já baixado (~140GB para 70B FP16). Use GP3 com IOPS 16.000 e throughput 1.000 MB/s. O modelo carrega do disco em 2–3 min em vez de baixar do S3 em 15+ min. Versione snapshots junto com releases de LoRA.</div>
-      </div>
+    <div class="callout green">
+      <strong>EBS Snapshot Strategy:</strong> crie um snapshot do EBS com o modelo já baixado (~140GB para 70B FP16). Use GP3 com IOPS 16.000 e throughput 1.000 MB/s. O modelo carrega do disco em 2–3 min em vez de baixar do S3 em 15+ min. Versione snapshots junto com releases de LoRA.
     </div>
 
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">TypeScript CDK — EBS com Snapshot no Launch Template</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">typescript — CDK — EBS com Snapshot no Launch Template</span>
       </div>
-      <pre>blockDevices<span class="op">:</span> [
-  { deviceName<span class="op">:</span> <span class="str">'/dev/xvda'</span>, volume<span class="op">:</span> ec2.BlockDeviceVolume.<span class="fn">ebs</span>(<span class="nm">100</span>) },
+      <pre><code>blockDevices<span class="op">:</span> [
+  { deviceName<span class="op">:</span> <span class="st">'/dev/xvda'</span>, volume<span class="op">:</span> ec2.BlockDeviceVolume.<span class="fn">ebs</span>(<span class="nb">100</span>) },
   {
-    deviceName<span class="op">:</span> <span class="str">'/dev/sdb'</span>,
-    volume<span class="op">:</span> ec2.BlockDeviceVolume.<span class="fn">ebsFromSnapshot</span>(<span class="str">'snap-0abc123def'</span>, {
-      volumeSize<span class="op">:</span> <span class="nm">500</span>,                    <span class="cm">// GB — modelo + LoRAs</span>
+    deviceName<span class="op">:</span> <span class="st">'/dev/sdb'</span>,
+    volume<span class="op">:</span> ec2.BlockDeviceVolume.<span class="fn">ebsFromSnapshot</span>(<span class="st">'snap-0abc123def'</span>, {
+      volumeSize<span class="op">:</span> <span class="nb">500</span>,                    <span class="cm">// GB — modelo + LoRAs</span>
       volumeType<span class="op">:</span> ec2.EbsDeviceVolumeType.GP3,
-      iops<span class="op">:</span> <span class="nm">16000</span>,                         <span class="cm">// máximo GP3</span>
-      throughput<span class="op">:</span> <span class="nm">1000</span>,                     <span class="cm">// MB/s — máximo GP3</span>
+      iops<span class="op">:</span> <span class="nb">16000</span>,                         <span class="cm">// máximo GP3</span>
+      throughput<span class="op">:</span> <span class="nb">1000</span>,                     <span class="cm">// MB/s — máximo GP3</span>
     }),
   },
-],</pre>
+],</code></pre>
     </div>
   </section>
 
-  <!-- ── LORA WARMUP ── -->
+  <!-- SEÇÃO 8: LORA WARMUP -->
   <section class="section" id="lora-warmup">
-    <div class="section-header">
-      <div class="section-icon icon-purple">🚀</div>
-      <div>
-        <h2>LoRA Warmup Script</h2>
-        <p>NLB só recebe tráfego após todos os LoRAs estarem carregados e aquecidos</p>
-      </div>
+    <div class="section-label">Implementação</div>
+    <h2><em>LoRA Warmup</em> Script</h2>
+
+    <p>NLB só recebe tráfego após todos os LoRAs estarem carregados e aquecidos.</p>
+
+    <div class="callout blue">
+      <strong>Porta 8080 como gate:</strong> o NLB aponta o health check para a porta <strong>8080</strong> (proxy). Essa porta só fica acessível após o warmup completo. O tráfego real vai para a porta <strong>8000</strong> (vLLM). Isso garante que a primeira requisição nunca sofra lazy-load de LoRA.
     </div>
 
-    <div class="callout info">
-      <div class="callout-icon">ℹ️</div>
-      <div class="callout-body">
-        <div class="callout-title">Porta 8080 como gate</div>
-        <div class="callout-text">O NLB aponta o health check para a porta <strong>8080</strong> (proxy). Essa porta só fica acessível após o warmup completo. O tráfego real vai para a porta <strong>8000</strong> (vLLM). Isso garante que a primeira requisição nunca sofra lazy-load de LoRA.</div>
-      </div>
-    </div>
-
-    <div class="code-block">
+    <div class="code-wrap">
       <div class="code-header">
-        <span class="code-lang">Bash — warmup.sh (entrypoint do container)</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">bash — warmup.sh (entrypoint do container)</span>
       </div>
-      <pre><span class="cm">#!/bin/bash</span>
+      <pre><code><span class="cm">#!/bin/bash</span>
 <span class="kw">set</span> -e
 
 <span class="cm"># 1. Inicia vLLM em background</span>
 python -m vllm.entrypoints.openai.api_server \
-  --model <span class="str">"${MODEL_NAME}"</span> \
-  --enable-lora --max-loras <span class="str">"${MAX_LORAS:-4}"</span> \
-  --port <span class="str">"${VLLM_PORT:-8000}"</span> &amp;
-VLLM_PID=<span class="nm">$!</span>
+  --model <span class="st">"${MODEL_NAME}"</span> \
+  --enable-lora --max-loras <span class="st">"${MAX_LORAS:-4}"</span> \
+  --port <span class="st">"${VLLM_PORT:-8000}"</span> &amp;
+VLLM_PID=<span class="nb">$!</span>
 
 <span class="cm"># 2. Aguarda vLLM base estar healthy</span>
-<span class="kw">until</span> curl -sf <span class="str">"http://localhost:${VLLM_PORT}/health"</span> &gt; /dev/null; <span class="kw">do</span>
-  sleep <span class="nm">5</span>
-  kill -0 <span class="nm">$VLLM_PID</span> 2&gt;/dev/null || { echo <span class="str">"vLLM morreu!"</span>; exit <span class="nm">1</span>; }
+<span class="kw">until</span> curl -sf <span class="st">"http://localhost:${VLLM_PORT}/health"</span> &gt; /dev/null; <span class="kw">do</span>
+  sleep <span class="nb">5</span>
+  kill -0 <span class="nb">$VLLM_PID</span> 2&gt;/dev/null || { echo <span class="st">"vLLM morreu!"</span>; exit <span class="nb">1</span>; }
 <span class="kw">done</span>
 
 <span class="cm"># 3. Registra e aquece cada LoRA</span>
-<span class="kw">for</span> lora_path <span class="kw">in</span> <span class="str">"${LORAS_DIR}"</span>/*/; <span class="kw">do</span>
-  lora_name=<span class="nm">$(basename "$lora_path")</span>
+<span class="kw">for</span> lora_path <span class="kw">in</span> <span class="st">"${LORAS_DIR}"</span>/*/; <span class="kw">do</span>
+  lora_name=<span class="nb">$(basename "$lora_path")</span>
 
   <span class="cm"># Registra</span>
-  curl -sf -X POST <span class="str">"http://localhost:${VLLM_PORT}/v1/load_lora_adapter"</span> \
-    -H <span class="str">"Content-Type: application/json"</span> \
-    -d <span class="str">"{\"lora_name\": \"${lora_name}\", \"lora_path\": \"${lora_path}\"}"</span>
+  curl -sf -X POST <span class="st">"http://localhost:${VLLM_PORT}/v1/load_lora_adapter"</span> \
+    -H <span class="st">"Content-Type: application/json"</span> \
+    -d <span class="st">"{\"lora_name\": \"${lora_name}\", \"lora_path\": \"${lora_path}\"}"</span>
 
   <span class="cm"># Warmup (aquece CUDA kernels)</span>
-  curl -sf -X POST <span class="str">"http://localhost:${VLLM_PORT}/v1/chat/completions"</span> \
-    -d <span class="str">"{\"model\": \"${lora_name}\", \"messages\": [{\"role\": \"user\", \"content\": \"Hi\"}], \"max_tokens\": 1}"</span> \
+  curl -sf -X POST <span class="st">"http://localhost:${VLLM_PORT}/v1/chat/completions"</span> \
+    -d <span class="st">"{\"model\": \"${lora_name}\", \"messages\": [{\"role\": \"user\", \"content\": \"Hi\"}], \"max_tokens\": 1}"</span> \
     &gt; /dev/null
 <span class="kw">done</span>
 
 <span class="cm"># 4. Sobe proxy — NLB só roteia agora</span>
-python /healthcheck_proxy.py --proxy-port <span class="nm">8080</span> &amp;
+python /healthcheck_proxy.py --proxy-port <span class="nb">8080</span> &amp;
 
 <span class="cm"># 5. Mantém container vivo</span>
-wait <span class="nm">$VLLM_PID</span></pre>
+wait <span class="nb">$VLLM_PID</span></code></pre>
     </div>
   </section>
 
-  <!-- ── ARQUITETURA ── -->
+  <!-- SEÇÃO 9: ARQUITETURA COMPLETA -->
   <section class="section" id="arquitetura">
-    <div class="section-header">
-      <div class="section-icon icon-cyan">🏗️</div>
-      <div>
-        <h2>Arquitetura Completa</h2>
-        <p>Visão end-to-end: Supervisor Account → Agents Account → vLLM com Multi-LoRA</p>
-      </div>
-    </div>
+    <div class="section-label">Arquitetura &amp; Roadmap</div>
+    <h2>Arquitetura <em>Completa</em></h2>
 
-    <div class="arch-diagram">
-<span class="arch-muted">┌─────────────────────────────────────────────────────────────────────┐</span>
-<span class="arch-muted">│</span>  <span class="arch-amber">SUPERVISOR ACCOUNT</span>                                                  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">┌──────────────────────────────────────────────────────────────┐</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  ECS Fargate — LangGraph Supervisor                          <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-cyan">ChatOpenAI(base_url=NLB_DNS)</span>  ← zero mudança de código       <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">└────────────────────────────────────┬─────────────────────────┘</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">└───────────────────────────────────────┼─────────────────────────────┘</span>
-                                        <span class="arch-muted">│ JWT Bearer / VPC Peering</span>
-<span class="arch-muted">┌───────────────────────────────────────┼─────────────────────────────┐</span>
-<span class="arch-muted">│</span>  <span class="arch-green">AGENTS ACCOUNT</span>                        <span class="arch-muted">│</span>                             <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>                                        <span class="arch-muted">▼</span>                             <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">┌──────────────────────────────────────────────────────────────┐</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-cyan">NLB Interno</span>  (porta 8000 tráfego · porta 8080 health)      <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">└────────────────────────────────────┬─────────────────────────┘</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>                                        <span class="arch-muted">│</span>                             <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">┌──────────────────────────────────────────────────────────────┐</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  ECS EC2 (g5.12xlarge — 4× A10G GPU, 96GB VRAM)             <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>                                                              <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-cyan">vLLM Server</span>  (Llama 3.1 70B base — carregado na GPU)       <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-purple">├── LoRA: finance-specialist</span>    ← GPU                       <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-purple">├── LoRA: legal-specialist</span>       ← GPU                       <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-purple">├── LoRA: support-specialist</span>     ← CPU swap                  <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-muted">│</span>                                                            <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-green">healthcheck_proxy</span> :8080  ← gate do NLB                     <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">└──────────────────────────────────────────────────────────────┘</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>                                                                      <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">┌──────────────────────────────────────────────────────────────┐</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  <span class="arch-amber">ASG Warm Pool</span>  (2× Stopped · EBS snapshot c/ modelo)       <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">│</span>  Lifecycle Hook → Lambda → wait /health → CONTINUE          <span class="arch-muted">│</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-muted">└──────────────────────────────────────────────────────────────┘</span>  <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>                                                                      <span class="arch-muted">│</span>
-<span class="arch-muted">│</span>  <span class="arch-green">S3</span>: s3://models-bucket/loras/   ← adaptadores LoRA            <span class="arch-muted">│</span>
-<span class="arch-muted">└─────────────────────────────────────────────────────────────────────┘</span>
+    <p>Visão end-to-end: Supervisor Account → Agents Account → vLLM com Multi-LoRA.</p>
+
+    <div class="diagram">
+      <pre>┌─────────────────────────────────────────────────────────────────────┐
+│  <span class="hi3">SUPERVISOR ACCOUNT</span>                                                  │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  ECS Fargate — LangGraph Supervisor                          │  │
+│  │  <span class="hi">ChatOpenAI(base_url=NLB_DNS)</span>  ← zero mudança de código       │  │
+│  └────────────────────────────────────┬─────────────────────────┘  │
+└───────────────────────────────────────┼─────────────────────────────┘
+                                          │ JWT Bearer / VPC Peering
+┌───────────────────────────────────────┼─────────────────────────────┐
+│  <span class="hi2">AGENTS ACCOUNT</span>                        │                             │
+│                                          ▼                             │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  <span class="hi">NLB Interno</span>  (porta 8000 tráfego · porta 8080 health)      │  │
+│  └────────────────────────────────────┬─────────────────────────┘  │
+│                                          │                             │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  ECS EC2 (g5.12xlarge — 4× A10G GPU, 96GB VRAM)             │  │
+│  │                                                              │  │
+│  │  <span class="hi">vLLM Server</span>  (Llama 3.1 70B base — carregado na GPU)       │  │
+│  │  <span class="hi4">├── LoRA: finance-specialist</span>    ← GPU                       │  │
+│  │  <span class="hi4">├── LoRA: legal-specialist</span>       ← GPU                       │  │
+│  │  <span class="hi4">├── LoRA: support-specialist</span>     ← CPU swap                  │  │
+│  │  │                                                            │  │
+│  │  <span class="hi2">healthcheck_proxy</span> :8080  ← gate do NLB                     │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  <span class="hi3">ASG Warm Pool</span>  (2× Stopped · EBS snapshot c/ modelo)       │  │
+│  │  Lifecycle Hook → Lambda → wait /health → CONTINUE          │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  <span class="hi2">S3</span>: s3://models-bucket/loras/   ← adaptadores LoRA            │
+└─────────────────────────────────────────────────────────────────────┘</pre>
     </div>
   </section>
 
-  <!-- ── TIMELINE ── -->
+  <!-- SEÇÃO 10: TIMELINE -->
   <section class="section" id="timeline">
-    <div class="section-header">
-      <div class="section-icon icon-green">⏱️</div>
-      <div>
-        <h2>Timeline de Cold Start Otimizado</h2>
-        <p>Com Warm Pool + EBS Snapshot + LoRA Warmup: ~8 min vs 20–25 min sem otimizações</p>
-      </div>
-    </div>
+    <div class="section-label">Arquitetura &amp; Roadmap</div>
+    <h2>Timeline de <em>Cold Start</em> Otimizado</h2>
+
+    <p>Com Warm Pool + EBS Snapshot + LoRA Warmup: ~8 min vs 20–25 min sem otimizações.</p>
 
     <div class="timeline">
       <div class="timeline-item done">
@@ -1561,83 +972,71 @@ wait <span class="nm">$VLLM_PID</span></pre>
       </div>
     </div>
 
-    <div class="compare-wrap" style="margin-top: 32px;">
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th>Cenário</th>
-            <th>ECS Warm Pool</th>
-            <th>EBS Snapshot</th>
-            <th>LoRA Warmup</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Sem otimizações</td>
-            <td style="color:var(--red)">❌ Cold EC2</td>
-            <td style="color:var(--red)">❌ S3 download</td>
-            <td style="color:var(--red)">❌ Lazy load</td>
-            <td style="color:var(--red)">20–25 min</td>
-          </tr>
-          <tr>
-            <td>Com todas as otimizações</td>
-            <td style="color:var(--green)">✅ Pool Stopped</td>
-            <td style="color:var(--green)">✅ GP3 local</td>
-            <td style="color:var(--green)">✅ Pre-warmed</td>
-            <td style="color:var(--green)">~8 min</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Cenário</th>
+          <th>ECS Warm Pool</th>
+          <th>EBS Snapshot</th>
+          <th>LoRA Warmup</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sem otimizações</td>
+          <td style="color:var(--red)">❌ Cold EC2</td>
+          <td style="color:var(--red)">❌ S3 download</td>
+          <td style="color:var(--red)">❌ Lazy load</td>
+          <td style="color:var(--red)">20–25 min</td>
+        </tr>
+        <tr>
+          <td>Com todas as otimizações</td>
+          <td style="color:var(--green)">✅ Pool Stopped</td>
+          <td style="color:var(--green)">✅ GP3 local</td>
+          <td style="color:var(--green)">✅ Pre-warmed</td>
+          <td style="color:var(--green)">~8 min</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="tags">
+      <span class="pill">vLLM</span>
+      <span class="pill purple">Multi-LoRA</span>
+      <span class="pill green">LangChain / LangGraph</span>
+      <span class="pill amber">ECS + EC2 GPU</span>
+      <span class="pill">Warm Pool ASG</span>
+      <span class="pill purple">OpenAI-Compatible API</span>
     </div>
   </section>
 
+  <div class="doc-footer">
+    <a href="../index.html">← Voltar para DevDocs</a>
+    <span>LLMs Open Source na AWS</span>
+  </div>
+
+</div>
 </main>
 
 <script>
-  // Progress bar
-  window.addEventListener('scroll', () => {
-    const total = document.body.scrollHeight - window.innerHeight;
-    const pct = (window.scrollY / total) * 100;
-    document.getElementById('progress').style.width = pct + '%';
-  });
-
-  // Nav active state
-  function setActive(el) {
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    el.classList.add('active');
-  }
-
-  // Intersection observer for nav
-  const sections = document.querySelectorAll('.section, .hero');
-  const navLinks = document.querySelectorAll('.nav-link');
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        const id = entry.target.id;
-        navLinks.forEach(link => {
-          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
-        });
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
       }
     });
-  }, { rootMargin: '-30% 0px -60% 0px' });
+  }, { threshold: 0.3 });
 
   sections.forEach(s => observer.observe(s));
-
-  // Copy code buttons
-  function copyCode(btn) {
-    const pre = btn.closest('.code-block').querySelector('pre');
-    const text = pre.innerText;
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'Copiado!';
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.textContent = 'Copiar';
-        btn.classList.remove('copied');
-      }, 2000);
-    });
-  }
 </script>
+
 </body>
 </html>

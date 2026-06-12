@@ -109,11 +109,11 @@
 
     <div class="hero-stats">
       <div class="stat">
-        <div class="stat-num" id="docCount">8</div>
+        <div class="stat-num" id="docCount">10</div>
         <div class="stat-label">Documentos</div>
       </div>
       <div class="stat">
-        <div class="stat-num">3</div>
+        <div class="stat-num">6</div>
         <div class="stat-label">Categorias</div>
       </div>
       <div class="stat">
@@ -123,11 +123,11 @@
     </div>
   </div>
 
-  <!-- FRAMEWORKS & LIBRARIES -->
-  <div class="section-label">Frameworks & Bibliotecas</div>
+  <!-- TOOLS & ACTIONS -->
+  <div class="section-label">Tools & Actions</div>
   <div class="topics-grid">
 
-    <a href="docs/mcp-fastmcp-guide.html" class="topic-card card-green" data-tags="python mcp protocol tools fastmcp">
+    <a href="docs/mcp-fastmcp-guide.html" class="topic-card card-green" data-tags="python mcp protocol tools fastmcp actions">
       <div class="card-top" style="display:flex;align-items:flex-start;justify-content:space-between;">
         <div class="topic-icon">⚡</div>
         <span class="topic-status">Completo</span>
@@ -248,9 +248,15 @@
       <span class="topic-arrow">→</span>
     </a>
 
-    <a href="docs/langchain/04-memoria-redis-dynamo.html" class="topic-card card-cyan" data-tags="redis dynamodb checkpointer ttl memoria sessions">
+  </div>
+
+  <!-- MEMÓRIA -->
+  <div class="section-label">Memória</div>
+  <div class="topics-grid">
+
+    <a href="docs/04-memoria-redis-dynamo.html" class="topic-card card-cyan" data-tags="redis dynamodb checkpointer ttl memoria sessions">
       <div class="card-top" style="display:flex;align-items:flex-start;justify-content:space-between;">
-        <div class="topic-icon">04</div>
+        <div class="topic-icon">💾</div>
         <span class="topic-status">Completo</span>
       </div>
       <span class="topic-title">Memória Redis & DynamoDB</span>
@@ -265,13 +271,69 @@
 
   </div>
 
+  <!-- LLM SELF-HOSTED -->
+  <div class="section-label">LLM Self-Hosted</div>
+  <div class="topics-grid">
+
+    <a href="docs/llm-aws-guide.html" class="topic-card card-amber" data-tags="llm aws gpu ecs lora self-hosted open source">
+      <div class="card-top" style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div class="topic-icon">🖥️</div>
+        <span class="topic-status">Completo</span>
+      </div>
+      <span class="topic-title">LLMs Open Source na AWS</span>
+      <p class="topic-desc">Guia de arquitetura para hospedar LLMs open source (Llama, DeepSeek, Mistral, Qwen) na AWS — instâncias GPU, ECS, warm pools e multi-LoRA.</p>
+      <div class="topic-tags">
+        <span class="tag">AWS</span>
+        <span class="tag">GPU</span>
+        <span class="tag">ECS</span>
+        <span class="tag">LoRA</span>
+      </div>
+      <span class="topic-arrow">→</span>
+    </a>
+
+  </div>
+
+  <!-- GESTÃO DE ACESSOS -->
+  <div class="section-label">Gestão de Acessos</div>
+  <div class="topics-grid">
+
+    <a href="docs/token-propagation-architecture.html" class="topic-card card-red" data-tags="token propagation acl access control multi-agent security langgraph">
+      <div class="card-top" style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div class="topic-icon">🔐</div>
+        <span class="topic-status">Completo</span>
+      </div>
+      <span class="topic-title">Token Propagation Architecture</span>
+      <p class="topic-desc">Propagação de tokens e controle de acesso (ACL) em sistemas multi-agente — contexto do usuário, estado dos agentes, cache de ACL e error codes.</p>
+      <div class="topic-tags">
+        <span class="tag">ACL</span>
+        <span class="tag">LangGraph</span>
+        <span class="tag">Multi-Agent</span>
+        <span class="tag">Security</span>
+      </div>
+      <span class="topic-arrow">→</span>
+    </a>
+
+  </div>
+
   <!-- RECENT -->
   <div class="section-label">Adicionados recentemente</div>
   <div class="recent-list">
-    <a href="docs/langchain/04-memoria-redis-dynamo.html" class="recent-item">
+    <a href="docs/token-propagation-architecture.html" class="recent-item">
+      <div class="recent-dot" style="background:#ef4444"></div>
+      <span class="recent-title">Token Propagation Architecture</span>
+      <span class="recent-category">Gestão de Acessos</span>
+      <span class="recent-date">Jun 2026</span>
+    </a>
+    <a href="docs/llm-aws-guide.html" class="recent-item">
+      <div class="recent-dot" style="background:#f59e0b"></div>
+      <span class="recent-title">LLMs Open Source na AWS</span>
+      <span class="recent-category">LLM Self-Hosted</span>
+      <span class="recent-date">Jun 2026</span>
+    </a>
+    <a href="docs/04-memoria-redis-dynamo.html" class="recent-item">
       <div class="recent-dot" style="background:#22d3ee"></div>
-      <span class="recent-title">04 — Memória Redis &amp; DynamoDB</span>
-      <span class="recent-category">Multi-Agentes</span>
+      <span class="recent-title">Memória Redis &amp; DynamoDB</span>
+      <span class="recent-category">Memória</span>
       <span class="recent-date">Jun 2026</span>
     </a>
     <a href="docs/langchain/index.html" class="recent-item">
@@ -313,14 +375,14 @@
     <a href="docs/mcp-fastmcp-guide.html" class="recent-item">
       <div class="recent-dot" style="background:#10b981"></div>
       <span class="recent-title">MCP & FastMCP — Guia completo</span>
-      <span class="recent-category">Frameworks</span>
+      <span class="recent-category">Tools & Actions</span>
       <span class="recent-date">Jun 2026</span>
     </a>
   </div>
 
   <footer class="hub-footer">
     <span>DevDocs · Gerado a partir das conversas do projeto</span>
-    <span>Última atualização: Jun 11, 2026</span>
+    <span>Última atualização: Jun 12, 2026</span>
   </footer>
 
 </div>
