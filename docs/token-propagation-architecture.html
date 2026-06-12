@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Token Propagation — Multi-Agent Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & Base ─────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0D1117;
+    --surface:   #161B22;
+    --surface2:  #1C2230;
+    --border:    #21262D;
+    --accent:    #58A6FF;
+    --accent-dim:#1F3A5F;
+    --green:     #3FB950;
+    --yellow:    #F0A83A;
+    --red:       #F85149;
+    --purple:    #BC8CFF;
+    --text:      #E6EDF3;
+    --muted:     #8B949E;
+    --code-bg:   #0D1117;
+    --nav-w:     260px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar Nav ──────────────────────────────── */
+  nav {
+    width: var(--nav-w);
+    min-width: var(--nav-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+
+  .nav-header {
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-header .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .nav-header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .nav-header .version {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .nav-section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 18px 20px 6px;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 20px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+
+  nav a:hover {
+    color: var(--text);
+    background: rgba(88,166,255,0.05);
+  }
+
+  nav a.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(88,166,255,0.08);
+  }
+
+  nav a .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  nav a.active .nav-dot { background: var(--accent); }
+
+  /* ── Main Content ─────────────────────────────── */
+  main {
+    margin-left: var(--nav-w);
+    flex: 1;
+    max-width: 900px;
+    padding: 60px 56px 120px;
+  }
+
+  /* ── Section ──────────────────────────────────── */
+  .section {
+    margin-bottom: 80px;
+    padding-top: 8px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 20px;
+  }
+
+  h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 32px 0 12px;
+  }
+
+  p {
+    color: #C9D1D9;
+    margin-bottom: 16px;
+    max-width: 680px;
+  }
+
+  strong { color: var(--text); font-weight: 600; }
+
+  /* ── Divider ──────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 0 80px;
+  }
+
+  /* ── Hero ─────────────────────────────────────── */
+  .hero {
+    margin-bottom: 72px;
+    padding: 48px 0 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(88,166,255,0.25);
+    border-radius: 4px;
+    padding: 3px 10px;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 600px;
+    margin-bottom: 0;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .meta-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ── Callout boxes ────────────────────────────── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(88,166,255,0.06);
+    border-radius: 0 6px 6px 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+    max-width: 680px;
+  }
+
+  .callout.warn {
+    border-left-color: var(--yellow);
+    background: rgba(240,168,58,0.06);
+  }
+
+  .callout.danger {
+    border-left-color: var(--red);
+    background: rgba(248,81,73,0.06);
+  }
+
+  .callout.success {
+    border-left-color: var(--green);
+    background: rgba(63,185,80,0.06);
+  }
+
+  .callout-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .callout.warn .callout-label  { color: var(--yellow); }
+  .callout.danger .callout-label { color: var(--red); }
+  .callout.success .callout-label { color: var(--green); }
+
+  .callout p { margin: 0; font-size: 13.5px; max-width: 100%; color: #C9D1D9; }
+
+  /* ── Code blocks ──────────────────────────────── */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .code-filename {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: #E6EDF3;
+  }
+
+  /* Syntax colors */
+  .kw  { color: #FF7B72; }   /* keywords: def, class, return, if */
+  .fn  { color: #D2A8FF; }   /* function names */
+  .st  { color: #A5D6FF; }   /* strings */
+  .cm  { color: #6E7681; font-style: italic; } /* comments */
+  .cl  { color: #FFA657; }   /* class names */
+  .nm  { color: #79C0FF; }   /* numbers, constants */
+  .dc  { color: #58A6FF; }   /* decorators */
+  .op  { color: #FF7B72; }   /* operators */
+  .bi  { color: #FFA657; }   /* builtins */
+
+  /* ── Diagram / Flow ───────────────────────────── */
+  .flow-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 24px;
+    margin: 20px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.9;
+    color: #C9D1D9;
+    overflow-x: auto;
+  }
+
+  .flow-diagram .flow-accent { color: var(--accent); font-weight: 600; }
+  .flow-diagram .flow-denied { color: var(--red); font-weight: 600; }
+  .flow-diagram .flow-ok { color: var(--green); font-weight: 600; }
+  .flow-diagram .flow-dim { color: var(--muted); }
+  .flow-diagram .flow-warn { color: var(--yellow); font-weight: 600; }
+
+  /* ── ACL Table ────────────────────────────────── */
+  .acl-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    margin: 20px 0;
+  }
+
+  .acl-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .acl-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: #C9D1D9;
+    vertical-align: top;
+  }
+
+  .acl-table tr:last-child td { border-bottom: none; }
+  .acl-table tr:hover td { background: rgba(88,166,255,0.03); }
+
+  .acl-table .pk { color: var(--accent); }
+  .acl-table .sk { color: var(--purple); }
+  .acl-table .val { color: var(--green); font-size: 11px; }
+
+  /* ── Layer cards ──────────────────────────────── */
+  .layer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 20px 0;
+  }
+
+  .layer-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .layer-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .layer-card.l1::before { background: var(--accent); }
+  .layer-card.l2::before { background: var(--yellow); }
+  .layer-card.l3::before { background: var(--purple); }
+
+  .layer-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .layer-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .layer-card p {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .layer-scope {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-top: 10px;
+  }
+
+  .l1 .layer-scope { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .l2 .layer-scope { background: rgba(240,168,58,0.15); color: var(--yellow); }
+  .l3 .layer-scope { background: rgba(188,140,255,0.15); color: var(--purple); }
+
+  /* ── Error codes ──────────────────────────────── */
+  .error-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .error-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+  }
+
+  .error-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--red);
+    background: rgba(248,81,73,0.1);
+    padding: 3px 10px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .error-desc {
+    font-size: 13px;
+    color: #C9D1D9;
+  }
+
+  .error-desc strong {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+
+  /* ── File tree ────────────────────────────────── */
+  .file-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 2;
+    color: #C9D1D9;
+    margin: 20px 0;
+  }
+
+  .file-tree .dir  { color: var(--accent); }
+  .file-tree .file { color: var(--muted); }
+  .file-tree .note { color: #6E7681; font-style: italic; }
+
+  /* ── Token flow badges ────────────────────────── */
+  .token-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 24px 0;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .token-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .token-node .tn-label { color: var(--muted); font-size: 9px; display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .token-node .tn-value { color: var(--accent); font-weight: 600; }
+
+  .token-arrow {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    padding: 0 6px;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .token-arrow .ta-label {
+    font-size: 9px;
+    color: var(--muted);
+    white-space: nowrap;
+    margin-bottom: 2px;
+  }
+
+  /* ── State propagation visual ─────────────────── */
+  .state-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .state-box-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .state-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .state-field {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+  }
+
+  .sf-key   { color: var(--accent); }
+  .sf-type  { color: var(--muted); font-size: 10px; }
+  .sf-badge {
+    margin-left: auto;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  .sf-badge.immutable { background: rgba(248,81,73,0.15); color: var(--red); }
+  .sf-badge.mutable   { background: rgba(63,185,80,0.15); color: var(--green); }
+  .sf-badge.append    { background: rgba(240,168,58,0.15); color: var(--yellow); }
+
+  /* ── Scrollbar ────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Responsive ───────────────────────────────── */
+  @media (max-width: 860px) {
+    nav { display: none; }
+    main { margin-left: 0; padding: 32px 24px 80px; }
+    .layer-grid { grid-template-columns: 1fr; }
+    .state-fields { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────── -->
+<nav id="sidebar">
+  <div class="nav-header">
+    <div class="label">Architecture Docs</div>
+    <div class="h1" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--text);line-height:1.4;">Token Propagation<br>Multi-Agent System</div>
+    <div class="version">v1.0 · Azure EntraID · LangGraph</div>
+  </div>
+
+  <div class="nav-section-label">Conceitos</div>
+  <a href="#overview" class="active"><span class="nav-dot"></span>Visão Geral</a>
+  <a href="#acl"><span class="nav-dot"></span>O que é ACL</a>
+  <a href="#acl-layers"><span class="nav-dot"></span>Camadas de ACL</a>
+
+  <div class="nav-section-label">Arquitetura</div>
+  <a href="#user-context"><span class="nav-dot"></span>UserContext</a>
+  <a href="#agent-state"><span class="nav-dot"></span>AgentState</a>
+  <a href="#token-flow"><span class="nav-dot"></span>Fluxo de Tokens</a>
+  <a href="#acl-cache"><span class="nav-dot"></span>ACL Cache (DynamoDB)</a>
+
+  <div class="nav-section-label">Implementação</div>
+  <a href="#file-structure"><span class="nav-dot"></span>Estrutura de Arquivos</a>
+  <a href="#code-state"><span class="nav-dot"></span>state.py</a>
+  <a href="#code-acl"><span class="nav-dot"></span>acl/cache.py</a>
+  <a href="#code-tokens"><span class="nav-dot"></span>auth/tokens.py</a>
+  <a href="#code-nodes"><span class="nav-dot"></span>graph/nodes.py</a>
+  <a href="#code-edges"><span class="nav-dot"></span>graph/edges.py</a>
+  <a href="#code-builder"><span class="nav-dot"></span>graph/builder.py</a>
+  <a href="#code-main"><span class="nav-dot"></span>main.py</a>
+
+  <div class="nav-section-label">Referência</div>
+  <a href="#error-codes"><span class="nav-dot"></span>Erros Estruturados</a>
+  <a href="#sequence"><span class="nav-dot"></span>Diagrama de Sequência</a>
+  <a href="#open-points"><span class="nav-dot"></span>Pontos em Aberto</a>
+</nav>
+
+<!-- ── Main ───────────────────────────────────────── -->
+<main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="tag">Multi-Agent · AWS · LangGraph</div>
+    <h1>Token <span>Propagation</span><br>Architecture</h1>
+    <p>Como a identidade e as permissões do usuário trafegam de forma segura desde o Azure EntraID até os agentes especialistas, sem expor o token original.</p>
+    <div class="hero-meta">
+      <div class="meta-item"><div class="meta-dot" style="background:var(--accent)"></div>Azure EntraID · JWT Bearer</div>
+      <div class="meta-item"><div class="meta-dot" style="background:var(--green)"></div>LangGraph StateGraph</div>
+      <div class="meta-item"><div class="meta-dot" style="background:var(--purple)"></div>DynamoDB ACL Cache</div>
+      <div class="meta-item"><div class="meta-dot" style="background:var(--yellow)"></div>Client Credentials B2B</div>
+    </div>
+  </div>
+
+  <!-- Visão Geral -->
+  <div class="section" id="overview">
+    <div class="eyebrow">Conceito Base</div>
+    <h2>Visão Geral</h2>
+
+    <p>O sistema recebe um <strong>Access Token do Azure EntraID</strong> como porta de entrada. Esse token não é repassado para os agentes especialistas — em vez disso, as informações de identidade relevantes são extraídas, sanitizadas e propagadas como um objeto estruturado (<strong>UserContext</strong>) dentro do estado do grafo LangGraph.</p>
+
+    <p>Para se comunicar com os agentes, o Supervisor usa um token separado obtido via <strong>Client Credentials</strong> — autenticação de sistema a sistema, onde o token representa o Supervisor, não o usuário. O contexto do usuário viaja no payload, não no token.</p>
+
+    <div class="callout">
+      <div class="callout-label">Princípio Central</div>
+      <p>O token original do usuário nunca sai do Supervisor. O que propaga é um objeto <code>UserContext</code> construído via allowlist explícita, contendo apenas o que os agentes precisam saber para validar acesso e auditar ações.</p>
+    </div>
+
+    <div class="token-flow">
+      <div class="token-node">
+        <span class="tn-label">Client</span>
+        <span class="tn-value">Access Token</span>
+      </div>
+      <div class="token-arrow">
+        <span class="ta-label">JWT Authorizer</span>
+        <span>──→</span>
+      </div>
+      <div class="token-node">
+        <span class="tn-label">API Gateway</span>
+        <span class="tn-value">Valida assinatura</span>
+      </div>
+      <div class="token-arrow">
+        <span class="ta-label">claims extraídas</span>
+        <span>──→</span>
+      </div>
+      <div class="token-node">
+        <span class="tn-label">Supervisor</span>
+        <span class="tn-value">UserContext</span>
+      </div>
+      <div class="token-arrow">
+        <span class="ta-label">client_credentials</span>
+        <span>──→</span>
+      </div>
+      <div class="token-node">
+        <span class="tn-label">Agente Especialista</span>
+        <span class="tn-value">B2B Token + Payload</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ACL -->
+  <div class="section" id="acl">
+    <div class="eyebrow">Conceito</div>
+    <h2>O que é ACL</h2>
+
+    <p><strong>ACL (Access Control List)</strong> é uma lista que define quem pode fazer o quê em um sistema. Para cada recurso (um agente, uma tool, um dado de cliente), existe uma lista explícita de quais grupos e roles têm permissão de acessá-lo — e com qual nível de acesso.</p>
+
+    <p>No contexto deste sistema, você tem <strong>RBAC + ACL combinados</strong>: o EntraID emite roles e grupos (RBAC), e o sistema de parametrização define quais grupos/roles podem acessar cada recurso (ACL). O cache no DynamoDB é a materialização em runtime dessa ACL.</p>
+
+    <div class="callout warn">
+      <div class="callout-label">Comportamento Conservador</div>
+      <p>Se não for possível resolver a regra de acesso (cache miss + API indisponível), o sistema <strong>nega o acesso</strong> por padrão. Nunca libera por ausência de regra.</p>
+    </div>
+
+    <h3>Comparativo de modelos de controle de acesso</h3>
+
+    <div class="flow-diagram">
+<span class="flow-accent">RBAC</span>  Role-Based Access Control
+      "Quem tem a role <span class="flow-warn">manager</span> pode fazer POST"
+      → O que o Azure EntraID faz nativamente com claims de roles
+
+<span class="flow-accent">ABAC</span>  Attribute-Based Access Control
+      "Quem tem <span class="flow-warn">department=finance</span> AND <span class="flow-warn">region=BR</span> pode acessar"
+      → Mais flexível, mais complexo de implementar
+
+<span class="flow-accent">ACL</span>   Access Control List
+      "O agente financial permite os grupos [grp-finance, grp-admin]"
+      → Lista explícita por recurso, direta ao ponto
+
+<span class="flow-dim">Este sistema usa RBAC (EntraID) + ACL (parametrização) combinados.</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ACL Layers -->
+  <div class="section" id="acl-layers">
+    <div class="eyebrow">Controle de Acesso</div>
+    <h2>Camadas de ACL</h2>
+
+    <p>A validação de acesso é feita em cascata com três níveis de granularidade. O usuário precisa passar por cada nível relevante à sua ação antes de obter uma resposta.</p>
+
+    <div class="layer-grid">
+      <div class="layer-card l1">
+        <div class="layer-num">NÍVEL 01</div>
+        <div class="layer-title">Agente</div>
+        <p>O usuário pode sequer invocar este agente especialista?</p>
+        <span class="layer-scope">AccessScope.AGENT</span>
+      </div>
+      <div class="layer-card l2">
+        <div class="layer-num">NÍVEL 02</div>
+        <div class="layer-title">Dados de Cliente</div>
+        <p>O usuário tem acesso aos dados do cliente consultado? Validado pelo agente via API externa.</p>
+        <span class="layer-scope">AccessScope.CLIENT_DATA</span>
+      </div>
+      <div class="layer-card l3">
+        <div class="layer-num">NÍVEL 03</div>
+        <div class="layer-title">Tool Específica</div>
+        <p>O usuário pode executar esta operação? GET vs POST têm permissões distintas.</p>
+        <span class="layer-scope">AccessScope.TOOL</span>
+      </div>
+    </div>
+
+    <h3>Estrutura da tabela DynamoDB (ACL Cache)</h3>
+
+    <table class="acl-table">
+      <thead>
+        <tr>
+          <th>PK</th>
+          <th>SK</th>
+          <th>allowed_groups</th>
+          <th>allowed_roles</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pk">AGENT#financial</td>
+          <td class="sk">ACCESS</td>
+          <td class="val">["grp-finance", "grp-admin"]</td>
+          <td class="val">["analyst"]</td>
+        </tr>
+        <tr>
+          <td class="pk">AGENT#financial</td>
+          <td class="sk">CLIENT_DATA</td>
+          <td class="val">["grp-account-owners"]</td>
+          <td class="val">[]</td>
+        </tr>
+        <tr>
+          <td class="pk">AGENT#financial</td>
+          <td class="sk">TOOL#create_client</td>
+          <td class="val">["grp-finance-write"]</td>
+          <td class="val">["manager"]</td>
+        </tr>
+        <tr>
+          <td class="pk">AGENT#crm</td>
+          <td class="sk">ACCESS</td>
+          <td class="val">["grp-sales", "grp-admin"]</td>
+          <td class="val">["account-manager"]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <!-- UserContext -->
+  <div class="section" id="user-context">
+    <div class="eyebrow">Modelo de Dados</div>
+    <h2>UserContext</h2>
+
+    <p>O <strong>UserContext</strong> é construído uma única vez, no entrypoint do Supervisor, a partir do JWT recebido via allowlist explícita. Uma vez montado, é injetado no <code>invoke</code> inicial do grafo e viaja <strong>imutável</strong> por todos os nós.</p>
+
+    <p>Isso garante que a identidade do usuário não pode ser adulterada por nenhum nó intermediário e que qualquer log ou auditoria tem sempre a mesma fonte de verdade.</p>
+
+    <div class="state-box">
+      <div class="state-box-title">UserContext — campos e origem</div>
+      <div class="state-fields">
+        <div class="state-field"><span class="sf-key">user_id</span><span class="sf-type">str · JWT sub</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">email</span><span class="sf-type">str · preferred_username</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">groups</span><span class="sf-type">list[str] · groups claim</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">roles</span><span class="sf-type">list[str] · roles claim</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">scopes</span><span class="sf-type">list[str] · scp claim</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">tenant_id</span><span class="sf-type">str · tid claim</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">session_id</span><span class="sf-type">str · propagado</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">thread_id</span><span class="sf-type">str · propagado</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">token_issued_at</span><span class="sf-type">datetime · iat</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">token_expires_at</span><span class="sf-type">datetime · exp</span><span class="sf-badge immutable">imutável</span></div>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <div class="callout-label">Nunca propagado</div>
+      <p>Raw token, refresh token, e quaisquer dados PII além de <code>email</code> e <code>user_id</code> são descartados na construção do UserContext e jamais entram no AgentState ou nos payloads dos agentes.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- AgentState -->
+  <div class="section" id="agent-state">
+    <div class="eyebrow">LangGraph</div>
+    <h2>AgentState</h2>
+
+    <p>O <strong>AgentState</strong> é o único objeto que trafega entre todos os nós do grafo. Nada é passado fora dele. Cada nó recebe o state completo, executa sua responsabilidade, e retorna <strong>apenas os campos que modificou</strong> — o LangGraph faz o merge automático.</p>
+
+    <div class="state-box">
+      <div class="state-box-title">AgentState — todos os campos</div>
+      <div class="state-fields">
+        <div class="state-field"><span class="sf-key">user_context</span><span class="sf-type">UserContext</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">session_id</span><span class="sf-type">str</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">thread_id</span><span class="sf-type">str</span><span class="sf-badge immutable">imutável</span></div>
+        <div class="state-field"><span class="sf-key">messages</span><span class="sf-type">list[BaseMessage]</span><span class="sf-badge append">acumula</span></div>
+        <div class="state-field"><span class="sf-key">intent</span><span class="sf-type">Optional[str]</span><span class="sf-badge mutable">mutável</span></div>
+        <div class="state-field"><span class="sf-key">active_agent</span><span class="sf-type">Optional[str]</span><span class="sf-badge mutable">mutável</span></div>
+        <div class="state-field"><span class="sf-key">access_denied</span><span class="sf-type">Optional[AccessDeniedContext]</span><span class="sf-badge mutable">mutável</span></div>
+        <div class="state-field"><span class="sf-key">specialist_response</span><span class="sf-type">Optional[dict]</span><span class="sf-badge mutable">mutável</span></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Annotated + operator.add</div>
+      <p>O campo <code>messages</code> usa <code>Annotated[list, operator.add]</code>. Isso instrui o LangGraph a <strong>concatenar</strong> as listas retornadas por diferentes nós em vez de substituir — mecanismo nativo de acumulação de histórico de mensagens.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Token Flow -->
+  <div class="section" id="token-flow">
+    <div class="eyebrow">Segurança</div>
+    <h2>Fluxo de Tokens</h2>
+
+    <p>Existem dois tokens distintos no sistema, com propósitos e escopos diferentes. Entender essa separação é fundamental para a segurança da arquitetura.</p>
+
+    <h3>Token 1 — Access Token do usuário (entrada)</h3>
+    <p>Emitido pelo Azure EntraID para o usuário final. Validado pelo JWT Authorizer do API Gateway antes de chegar ao Supervisor. <strong>Nunca é repassado para os agentes.</strong> O Supervisor apenas lê as claims e descarta o token.</p>
+
+    <h3>Token 2 — Client Credentials (back-to-back)</h3>
+    <p>Obtido pelo Supervisor via fluxo <strong>client_credentials</strong> do OAuth2. Representa a identidade do <em>Supervisor</em>, não do usuário. É este token que acompanha as chamadas HTTP para os agentes especialistas — o contexto do usuário viaja separadamente no payload JSON.</p>
+
+    <div class="callout warn">
+      <div class="callout-label">Cache de token client_credentials</div>
+      <p>Tokens client_credentials têm validade de ~1h no EntraID. O <code>AgentTokenProvider</code> cacheia o token em memória com verificação de expiração (com buffer de 60s), evitando um roundtrip HTTP ao EntraID a cada invocação de agente.</p>
+    </div>
+
+    <h3>O que o agente recebe</h3>
+    <div class="flow-diagram">
+POST /agents/financial
+Authorization: Bearer <span class="flow-accent">{token do Supervisor — client_credentials}</span>
+Content-Type: application/json
+
+{
+  <span class="flow-warn">"user_context"</span>: {           <span class="flow-dim">← allowlist mínima do UserContext</span>
+    "user_id":    "sub-do-usuario",
+    "groups":     ["grp-finance"],
+    "roles":      ["analyst"],
+    "session_id": "sess-abc123",
+    "thread_id":  "thread-xyz789"
+  },
+  <span class="flow-warn">"messages"</span>: [...]            <span class="flow-dim">← histórico de mensagens</span>
+}
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ACL Cache -->
+  <div class="section" id="acl-cache">
+    <div class="eyebrow">Infraestrutura</div>
+    <h2>ACL Cache — DynamoDB</h2>
+
+    <p>O sistema de parametrização (API externa) é a <strong>fonte da verdade</strong> das regras de acesso. O DynamoDB funciona como cache de longa duração dessas regras, evitando chamadas repetidas à API a cada request.</p>
+
+    <h3>Estratégia de resolução</h3>
+    <div class="flow-diagram">
+<span class="flow-accent">1.</span> Supervisor precisa validar acesso
+
+<span class="flow-accent">2.</span> Consulta DynamoDB (PK=AGENT#id, SK=SCOPE)
+   ├── <span class="flow-ok">HIT + TTL válido</span>   → usa a regra cacheada
+   └── <span class="flow-denied">MISS ou TTL expirado</span> → vai para o passo 3
+
+<span class="flow-accent">3.</span> Chama API de parametrização
+   ├── <span class="flow-ok">Sucesso</span>            → popula DynamoDB + retorna regra
+   └── <span class="flow-denied">Falha (timeout/erro)</span> → <span class="flow-denied">NEGA ACESSO (fail-closed)</span>
+
+<span class="flow-accent">4.</span> Verifica interseção de grupos/roles do usuário
+   com allowed_groups e allowed_roles da regra
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-label">TTL recomendado</div>
+      <p>5 minutos (300s) como padrão. ACL é uma configuração que muda com pouca frequência. O DynamoDB remove itens expirados automaticamente, mas com possível atraso — por isso o código também verifica <code>ttl &gt; time.time()</code> manualmente.</p>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-label">DynamoDB Streams — preparado para o futuro</div>
+      <p>A arquitetura já contempla DynamoDB Streams para invalidação automática do cache quando uma regra for alterada no sistema de parametrização. A feature está arquitetada mas não ativada — sem custo adicional de design quando for necessário.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- File Structure -->
+  <div class="section" id="file-structure">
+    <div class="eyebrow">Implementação</div>
+    <h2>Estrutura de Arquivos</h2>
+
+    <div class="file-tree">
+<span class="dir">supervisor/</span>
+├── <span class="dir">graph/</span>
+│   ├── <span class="file">state.py</span>        <span class="note"># AgentState, UserContext, AccessDeniedContext</span>
+│   ├── <span class="file">nodes.py</span>        <span class="note"># todos os nós do grafo LangGraph</span>
+│   ├── <span class="file">edges.py</span>        <span class="note"># lógica de roteamento condicional</span>
+│   └── <span class="file">builder.py</span>      <span class="note"># montagem e compilação do grafo</span>
+├── <span class="dir">auth/</span>
+│   ├── <span class="file">context.py</span>      <span class="note"># parse do JWT → UserContext (allowlist)</span>
+│   └── <span class="file">tokens.py</span>       <span class="note"># client_credentials cache in-memory</span>
+├── <span class="dir">acl/</span>
+│   └── <span class="file">cache.py</span>        <span class="note"># ACL cache no DynamoDB com fallback para API</span>
+└── <span class="file">main.py</span>             <span class="note"># entrypoint — Lambda/ECS handler</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Code: state.py -->
+  <div class="section" id="code-state">
+    <div class="eyebrow">graph/state.py</div>
+    <h2>UserContext &amp; AgentState</h2>
+
+    <p>O contrato de dados do grafo. O <code>UserContext</code> é construído via allowlist explícita — apenas as claims mapeadas aqui são extraídas do JWT. Qualquer outra claim é descartada silenciosamente, independente do que o EntraID enviar.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">graph/state.py</span>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">from</span> typing <span class="kw">import</span> Annotated, Optional
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">from</span> enum <span class="kw">import</span> Enum
+<span class="kw">import</span> operator
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field
+<span class="kw">from</span> langchain_core.messages <span class="kw">import</span> BaseMessage
+
+
+<span class="cm"># ── UserContext ───────────────────────────────────────</span>
+<span class="cm"># Montado uma única vez a partir do JWT.</span>
+<span class="cm"># Viaja imutável pelo grafo inteiro.</span>
+
+<span class="kw">class</span> <span class="cl">UserContext</span>(BaseModel):
+    <span class="cm"># Identidade</span>
+    user_id: str
+    email:   Optional[str] = <span class="nm">None</span>
+    name:    Optional[str] = <span class="nm">None</span>
+
+    <span class="cm"># Claims de autorização (vindas do EntraID)</span>
+    groups: list[str] = Field(default_factory=list)
+    roles:  list[str] = Field(default_factory=list)
+    scopes: list[str] = Field(default_factory=list)
+
+    <span class="cm"># Metadados do tenant/app</span>
+    tenant_id: Optional[str] = <span class="nm">None</span>
+    client_id: Optional[str] = <span class="nm">None</span>  <span class="cm"># azp — app que emitiu o token</span>
+
+    <span class="cm"># Rastreabilidade — propagados em todo state e payload</span>
+    session_id: str
+    thread_id:  str
+
+    <span class="cm"># Janela de validade (apenas para logging)</span>
+    token_issued_at:  Optional[datetime] = <span class="nm">None</span>
+    token_expires_at: Optional[datetime] = <span class="nm">None</span>
+
+    <span class="dc">@classmethod</span>
+    <span class="kw">def</span> <span class="fn">from_jwt_claims</span>(
+        cls,
+        claims: dict,
+        session_id: str,
+        thread_id: str,
+    ) -> <span class="st">"UserContext"</span>:
+        <span class="st">"""
+        Allowlist explícita — só extrai o que está mapeado aqui.
+        Qualquer claim fora dessa lista é descartada silenciosamente.
+        """</span>
+        <span class="kw">return</span> cls(
+            user_id   = claims[<span class="st">"sub"</span>],
+            email     = claims.get(<span class="st">"preferred_username"</span>),
+            name      = claims.get(<span class="st">"name"</span>),
+            groups    = claims.get(<span class="st">"groups"</span>, []),
+            roles     = claims.get(<span class="st">"roles"</span>, []),
+            scopes    = claims.get(<span class="st">"scp"</span>, <span class="st">""</span>).split() <span class="kw">if</span> claims.get(<span class="st">"scp"</span>) <span class="kw">else</span> [],
+            tenant_id = claims.get(<span class="st">"tid"</span>),
+            client_id = claims.get(<span class="st">"azp"</span>),
+            session_id = session_id,
+            thread_id  = thread_id,
+            token_issued_at  = datetime.fromtimestamp(claims[<span class="st">"iat"</span>]) <span class="kw">if</span> <span class="st">"iat"</span> <span class="kw">in</span> claims <span class="kw">else</span> <span class="nm">None</span>,
+            token_expires_at = datetime.fromtimestamp(claims[<span class="st">"exp"</span>]) <span class="kw">if</span> <span class="st">"exp"</span> <span class="kw">in</span> claims <span class="kw">else</span> <span class="nm">None</span>,
+        )
+
+    <span class="kw">def</span> <span class="fn">to_propagatable_payload</span>(self) -> dict:
+        <span class="st">"""
+        Segunda camada de allowlist: só o que o agente precisa.
+        Raw token NUNCA entra aqui.
+        """</span>
+        <span class="kw">return</span> {
+            <span class="st">"user_id"</span>:    self.user_id,
+            <span class="st">"groups"</span>:     self.groups,
+            <span class="st">"roles"</span>:      self.roles,
+            <span class="st">"session_id"</span>: self.session_id,
+            <span class="st">"thread_id"</span>:  self.thread_id,
+        }
+
+
+<span class="cm"># ── AccessDenied ──────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cl">AccessDeniedReason</span>(str, Enum):
+    AGENT_RESTRICTED       = <span class="st">"AGENT_RESTRICTED"</span>
+    CLIENT_DATA_RESTRICTED = <span class="st">"CLIENT_DATA_RESTRICTED"</span>
+    TOOL_RESTRICTED        = <span class="st">"TOOL_RESTRICTED"</span>
+
+
+<span class="kw">class</span> <span class="cl">AccessDeniedContext</span>(BaseModel):
+    reason:     <span class="cl">AccessDeniedReason</span>
+    agent_id:   str
+    tool_name:  Optional[str] = <span class="nm">None</span>
+    client_id:  Optional[str] = <span class="nm">None</span>
+    detail:     str  <span class="cm"># mensagem técnica para log, nunca exposta ao usuário</span>
+
+
+<span class="cm"># ── AgentState ────────────────────────────────────────</span>
+<span class="cm"># Annotated[list, operator.add] → LangGraph concatena</span>
+<span class="cm"># em vez de substituir (acumulação de mensagens)</span>
+
+<span class="kw">class</span> <span class="cl">AgentState</span>(TypedDict):
+    user_context:        <span class="cl">UserContext</span>           <span class="cm"># imutável após inject</span>
+    session_id:          str                    <span class="cm"># duplicado para acesso rápido</span>
+    thread_id:           str
+    messages:            Annotated[list[<span class="cl">BaseMessage</span>], operator.add]
+    intent:              Optional[str]
+    active_agent:        Optional[str]
+    access_denied:       Optional[<span class="cl">AccessDeniedContext</span>]
+    specialist_response: Optional[dict]</pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Code: acl/cache.py -->
+  <div class="section" id="code-acl">
+    <div class="eyebrow">acl/cache.py</div>
+    <h2>ACL Cache</h2>
+
+    <p>Responsável por responder: <em>"este usuário pode fazer X?"</em> Implementa a estratégia DynamoDB → API → fail-closed em um único ponto de entrada (<code>check_access</code>). Todo o Supervisor passa por aqui para qualquer validação de acesso.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">acl/cache.py</span>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><span class="kw">import</span> time, logging, requests, boto3
+<span class="kw">from</span> enum <span class="kw">import</span> Enum
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+<span class="kw">from</span> supervisor.graph.state <span class="kw">import</span> UserContext
+
+logger = logging.getLogger(__name__)
+
+
+<span class="kw">class</span> <span class="cl">AccessScope</span>(str, Enum):
+    AGENT       = <span class="st">"ACCESS"</span>
+    CLIENT_DATA = <span class="st">"CLIENT_DATA"</span>
+    TOOL        = <span class="st">"TOOL"</span>
+
+
+<span class="kw">class</span> <span class="cl">ACLCache</span>:
+    <span class="st">"""
+    Estratégia de resolução (em ordem):
+    1. DynamoDB (cache local)
+    2. MISS/expirado → API de parametrização → popula DynamoDB
+    3. API falhou   → nega acesso (fail-closed)
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, table_name: str, acl_api_url: str, ttl_seconds: int = <span class="nm">300</span>):
+        self.table       = boto3.resource(<span class="st">"dynamodb"</span>).Table(table_name)
+        self.acl_api_url = acl_api_url
+        self.ttl_seconds = ttl_seconds
+
+    <span class="kw">def</span> <span class="fn">check_access</span>(
+        self,
+        agent_id: str,
+        scope: <span class="cl">AccessScope</span>,
+        user_context: <span class="cl">UserContext</span>,
+        tool_name: Optional[str] = <span class="nm">None</span>,
+    ) -> bool:
+        sk   = <span class="st">f"TOOL#{tool_name}"</span> <span class="kw">if</span> scope == <span class="cl">AccessScope</span>.TOOL <span class="kw">else</span> scope.value
+        pk   = <span class="st">f"AGENT#{agent_id}"</span>
+        rule = self._get_from_dynamo(pk, sk)
+
+        <span class="kw">if</span> rule <span class="kw">is</span> <span class="nm">None</span>:
+            logger.info(<span class="st">"acl_cache_miss pk=%s sk=%s user=%s"</span>, pk, sk, user_context.user_id)
+            rule = self._fetch_from_api_and_cache(pk, sk, agent_id, scope, tool_name)
+
+        <span class="kw">if</span> rule <span class="kw">is</span> <span class="nm">None</span>:
+            logger.error(<span class="st">"acl_resolution_failed pk=%s sk=%s — denying"</span>, pk, sk)
+            <span class="kw">return</span> <span class="nm">False</span>  <span class="cm"># fail-closed</span>
+
+        allowed_groups = set(rule.get(<span class="st">"allowed_groups"</span>, []))
+        allowed_roles  = set(rule.get(<span class="st">"allowed_roles"</span>, []))
+        user_groups    = set(user_context.groups)
+        user_roles     = set(user_context.roles)
+
+        <span class="kw">return</span> bool(user_groups & allowed_groups <span class="kw">or</span> user_roles & allowed_roles)
+
+    <span class="kw">def</span> <span class="fn">_get_from_dynamo</span>(self, pk: str, sk: str) -> Optional[dict]:
+        <span class="kw">try</span>:
+            resp = self.table.get_item(Key={<span class="st">"PK"</span>: pk, <span class="st">"SK"</span>: sk})
+            item = resp.get(<span class="st">"Item"</span>)
+            <span class="kw">if not</span> item:
+                <span class="kw">return</span> <span class="nm">None</span>
+            <span class="cm"># Verifica TTL manualmente (DynamoDB pode demorar para limpar)</span>
+            <span class="kw">if</span> item.get(<span class="st">"ttl"</span>, <span class="nm">0</span>) < time.time():
+                <span class="kw">return</span> <span class="nm">None</span>
+            <span class="kw">return</span> item
+        <span class="kw">except</span> <span class="cl">Exception</span> <span class="kw">as</span> e:
+            logger.error(<span class="st">"dynamo_read_error pk=%s sk=%s error=%s"</span>, pk, sk, e)
+            <span class="kw">return</span> <span class="nm">None</span>
+
+    <span class="kw">def</span> <span class="fn">_fetch_from_api_and_cache</span>(
+        self, pk, sk, agent_id, scope, tool_name
+    ) -> Optional[dict]:
+        <span class="kw">try</span>:
+            params = {<span class="st">"agent_id"</span>: agent_id, <span class="st">"scope"</span>: scope.value}
+            <span class="kw">if</span> tool_name:
+                params[<span class="st">"tool"</span>] = tool_name
+
+            resp = requests.get(
+                <span class="st">f"{self.acl_api_url}/rules"</span>,
+                params=params, timeout=<span class="nm">3</span>
+            )
+            resp.raise_for_status()
+            rule = resp.json()
+
+            self.table.put_item(Item={
+                <span class="st">"PK"</span>: pk, <span class="st">"SK"</span>: sk,
+                **rule,
+                <span class="st">"ttl"</span>: int(time.time()) + self.ttl_seconds,
+            })
+            logger.info(<span class="st">"acl_cache_populated pk=%s sk=%s"</span>, pk, sk)
+            <span class="kw">return</span> rule
+        <span class="kw">except</span> <span class="cl">Exception</span> <span class="kw">as</span> e:
+            logger.error(<span class="st">"acl_api_error agent=%s scope=%s error=%s"</span>, agent_id, scope, e)
+            <span class="kw">return</span> <span class="nm">None</span></pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Code: auth/tokens.py -->
+  <div class="section" id="code-tokens">
+    <div class="eyebrow">auth/tokens.py</div>
+    <h2>Agent Token Provider</h2>
+
+    <p>Gerencia o ciclo de vida dos tokens <strong>client_credentials</strong> que o Supervisor usa para se autenticar com os agentes. O cache é in-memory por scope — um processo ECS não precisa de mais que isso. O buffer de 60s antes da expiração evita usar um token que vai expirar durante a chamada HTTP.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">auth/tokens.py</span>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><span class="kw">import</span> time, logging, requests
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+logger = logging.getLogger(__name__)
+
+
+<span class="dc">@dataclass</span>
+<span class="kw">class</span> <span class="cl">CachedToken</span>:
+    access_token: str
+    expires_at:   float  <span class="cm"># unix timestamp</span>
+
+    <span class="kw">def</span> <span class="fn">is_valid</span>(self, buffer_seconds: int = <span class="nm">60</span>) -> bool:
+        <span class="st">"""Considera inválido 60s antes de expirar."""</span>
+        <span class="kw">return</span> time.time() < (self.expires_at - buffer_seconds)
+
+
+<span class="kw">class</span> <span class="cl">AgentTokenProvider</span>:
+    <span class="st">"""
+    Gerencia tokens client_credentials para o Supervisor.
+    Cache in-memory por scope — renovação automática ao expirar.
+
+    Este token representa o SUPERVISOR, não o usuário.
+    O contexto do usuário viaja separadamente no payload.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, tenant_id: str, client_id: str, client_secret: str):
+        self.token_url     = <span class="st">f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"</span>
+        self.client_id     = client_id
+        self.client_secret = client_secret
+        self._cache: dict[str, <span class="cl">CachedToken</span>] = {}
+
+    <span class="kw">def</span> <span class="fn">get_token</span>(self, scope: str) -> str:
+        cached = self._cache.get(scope)
+        <span class="kw">if</span> cached <span class="kw">and</span> cached.is_valid():
+            logger.debug(<span class="st">"agent_token_cache_hit scope=%s"</span>, scope)
+            <span class="kw">return</span> cached.access_token
+        <span class="kw">return</span> self._fetch_and_cache(scope)
+
+    <span class="kw">def</span> <span class="fn">_fetch_and_cache</span>(self, scope: str) -> str:
+        logger.info(<span class="st">"agent_token_refreshing scope=%s"</span>, scope)
+        <span class="kw">try</span>:
+            resp = requests.post(self.token_url, data={
+                <span class="st">"grant_type"</span>:    <span class="st">"client_credentials"</span>,
+                <span class="st">"client_id"</span>:     self.client_id,
+                <span class="st">"client_secret"</span>: self.client_secret,
+                <span class="st">"scope"</span>:         scope,
+            }, timeout=<span class="nm">5</span>)
+            resp.raise_for_status()
+            data  = resp.json()
+            token = <span class="cl">CachedToken</span>(
+                access_token = data[<span class="st">"access_token"</span>],
+                expires_at   = time.time() + data[<span class="st">"expires_in"</span>],
+            )
+            self._cache[scope] = token
+            logger.info(<span class="st">"agent_token_acquired scope=%s expires_in=%ds"</span>, scope, data[<span class="st">"expires_in"</span>])
+            <span class="kw">return</span> token.access_token
+        <span class="kw">except</span> <span class="cl">Exception</span> <span class="kw">as</span> e:
+            logger.error(<span class="st">"agent_token_fetch_error scope=%s error=%s"</span>, scope, e)
+            <span class="kw">raise</span></pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Code: graph/nodes.py -->
+  <div class="section" id="code-nodes">
+    <div class="eyebrow">graph/nodes.py</div>
+    <h2>Nós do Grafo</h2>
+
+    <p>Cada nó é uma função pura com responsabilidade única. Recebe o state completo e retorna apenas os campos que modificou. O LangGraph faz o merge. Nenhum nó pode reescrever o <code>user_context</code>.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">graph/nodes.py</span>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><span class="kw">import</span> logging, requests
+<span class="kw">from</span> langchain_core.messages <span class="kw">import</span> AIMessage
+<span class="kw">from</span> supervisor.graph.state <span class="kw">import</span> (
+    AgentState, UserContext,
+    AccessDeniedContext, AccessDeniedReason,
+)
+<span class="kw">from</span> supervisor.acl.cache <span class="kw">import</span> ACLCache, AccessScope
+<span class="kw">from</span> supervisor.auth.tokens <span class="kw">import</span> AgentTokenProvider
+
+logger = logging.getLogger(__name__)
+
+<span class="cm"># Dependências singleton — injetadas na inicialização</span>
+acl_cache:      <span class="cl">ACLCache</span>            = <span class="nm">None</span>
+token_provider: <span class="cl">AgentTokenProvider</span>  = <span class="nm">None</span>
+llm                                  = <span class="nm">None</span>
+AGENT_ENDPOINTS: dict[str, str]      = {}
+AGENT_SCOPES:    dict[str, str]      = {}
+
+
+<span class="cm"># ── Nó 1: parse_user_context ──────────────────────────</span>
+<span class="cm"># Valida e loga o início do request. Não modifica o state.</span>
+
+<span class="kw">def</span> <span class="fn">parse_user_context</span>(state: <span class="cl">AgentState</span>) -> dict:
+    u = state[<span class="st">"user_context"</span>]
+    logger.info(
+        <span class="st">"request_received user_id=%s session=%s thread=%s groups=%s roles=%s"</span>,
+        u.user_id, u.session_id, u.thread_id, u.groups, u.roles,
+    )
+    <span class="kw">return</span> {}
+
+
+<span class="cm"># ── Nó 2: resolve_intent ──────────────────────────────</span>
+<span class="cm"># LLM lê a mensagem e retorna o identificador do agente.</span>
+<span class="cm"># Separado do check de acesso para logar "tentou acessar X".</span>
+
+<span class="kw">def</span> <span class="fn">resolve_intent</span>(state: <span class="cl">AgentState</span>) -> dict:
+    u    = state[<span class="st">"user_context"</span>]
+    msg  = state[<span class="st">"messages"</span>][-<span class="nm">1</span>].content
+    resp = llm.invoke([
+        {<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: <span class="st">"""
+Analise a mensagem e retorne APENAS o identificador do agente:
+- financial: questões financeiras, relatórios, pagamentos
+- hr: recursos humanos, folha, benefícios
+- crm: dados de clientes, accounts, oportunidades
+- general: sem agente específico
+Retorne só o identificador."""</span>},
+        {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: msg},
+    ])
+    intent = resp.content.strip().lower()
+    logger.info(<span class="st">"intent_resolved user=%s session=%s intent=%s"</span>, u.user_id, u.session_id, intent)
+    <span class="kw">return</span> {<span class="st">"intent"</span>: intent}
+
+
+<span class="cm"># ── Nó 3: check_agent_access ──────────────────────────</span>
+<span class="cm"># Primeiro portão de segurança. Popula access_denied ou active_agent.</span>
+
+<span class="kw">def</span> <span class="fn">check_agent_access</span>(state: <span class="cl">AgentState</span>) -> dict:
+    u, intent = state[<span class="st">"user_context"</span>], state[<span class="st">"intent"</span>]
+
+    <span class="kw">if not</span> intent <span class="kw">or</span> intent == <span class="st">"general"</span>:
+        <span class="kw">return</span> {<span class="st">"active_agent"</span>: <span class="st">"general"</span>}
+
+    <span class="kw">if not</span> acl_cache.check_access(intent, <span class="cl">AccessScope</span>.AGENT, u):
+        denied = <span class="cl">AccessDeniedContext</span>(
+            reason   = <span class="cl">AccessDeniedReason</span>.AGENT_RESTRICTED,
+            agent_id = intent,
+            detail   = <span class="st">f"groups={u.groups} roles={u.roles}"</span>,
+        )
+        _log_access_denied(denied, u)
+        <span class="kw">return</span> {<span class="st">"access_denied"</span>: denied}
+
+    <span class="kw">return</span> {<span class="st">"active_agent"</span>: intent}
+
+
+<span class="cm"># ── Nó 4: invoke_specialist ───────────────────────────</span>
+<span class="cm"># Back-to-back: obtém token client_credentials, chama o agente.</span>
+<span class="cm"># UserContext viaja no payload, não no token.</span>
+
+<span class="kw">def</span> <span class="fn">invoke_specialist</span>(state: <span class="cl">AgentState</span>) -> dict:
+    u, agent_id = state[<span class="st">"user_context"</span>], state[<span class="st">"active_agent"</span>]
+
+    <span class="kw">if</span> agent_id == <span class="st">"general"</span>:
+        <span class="kw">return</span> {<span class="st">"specialist_response"</span>: {<span class="st">"content"</span>: <span class="st">"Posso ajudar com informações gerais."</span>}}
+
+    <span class="kw">try</span>:
+        token = token_provider.get_token(<span class="cl">AGENT_SCOPES</span>[agent_id])
+        logger.info(<span class="st">"invoking_specialist agent=%s user=%s session=%s thread=%s"</span>,
+                    agent_id, u.user_id, u.session_id, u.thread_id)
+
+        resp = requests.post(
+            <span class="cl">AGENT_ENDPOINTS</span>[agent_id],
+            headers={<span class="st">"Authorization"</span>: <span class="st">f"Bearer {token}"</span>, <span class="st">"Content-Type"</span>: <span class="st">"application/json"</span>},
+            json={
+                <span class="st">"user_context"</span>: u.to_propagatable_payload(),
+                <span class="st">"messages"</span>: [{<span class="st">"role"</span>: m.type, <span class="st">"content"</span>: m.content} <span class="kw">for</span> m <span class="kw">in</span> state[<span class="st">"messages"</span>]],
+            },
+            timeout=<span class="nm">30</span>,
+        )
+        resp.raise_for_status()
+        result = resp.json()
+
+        <span class="cm"># Captura erros estruturados de ACL vindos do agente</span>
+        <span class="kw">if</span> result.get(<span class="st">"error_code"</span>) <span class="kw">in</span> {<span class="st">"CLIENT_DATA_RESTRICTED"</span>, <span class="st">"TOOL_RESTRICTED"</span>}:
+            denied = <span class="cl">AccessDeniedContext</span>(
+                reason    = <span class="cl">AccessDeniedReason</span>(result[<span class="st">"error_code"</span>]),
+                agent_id  = agent_id,
+                tool_name = result.get(<span class="st">"tool_name"</span>),
+                client_id = result.get(<span class="st">"client_id"</span>),
+                detail    = result.get(<span class="st">"detail"</span>, <span class="st">""</span>),
+            )
+            _log_access_denied(denied, u)
+            <span class="kw">return</span> {<span class="st">"access_denied"</span>: denied, <span class="st">"specialist_response"</span>: result}
+
+        logger.info(<span class="st">"specialist_ok agent=%s user=%s session=%s"</span>, agent_id, u.user_id, u.session_id)
+        <span class="kw">return</span> {<span class="st">"specialist_response"</span>: result}
+
+    <span class="kw">except</span> requests.<span class="cl">RequestException</span> <span class="kw">as</span> e:
+        logger.error(<span class="st">"specialist_error agent=%s user=%s error=%s"</span>, agent_id, u.user_id, e)
+        <span class="kw">return</span> {<span class="st">"specialist_response"</span>: {<span class="st">"content"</span>: <span class="st">"Não foi possível processar sua solicitação."</span>}}
+
+
+<span class="cm"># ── Nó 5: process_response ────────────────────────────</span>
+<span class="cm"># Nó terminal. Normaliza qualquer resultado em AIMessage.</span>
+<span class="cm"># Detalhes técnicos ficam nos logs — nunca expostos ao usuário.</span>
+
+<span class="kw">def</span> <span class="fn">process_response</span>(state: <span class="cl">AgentState</span>) -> dict:
+    denied = state.get(<span class="st">"access_denied"</span>)
+    <span class="kw">if</span> denied:
+        content = _build_denied_message(denied)
+    <span class="kw">else</span>:
+        content = state.get(<span class="st">"specialist_response"</span>, {}).get(<span class="st">"content"</span>, <span class="st">"Sem resposta disponível."</span>)
+    <span class="kw">return</span> {<span class="st">"messages"</span>: [<span class="cl">AIMessage</span>(content=content)]}
+
+
+<span class="cm"># ── Helpers ───────────────────────────────────────────</span>
+
+<span class="kw">def</span> <span class="fn">_log_access_denied</span>(denied: <span class="cl">AccessDeniedContext</span>, u: <span class="cl">UserContext</span>):
+    logger.warning(
+        <span class="st">"access_denied reason=%s agent=%s tool=%s client=%s user=%s session=%s thread=%s detail=%s"</span>,
+        denied.reason.value, denied.agent_id, denied.tool_name,
+        denied.client_id, u.user_id, u.session_id, u.thread_id, denied.detail,
+    )
+
+<span class="kw">def</span> <span class="fn">_build_denied_message</span>(denied: <span class="cl">AccessDeniedContext</span>) -> str:
+    <span class="kw">return</span> {
+        <span class="cl">AccessDeniedReason</span>.AGENT_RESTRICTED: (
+            <span class="st">"Você não possui acesso ao módulo solicitado. "</span>
+            <span class="st">"Entre em contato com o administrador para solicitar permissão."</span>
+        ),
+        <span class="cl">AccessDeniedReason</span>.CLIENT_DATA_RESTRICTED: (
+            <span class="st">"Você não possui acesso aos dados deste cliente. "</span>
+            <span class="st">"Apenas o account responsável pode consultar essas informações."</span>
+        ),
+        <span class="cl">AccessDeniedReason</span>.TOOL_RESTRICTED: (
+            <span class="st">"Você não possui permissão para executar esta operação. "</span>
+            <span class="st">"Sua conta permite apenas consultas neste módulo."</span>
+        ),
+    }.get(denied.reason, <span class="st">"Acesso negado."</span>)</pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Code: edges + builder -->
+  <div class="section" id="code-edges">
+    <div class="eyebrow">graph/edges.py &amp; graph/builder.py</div>
+    <h2>Edges &amp; Builder</h2>
+
+    <p>As <strong>edges condicionais</strong> são onde o LangGraph decide qual nó executar a seguir baseado no estado atual. O <strong>builder</strong> é onde tudo se conecta e o grafo é compilado — uma única vez na inicialização do processo, reutilizado para todos os requests.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">graph/edges.py</span>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><span class="kw">from</span> supervisor.graph.state <span class="kw">import</span> AgentState
+
+
+<span class="kw">def</span> <span class="fn">after_access_check</span>(state: <span class="cl">AgentState</span>) -> str:
+    <span class="st">"""
+    Após check_agent_access:
+    - access_denied preenchido → encerra em process_response
+    - aprovado                 → vai para invoke_specialist
+    """</span>
+    <span class="kw">if</span> state.get(<span class="st">"access_denied"</span>):
+        <span class="kw">return</span> <span class="st">"process_response"</span>
+    <span class="kw">return</span> <span class="st">"invoke_specialist"</span>
+
+
+<span class="kw">def</span> <span class="fn">after_invoke</span>(state: <span class="cl">AgentState</span>) -> str:
+    <span class="cm"># Sempre normaliza — erros do agente já foram capturados no nó anterior</span>
+    <span class="kw">return</span> <span class="st">"process_response"</span></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">graph/builder.py</span>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, START, END
+<span class="kw">from</span> supervisor.graph.state <span class="kw">import</span> AgentState
+<span class="kw">from</span> supervisor.graph.nodes <span class="kw">import</span> (
+    parse_user_context, resolve_intent,
+    check_agent_access, invoke_specialist, process_response,
+)
+<span class="kw">from</span> supervisor.graph.edges <span class="kw">import</span> after_access_check
+
+
+<span class="kw">def</span> <span class="fn">build_supervisor_graph</span>():
+    builder = <span class="cl">StateGraph</span>(<span class="cl">AgentState</span>)
+
+    <span class="cm"># Registra nós</span>
+    builder.add_node(<span class="st">"parse_user_context"</span>, parse_user_context)
+    builder.add_node(<span class="st">"resolve_intent"</span>,     resolve_intent)
+    builder.add_node(<span class="st">"check_agent_access"</span>, check_agent_access)
+    builder.add_node(<span class="st">"invoke_specialist"</span>,  invoke_specialist)
+    builder.add_node(<span class="st">"process_response"</span>,   process_response)
+
+    <span class="cm"># Fluxo principal</span>
+    builder.add_edge(START,                <span class="st">"parse_user_context"</span>)
+    builder.add_edge(<span class="st">"parse_user_context"</span>, <span class="st">"resolve_intent"</span>)
+    builder.add_edge(<span class="st">"resolve_intent"</span>,     <span class="st">"check_agent_access"</span>)
+
+    <span class="cm"># Edge condicional: acesso negado ou aprovado</span>
+    builder.add_conditional_edges(
+        <span class="st">"check_agent_access"</span>,
+        after_access_check,
+        {
+            <span class="st">"invoke_specialist"</span>: <span class="st">"invoke_specialist"</span>,
+            <span class="st">"process_response"</span>:  <span class="st">"process_response"</span>,
+        },
+    )
+
+    builder.add_edge(<span class="st">"invoke_specialist"</span>, <span class="st">"process_response"</span>)
+    builder.add_edge(<span class="st">"process_response"</span>,  END)
+
+    <span class="kw">return</span> builder.compile()
+
+
+<span class="cm"># Singleton — compilado uma vez, reutilizado em todos os requests</span>
+supervisor_graph = build_supervisor_graph()</pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Code: main.py -->
+  <div class="section" id="code-main">
+    <div class="eyebrow">main.py</div>
+    <h2>Entrypoint</h2>
+
+    <p>O ponto de entrada onde o JWT chega, o <code>UserContext</code> é montado e o grafo é invocado. Toda a segurança começa aqui. O JWT Authorizer do API Gateway já validou assinatura, issuer e audience antes disso — aqui apenas decodificamos as claims sem reverificação de assinatura.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">main.py</span>
+        <span class="code-lang">python</span>
+      </div>
+      <pre><span class="kw">import</span> json, logging
+<span class="kw">import</span> jwt  <span class="cm"># PyJWT</span>
+<span class="kw">from</span> langchain_core.messages <span class="kw">import</span> HumanMessage
+<span class="kw">from</span> supervisor.graph.builder <span class="kw">import</span> supervisor_graph
+<span class="kw">from</span> supervisor.graph.state <span class="kw">import</span> UserContext
+
+logger = logging.getLogger(__name__)
+
+
+<span class="kw">def</span> <span class="fn">handler</span>(event: dict, context) -> dict:
+    <span class="st">"""
+    AWS Lambda / ECS handler para requests do API Gateway.
+    JWT já validado pelo JWT Authorizer — apenas decodificamos claims.
+    """</span>
+    <span class="kw">try</span>:
+        <span class="cm"># Extrai claims do JWT (assinatura já validada pelo API GW)</span>
+        raw_token = event[<span class="st">"headers"</span>].get(<span class="st">"Authorization"</span>, <span class="st">""</span>).removeprefix(<span class="st">"Bearer "</span>)
+        claims    = jwt.decode(raw_token, options={<span class="st">"verify_signature"</span>: <span class="nm">False</span>})
+
+        body       = json.loads(event.get(<span class="st">"body"</span>, <span class="st">"{}"</span>))
+        session_id = body.get(<span class="st">"session_id"</span>) <span class="kw">or</span> event[<span class="st">"headers"</span>].get(<span class="st">"X-Session-Id"</span>)
+        thread_id  = body.get(<span class="st">"thread_id"</span>)  <span class="kw">or</span> event[<span class="st">"headers"</span>].get(<span class="st">"X-Thread-Id"</span>)
+
+        <span class="kw">if not</span> session_id <span class="kw">or not</span> thread_id:
+            <span class="kw">return</span> _error(<span class="nm">400</span>, <span class="st">"session_id e thread_id são obrigatórios"</span>)
+
+        <span class="cm"># Monta UserContext via allowlist — ponto único de extração do JWT</span>
+        user_context = <span class="cl">UserContext</span>.from_jwt_claims(claims, session_id, thread_id)
+
+        <span class="cm"># Invoca o grafo com state inicial completo</span>
+        result = supervisor_graph.invoke({
+            <span class="st">"user_context"</span>:        user_context,
+            <span class="st">"session_id"</span>:          session_id,
+            <span class="st">"thread_id"</span>:           thread_id,
+            <span class="st">"messages"</span>:            [<span class="cl">HumanMessage</span>(content=body[<span class="st">"message"</span>])],
+            <span class="st">"intent"</span>:              <span class="nm">None</span>,
+            <span class="st">"active_agent"</span>:        <span class="nm">None</span>,
+            <span class="st">"access_denied"</span>:       <span class="nm">None</span>,
+            <span class="st">"specialist_response"</span>: <span class="nm">None</span>,
+        })
+
+        final = result[<span class="st">"messages"</span>][-<span class="nm">1</span>].content
+        <span class="kw">return</span> {
+            <span class="st">"statusCode"</span>: <span class="nm">200</span>,
+            <span class="st">"body"</span>: json.dumps({
+                <span class="st">"message"</span>:    final,
+                <span class="st">"session_id"</span>: session_id,
+                <span class="st">"thread_id"</span>:  thread_id,
+            }),
+        }
+
+    <span class="kw">except</span> <span class="cl">KeyError</span> <span class="kw">as</span> e:
+        logger.error(<span class="st">"missing_field error=%s"</span>, e)
+        <span class="kw">return</span> _error(<span class="nm">400</span>, <span class="st">f"Campo obrigatório ausente: {e}"</span>)
+    <span class="kw">except</span> <span class="cl">Exception</span> <span class="kw">as</span> e:
+        logger.error(<span class="st">"unhandled_error error=%s"</span>, e, exc_info=<span class="nm">True</span>)
+        <span class="kw">return</span> _error(<span class="nm">500</span>, <span class="st">"Erro interno"</span>)
+
+
+<span class="kw">def</span> <span class="fn">_error</span>(status: int, msg: str) -> dict:
+    <span class="kw">return</span> {<span class="st">"statusCode"</span>: status, <span class="st">"body"</span>: json.dumps({<span class="st">"error"</span>: msg})}</pre>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Error Codes -->
+  <div class="section" id="error-codes">
+    <div class="eyebrow">Referência</div>
+    <h2>Erros Estruturados</h2>
+
+    <p>Cada cenário de acesso negado tem um código distinto para rastreabilidade completa. As mensagens exibidas ao usuário são amigáveis e não expõem detalhes internos — esses ficam nos logs com o contexto completo.</p>
+
+    <div class="error-list">
+      <div class="error-item">
+        <span class="error-code">AGENT_RESTRICTED</span>
+        <div class="error-desc">
+          <strong>Validado por: Supervisor (check_agent_access)</strong>
+          O usuário não tem grupo ou role que permita invocar o agente especialista alvo. O grafo encerra sem chamar o agente.
+        </div>
+      </div>
+      <div class="error-item">
+        <span class="error-code">CLIENT_DATA_RESTRICTED</span>
+        <div class="error-desc">
+          <strong>Validado por: Agente especialista (dentro da tool)</strong>
+          O usuário não é account do cliente consultado. A tool chama a API externa com user_id + client_id e recebe negação.
+        </div>
+      </div>
+      <div class="error-item">
+        <span class="error-code">TOOL_RESTRICTED</span>
+        <div class="error-desc">
+          <strong>Validado por: Agente especialista (antes de executar a tool)</strong>
+          O usuário tem acesso ao agente mas não a esta operação específica. Ex: pode fazer GET mas não POST em dados de clientes.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Sequence Diagram -->
+  <div class="section" id="sequence">
+    <div class="eyebrow">Referência</div>
+    <h2>Diagrama de Sequência</h2>
+
+    <div class="flow-diagram">
+<span class="flow-dim">Client</span>          <span class="flow-dim">API Gateway</span>     <span class="flow-dim">Supervisor</span>       <span class="flow-dim">DynamoDB</span>      <span class="flow-dim">ACL API</span>      <span class="flow-dim">Agente</span>
+  │                   │                 │                  │               │               │
+  │── POST /chat ────►│                 │                  │               │               │
+  │   Bearer {JWT}    │                 │                  │               │               │
+  │                   │─ JWT Authorizer │                  │               │               │
+  │                   │  (valida assin, │                  │               │               │
+  │                   │   issuer, aud)  │                  │               │               │
+  │                   │── request ─────►│                  │               │               │
+  │                   │                 │                  │               │               │
+  │                   │            <span class="flow-accent">parse_user_context</span>         │               │               │
+  │                   │            from_jwt_claims (allowlist)             │               │
+  │                   │            injeta no AgentState                    │               │
+  │                   │                 │                  │               │               │
+  │                   │            <span class="flow-accent">resolve_intent</span>             │               │               │
+  │                   │            LLM → intent="financial"                │               │               │
+  │                   │                 │                  │               │               │
+  │                   │            <span class="flow-accent">check_agent_access</span>         │               │               │
+  │                   │                 │── get_item ─────►│               │               │
+  │                   │                 │                  │               │               │
+  │                   │                 │◄── HIT (TTL ok) ─│               │               │
+  │                   │                 │  (ou MISS →)     │──── GET ─────►│               │
+  │                   │                 │                  │◄─ regra ──────│               │
+  │                   │                 │                  │ put_item      │               │
+  │                   │                 │                  │               │               │
+  │                   │            intersecção grupos/roles do usuário                     │
+  │                   │                 │                  │               │               │
+  │                   │            <span class="flow-ok">aprovado</span> ─────────────────────────────────────────────►│
+  │                   │            <span class="flow-accent">invoke_specialist</span>                                       │
+  │                   │            client_credentials token                               │
+  │                   │            + UserContext no payload                                │
+  │                   │                 │                  │               │               │
+  │                   │                 │                  │               │  tool executa │
+  │                   │                 │                  │               │  valida CLIENT│
+  │                   │                 │                  │               │  via API ext. │
+  │                   │                 │                  │               │               │
+  │                   │            <span class="flow-accent">process_response</span>                                        │
+  │                   │◄── 200 ─────────│                  │               │               │
+  │◄── response ──────│                 │                  │               │               │
+  │                   │                 │                  │               │               │
+  │                   │       <span class="flow-denied">SE access_denied em qualquer nível:</span>               │               │
+  │                   │       log warning + mensagem amigável ao usuário                  │
+  │◄── 200 ───────────│                 │                  │               │               │
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Open Points -->
+  <div class="section" id="open-points">
+    <div class="eyebrow">Próximos Passos</div>
+    <h2>Pontos em Aberto</h2>
+
+    <div class="callout warn">
+      <div class="callout-label">Checkpointer LangGraph</div>
+      <p>O <code>thread_id</code> no AgentState deve ser o mesmo usado no <code>RunnableConfig</code> do LangGraph para o checkpointer manter histórico de sessão. A integração do checkpointer com DynamoDB ainda não foi detalhada neste documento.</p>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-label">ACL Client compartilhado</div>
+      <p>A lógica de <code>ACLCache.check_access</code> será necessária também dentro dos agentes especialistas (para validar TOOL e CLIENT_DATA). Faz sentido extrair um pacote <code>acl-client</code> compartilhado entre Supervisor e agentes.</p>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-label">UserContext no payload MCP</div>
+      <p>Quando os agentes forem formalizados como MCP tools, o <code>user_context</code> entra como metadata do tool call ou como campo do input schema do agente. Esse contrato precisa ser definido antes da implementação dos agentes.</p>
+    </div>
+
+    <div class="callout success">
+      <div class="callout-label">DynamoDB Streams — pronto para ativar</div>
+      <p>A arquitetura do cache já contempla invalidação via Streams quando uma regra mudar no sistema de parametrização. Sem custo adicional de design — basta ativar o Stream e criar a Lambda de invalidação quando necessário.</p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // Sidebar active state on scroll
+  const sections = document.querySelectorAll('.section, .hero');
+  const links    = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(l => {
+          l.classList.toggle('active', l.getAttribute('href') === `#${id}`);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => { if (s.id) observer.observe(s); });
+</script>
+
+</body>
+</html>
