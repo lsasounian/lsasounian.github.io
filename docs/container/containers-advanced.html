@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Containers Avançado — Internals, Build, Networking, ECS, Otimização</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --surface2: #1c2128;
+    --border:   #30363d;
+    --text:     #e6edf3;
+    --muted:    #8b949e;
+    --dim:      #6e7681;
+    --mono:     'JetBrains Mono', monospace;
+    --sans:     'Inter', sans-serif;
+    --internals:    #6366f1;
+    --build:        #22c55e;
+    --networking:   #ef4444;
+    --ecs:          #f59e0b;
+    --optimization: #a855f7;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.65; min-height: 100vh; }
+
+  #progress-bar {
+    position: fixed; top: 0; left: 0; z-index: 1000;
+    height: 2px; width: 0%;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    transition: width 0.1s linear;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,17,23,0.94); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px; display: flex; align-items: stretch; height: 48px;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 13px; color: var(--muted);
+    padding-right: 20px; border-right: 1px solid var(--border);
+    margin-right: 8px; white-space: nowrap; flex-shrink: 0;
+  }
+  .nav-brand span { color: var(--text); }
+  .nav-tabs { display: flex; align-items: stretch; overflow-x: auto; }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 16px; border: none; background: none;
+    color: var(--muted); font-family: var(--sans); font-size: 13px;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { font-weight: 600; color: var(--text); }
+  .nav-tab[data-s="internals"].active    { border-color: var(--internals); color: var(--internals); }
+  .nav-tab[data-s="build"].active        { border-color: var(--build); color: var(--build); }
+  .nav-tab[data-s="networking"].active   { border-color: var(--networking); color: var(--networking); }
+  .nav-tab[data-s="ecs"].active          { border-color: var(--ecs); color: var(--ecs); }
+  .nav-tab[data-s="optimization"].active { border-color: var(--optimization); color: var(--optimization); }
+
+  .layout { display: flex; min-height: calc(100vh - 48px); }
+
+  aside {
+    width: 236px; flex-shrink: 0; background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: sticky; top: 48px; height: calc(100vh - 48px);
+    overflow-y: auto; padding: 20px 12px;
+  }
+  aside::-webkit-scrollbar { width: 4px; }
+  aside::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .sidebar-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--dim);
+    padding: 0 8px; margin-bottom: 6px; display: block;
+  }
+  .sidebar-link {
+    display: block; padding: 7px 10px 7px 12px;
+    font-size: 12.5px; color: var(--muted); text-decoration: none;
+    border-radius: 6px; border-left: 2px solid transparent;
+    transition: all 0.12s; margin-bottom: 1px; line-height: 1.4;
+  }
+  .sidebar-link:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-link.active { color: var(--text); font-weight: 600; background: var(--surface2); }
+  aside[data-s="internals"]    .sidebar-link.active { color: var(--internals); border-left-color: var(--internals); }
+  aside[data-s="build"]        .sidebar-link.active { color: var(--build); border-left-color: var(--build); }
+  aside[data-s="networking"]   .sidebar-link.active { color: var(--networking); border-left-color: var(--networking); }
+  aside[data-s="ecs"]          .sidebar-link.active { color: var(--ecs); border-left-color: var(--ecs); }
+  aside[data-s="optimization"] .sidebar-link.active { color: var(--optimization); border-left-color: var(--optimization); }
+
+  main { flex: 1; min-width: 0; padding: 48px 56px 80px 56px; max-width: 900px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .topic { margin-bottom: 72px; scroll-margin-top: 72px; }
+  .topic-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .section[data-s="internals"]    .topic-eyebrow { color: var(--internals); }
+  .section[data-s="build"]        .topic-eyebrow { color: var(--build); }
+  .section[data-s="networking"]   .topic-eyebrow { color: var(--networking); }
+  .section[data-s="ecs"]          .topic-eyebrow { color: var(--ecs); }
+  .section[data-s="optimization"] .topic-eyebrow { color: var(--optimization); }
+  .topic-title { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; line-height: 1.3; margin-bottom: 24px; }
+  .topic-divider { height: 1px; background: var(--border); margin: 56px 0; }
+
+  .prose h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; margin: 32px 0 12px; }
+  .section[data-s="internals"]    .prose h2 { color: var(--internals); }
+  .section[data-s="build"]        .prose h2 { color: var(--build); }
+  .section[data-s="networking"]   .prose h2 { color: var(--networking); }
+  .section[data-s="ecs"]          .prose h2 { color: var(--ecs); }
+  .section[data-s="optimization"] .prose h2 { color: var(--optimization); }
+  .prose p { font-size: 14px; color: #c9d1d9; line-height: 1.8; margin-bottom: 14px; }
+  .prose strong { color: var(--text); font-weight: 600; }
+  .prose code { font-family: var(--mono); font-size: 12px; background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+  .prose ul, .prose ol { margin: 10px 0 14px 0; padding-left: 22px; }
+  .prose li { font-size: 14px; color: #c9d1d9; line-height: 1.8; margin-bottom: 4px; }
+  .prose blockquote { border-left: 3px solid var(--border); margin: 16px 0; padding: 10px 18px; color: var(--muted); font-style: italic; font-size: 14px; background: var(--surface2); border-radius: 0 6px 6px 0; }
+
+  .table-wrap { overflow-x: auto; margin: 18px 0; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--surface2); }
+  th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 9px 16px; color: #c9d1d9; border-bottom: 1px solid #21262d; font-size: 13px; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #1a1f27; }
+
+  .code-block { background: #010409; border: 1px solid #30363d; border-radius: 8px; margin: 18px 0; overflow: hidden; }
+  .code-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: #161b22; border-bottom: 1px solid #30363d; }
+  .code-lang { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; }
+  .copy-btn { font-family: var(--mono); font-size: 11px; background: none; border: 1px solid var(--border); color: var(--muted); padding: 3px 10px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+  .copy-btn:hover { border-color: var(--muted); color: var(--text); }
+  .copy-btn.copied { color: #3fb950; border-color: #3fb950; }
+  pre { padding: 18px 20px; margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.8; overflow-x: auto; color: #e6edf3; }
+  pre::-webkit-scrollbar { height: 4px; }
+  pre::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .tok-comment { color: #6e7681; }
+  .tok-key     { color: #7ee787; }
+  .tok-good    { color: #3fb950; }
+  .tok-bad     { color: #f85149; }
+
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 18px 0; font-size: 13.5px; line-height: 1.7; border-left: 3px solid; }
+  .callout-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout.info    { background: #1f2d45; border-color: #388bfd; }
+  .callout.info    .callout-label { color: #388bfd; }
+  .callout.warn    { background: #2d1f0e; border-color: #e3b341; }
+  .callout.warn    .callout-label { color: #e3b341; }
+  .callout.danger  { background: #2d1010; border-color: #f85149; }
+  .callout.danger  .callout-label { color: #f85149; }
+  .callout.success { background: #0f2a18; border-color: #3fb950; }
+  .callout.success .callout-label { color: #3fb950; }
+  .callout p, .callout li { color: #c9d1d9; font-size: 13.5px; }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 48px; }
+  .tag { font-size: 11px; font-weight: 600; padding: 3px 10px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); border-radius: 20px; }
+
+  .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; }
+  .pagination a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .pagination a:hover { color: var(--text); }
+  .pagination .pg-label { color: var(--dim); font-family: var(--mono); font-size: 11px; }
+
+  @media (max-width: 768px) { aside { display: none; } main { padding: 24px 20px 60px; } }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav>
+  <div class="nav-brand">📦 <span>Containers</span> — Avançado</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-s="internals"    onclick="showSection('internals',this)">⚙️ Internals</button>
+    <button class="nav-tab"        data-s="build"        onclick="showSection('build',this)">🔨 Build Avançado</button>
+    <button class="nav-tab"        data-s="networking"   onclick="showSection('networking',this)">🌐 Networking</button>
+    <button class="nav-tab"        data-s="ecs"          onclick="showSection('ecs',this)">☁️ ECS Avançado</button>
+    <button class="nav-tab"        data-s="optimization" onclick="showSection('optimization',this)">⚡ Otimização</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside id="aside" data-s="internals"></aside>
+
+  <main>
+
+    <!-- ══════════ INTERNALS ══════════ -->
+    <div class="section active" id="s-internals" data-s="internals">
+
+      <div class="topic" id="overlay-fs">
+        <div class="topic-eyebrow">Internals · 01</div>
+        <h1 class="topic-title">Overlay Filesystem &amp; Copy-on-Write</h1>
+        <div class="prose">
+          <h2>Como o Docker armazena dados: OverlayFS</h2>
+          <p>O kernel Linux expõe uma abstração chamada <strong>Union Mount</strong> — empilhar múltiplos diretórios em uma única visão coesa. O Docker usa a implementação moderna disso: <strong>OverlayFS</strong> (overlay2 driver).</p>
+          <p>Quando você faz <code>docker run</code>, o Docker monta quatro camadas:</p>
+          <ul>
+            <li><strong>lowerdir</strong> → camadas da imagem (read-only, compartilhadas entre containers)</li>
+            <li><strong>upperdir</strong> → camada de escrita exclusiva deste container (read-write)</li>
+            <li><strong>workdir</strong> → diretório de trabalho interno do OverlayFS (bookkeeping)</li>
+            <li><strong>merged</strong> → o que o processo dentro do container enxerga (union das anteriores)</li>
+          </ul>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">shell</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment">/var/lib/docker/overlay2/</span>
+├── &lt;layer-sha&gt;/
+│   ├── diff/        <span class="tok-comment">← conteúdo real da camada</span>
+│   ├── link         <span class="tok-comment">← symlink curto (otimização de kernel)</span>
+│   └── lower        <span class="tok-comment">← referência à camada inferior</span>
+└── &lt;container-id&gt;/
+    ├── diff/        <span class="tok-comment">← upperdir (writes do container)</span>
+    ├── merged/      <span class="tok-comment">← mount point final</span>
+    └── work/        <span class="tok-comment">← workdir do OverlayFS</span></pre>
+          </div>
+
+          <h2>Copy-on-Write (CoW)</h2>
+          <blockquote>Arquivos das camadas inferiores são compartilhados entre todos os containers. Só quando um container <strong>modifica</strong> um arquivo é que uma cópia privada é criada no upperdir dele.</blockquote>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">shell</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># 3 containers rodando a mesma imagem nginx (200MB)</span>
+<span class="tok-comment"># Uso real em disco: ~200MB + delta de cada container</span>
+<span class="tok-comment"># SEM CoW seria: 3 × 200MB = 600MB</span></pre>
+          </div>
+          <p>Quando o container escreve em <code>/etc/nginx/nginx.conf</code>: OverlayFS intercepta a syscall, copia o arquivo para o <code>upperdir</code> do container, a modificação acontece só na cópia privada, e a imagem original fica intacta.</p>
+
+          <h2>Por que isso importa em produção</h2>
+          <div class="callout danger">
+            <div class="callout-label">⚠️ Containers são efêmeros</div>
+            <p>Qualquer escrita no <code>upperdir</code> some quando o container morre. No ECS Fargate, o upperdir existe <strong>só enquanto a Task existe</strong>. Para persistência: EFS mount ou S3 via código.</p>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># Nunca confie no upperdir para dados persistentes</span>
+<span class="tok-comment"># Logs, uploads, checkpoints LangGraph → sempre em volume</span>
+<span class="tok-key">VOLUME</span> ["/app/checkpoints"]</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="topic-divider"></div>
+
+      <div class="topic" id="namespaces-cgroups">
+        <div class="topic-eyebrow">Internals · 02</div>
+        <h1 class="topic-title">Namespaces &amp; cgroups: o que realmente isola containers</h1>
+        <div class="prose">
+          <h2>Containers não são VMs — são processos isolados</h2>
+          <p>Um container é literalmente um processo Linux com ilusões de isolamento criadas pelo kernel. Dois mecanismos fazem isso: <strong>namespaces</strong> (visibilidade) e <strong>cgroups</strong> (recursos).</p>
+
+          <h2>Namespaces — isolamento de visibilidade</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Namespace</th><th>O que isola</th><th>Exemplo</th></tr></thead>
+            <tbody>
+              <tr><td><code>pid</code></td><td>Árvore de processos</td><td>PID 1 dentro ≠ PID 1 do host</td></tr>
+              <tr><td><code>net</code></td><td>Stack de rede</td><td>Interface eth0 própria, rotas próprias</td></tr>
+              <tr><td><code>mnt</code></td><td>Sistema de arquivos</td><td>O que o container enxerga como <code>/</code></td></tr>
+              <tr><td><code>uts</code></td><td>Hostname</td><td>Container tem seu próprio hostname</td></tr>
+              <tr><td><code>ipc</code></td><td>IPC (semáforos, filas)</td><td>Não acessa IPC do host</td></tr>
+              <tr><td><code>user</code></td><td>UIDs/GIDs</td><td>UID 0 pode não ser root no host</td></tr>
+              <tr><td><code>cgroup</code></td><td>Visão dos cgroups</td><td>Enxerga só seus próprios limites</td></tr>
+              <tr><td><code>time</code></td><td>Clock do sistema</td><td>Pode ter clock offset diferente</td></tr>
+            </tbody>
+          </table></div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># Inspecionar os namespaces de um processo</span>
+ls -la /proc/&lt;pid&gt;/ns/
+
+<span class="tok-comment"># Entrar no namespace de um container manualmente</span>
+nsenter -t &lt;pid&gt; --net --pid -- bash</pre>
+          </div>
+
+          <h2>cgroups — isolamento de recursos</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>docker run --memory=512m --cpus=0.5 minha-app
+
+<span class="tok-comment"># O Docker cria cgroups em:</span>
+/sys/fs/cgroup/memory/docker/&lt;container-id&gt;/memory.limit_in_bytes
+/sys/fs/cgroup/cpu/docker/&lt;container-id&gt;/cpu.cfs_quota_us</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "containerDefinitions": [{
+    "memory": 512,            <span class="tok-comment">// hard limit via cgroup → OOM kill se ultrapassar</span>
+    "memoryReservation": 256, <span class="tok-comment">// soft limit para o scheduler do ECS</span>
+    "cpu": 512                <span class="tok-comment">// 512 units = 0.5 vCPU</span>
+  }]
+}</pre>
+          </div>
+
+          <h2>O processo PID 1 e por que importa</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-bad"># ❌ Ruim: shell vira PID 1, não repassa SIGTERM</span>
+<span class="tok-key">CMD</span> python app.py
+
+<span class="tok-good"># ✅ Bom: python vira PID 1 diretamente (exec form)</span>
+<span class="tok-key">CMD</span> ["python", "app.py"]
+
+<span class="tok-good"># ✅ Melhor: tini como init mínimo</span>
+<span class="tok-key">RUN</span> apk add --no-cache tini
+<span class="tok-key">ENTRYPOINT</span> ["/sbin/tini", "--"]
+<span class="tok-key">CMD</span> ["python", "app.py"]</pre>
+          </div>
+          <div class="callout warn">
+            <div class="callout-label">ECS + SIGTERM + Checkpointing</div>
+            <p>Se o container não responde ao SIGTERM, o ECS espera o <code>stopTimeout</code> (padrão 30s) e manda SIGKILL — fatal para checkpoints em progresso. Use <code>linuxParameters.initProcessEnabled: true</code> na Task Definition para habilitar init process via Fargate sem precisar do tini no Dockerfile.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tag-row">
+        <span class="tag">OverlayFS</span><span class="tag">overlay2</span><span class="tag">Copy-on-Write</span>
+        <span class="tag">Namespaces</span><span class="tag">cgroups</span><span class="tag">PID 1</span>
+        <span class="tag">SIGTERM</span><span class="tag">tini</span><span class="tag">Fargate</span>
+      </div>
+    </div>
+
+    <!-- ══════════ BUILD AVANÇADO ══════════ -->
+    <div class="section" id="s-build" data-s="build">
+
+      <div class="topic" id="multi-stage">
+        <div class="topic-eyebrow">Build Avançado · 01</div>
+        <h1 class="topic-title">Multi-stage builds</h1>
+        <div class="prose">
+          <h2>O problema que multi-stage resolve</h2>
+          <p>Imagens de produção carregam peso desnecessário: compiladores, ferramentas de build, arquivos de teste, dependências de dev. Multi-stage separa o ambiente de build do artefato final.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># ── Stage 1: Builder ──────────────────────────────────</span>
+<span class="tok-key">FROM</span> python:3.12 AS builder
+<span class="tok-key">WORKDIR</span> /build
+<span class="tok-key">RUN</span> pip install poetry
+<span class="tok-key">COPY</span> pyproject.toml poetry.lock ./
+<span class="tok-key">RUN</span> poetry export -f requirements.txt --without dev -o requirements.txt
+
+<span class="tok-comment"># ── Stage 2: Runtime ──────────────────────────────────</span>
+<span class="tok-key">FROM</span> python:3.12-slim AS runtime
+<span class="tok-key">WORKDIR</span> /app
+<span class="tok-key">COPY</span> --from=builder /build/requirements.txt .
+<span class="tok-key">RUN</span> pip install --no-cache-dir -r requirements.txt
+<span class="tok-key">COPY</span> src/ ./src/
+<span class="tok-key">RUN</span> useradd -r -u 1001 appuser
+<span class="tok-key">USER</span> appuser
+<span class="tok-key">CMD</span> ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0"]</pre>
+          </div>
+          <div class="callout success">
+            <div class="callout-label">Ganho típico</div>
+            <p>Imagem vai de ~1.2GB para ~180MB. Cold start no ECS Fargate pode ser 2–3 minutos mais rápido.</p>
+          </div>
+
+          <h2>Padrão para Go — imagem scratch</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-key">FROM</span> golang:1.22 AS builder
+<span class="tok-key">WORKDIR</span> /src
+<span class="tok-key">COPY</span> go.mod go.sum ./
+<span class="tok-key">RUN</span> go mod download
+<span class="tok-key">COPY</span> . .
+<span class="tok-comment"># CGO_ENABLED=0 → binário estático, sem dependência de libc</span>
+<span class="tok-key">RUN</span> CGO_ENABLED=0 GOOS=linux go build -o /app ./cmd/server
+
+<span class="tok-comment"># Imagem final: SCRATCH — literalmente vazia</span>
+<span class="tok-key">FROM</span> scratch
+<span class="tok-key">COPY</span> --from=builder /app /app
+<span class="tok-key">COPY</span> --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+<span class="tok-key">ENTRYPOINT</span> ["/app"]</pre>
+          </div>
+          <p>Imagem resultante: <strong>~8MB</strong>. Nenhuma shell, nenhum utilitário, só o binário.</p>
+
+          <h2>Targets nomeados — builds condicionais</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-key">FROM</span> python:3.12-slim AS base
+<span class="tok-key">RUN</span> pip install -r requirements.txt
+
+<span class="tok-key">FROM</span> base AS dev
+<span class="tok-key">RUN</span> pip install pytest pytest-asyncio
+<span class="tok-key">CMD</span> ["pytest"]
+
+<span class="tok-key">FROM</span> base AS production
+<span class="tok-key">COPY</span> src/ ./src/
+<span class="tok-key">CMD</span> ["uvicorn", "src.main:app"]</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># CI roda testes</span>
+docker build --target dev -t app:test .
+docker run app:test
+
+<span class="tok-comment"># Deploy usa produção</span>
+docker build --target production -t app:prod .</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="topic-divider"></div>
+
+      <div class="topic" id="buildkit-cache">
+        <div class="topic-eyebrow">Build Avançado · 02</div>
+        <h1 class="topic-title">BuildKit: cache avançado e paralelismo</h1>
+        <div class="prose">
+          <h2>BuildKit — o novo engine de build</h2>
+          <p>BuildKit (padrão desde Docker 23) traz: <strong>DAG paralelo</strong> (stages independentes buildam em paralelo), <strong>cache mounts</strong> persistentes entre builds, <strong>secret mounts</strong> que nunca ficam em layers, e SSH forwarding para repos privados.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># Habilitar em versões antigas do Docker</span>
+DOCKER_BUILDKIT=1 docker build .</pre>
+          </div>
+
+          <h2>Cache mounts — o recurso mais subutilizado</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># syntax=docker/dockerfile:1</span>
+
+<span class="tok-bad"># ❌ pip baixa tudo do zero a cada build</span>
+<span class="tok-key">RUN</span> pip install -r requirements.txt
+
+<span class="tok-good"># ✅ cache mount: pip cache persiste no host entre builds</span>
+<span class="tok-key">RUN</span> --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+
+<span class="tok-comment"># npm</span>
+<span class="tok-key">RUN</span> --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline
+
+<span class="tok-comment"># cargo (Rust)</span>
+<span class="tok-key">RUN</span> --mount=type=cache,target=/usr/local/cargo/registry \
+    cargo build --release</pre>
+          </div>
+          <div class="callout success">
+            <div class="callout-label">Resultado real</div>
+            <p>Rebuild após mudar só o código (sem mudar deps) vai de <strong>3 min para 8s</strong>.</p>
+          </div>
+
+          <h2>Secret mounts — nunca exponha credentials em layers</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-bad"># ❌ NUNCA — o token fica gravado na layer para sempre</span>
+<span class="tok-key">RUN</span> pip install git+https://token@github.com/org/pkg.git
+
+<span class="tok-good"># ✅ Secret mount: disponível só durante o RUN, nunca gravado</span>
+<span class="tok-key">RUN</span> --mount=type=secret,id=gh_token \
+    pip install git+https://$(cat /run/secrets/gh_token)@github.com/org/pkg.git</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>docker build --secret id=gh_token,src=~/.github_token .</pre>
+          </div>
+
+          <h2>Cache no CI — ECR como cache backend</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>docker buildx build \
+  --cache-to   type=registry,ref=&lt;account&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/cache:buildcache,mode=max \
+  --cache-from type=registry,ref=&lt;account&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/cache:buildcache \
+  --push -t &lt;account&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/app:latest .</pre>
+          </div>
+          <div class="callout info">
+            <div class="callout-label">mode=max</div>
+            <p>Exporta cache de todos os stages, não só do final. Crítico para multi-stage builds em CI.</p>
+          </div>
+
+          <h2>.dockerignore — o que a maioria esquece</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">.dockerignore</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>.git
+.github
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+.env*
+tests/
+docs/
+.venv
+node_modules</pre>
+          </div>
+          <p>O contexto de build é enviado ao daemon <strong>antes</strong> do build começar. Um <code>.git</code> de 500MB enviado toda vez é um desperdício visível no output <em>"Sending build context"</em>.</p>
+        </div>
+      </div>
+
+      <div class="tag-row">
+        <span class="tag">Multi-stage</span><span class="tag">BuildKit</span><span class="tag">cache mount</span>
+        <span class="tag">secret mount</span><span class="tag">ECR cache</span><span class="tag">mode=max</span>
+        <span class="tag">scratch</span><span class="tag">.dockerignore</span>
+      </div>
+    </div>
+
+    <!-- ══════════ NETWORKING ══════════ -->
+    <div class="section" id="s-networking" data-s="networking">
+
+      <div class="topic" id="network-drivers">
+        <div class="topic-eyebrow">Networking · 01</div>
+        <h1 class="topic-title">Drivers de rede: bridge, host, overlay</h1>
+        <div class="prose">
+          <h2>Como o Docker cria redes</h2>
+          <p>Quando o Docker inicia, ele cria uma interface virtual <code>docker0</code> no host — um switch virtual Layer 2. Containers se conectam via <strong>veth pairs</strong> (virtual ethernet).</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">shell</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>Host:
+  ├── eth0     (interface física,  IP: 192.168.1.10)
+  ├── docker0  (bridge virtual,   IP: 172.17.0.1)
+  │   ├── veth3a4f → container1  (eth0: 172.17.0.2)
+  │   └── veth8b2c → container2  (eth0: 172.17.0.3)
+  └── iptables rules (NAT: container → internet)</pre>
+          </div>
+
+          <h2>Bridge network — default vs user-defined</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>docker network create minha-rede
+docker run --name redis --network minha-rede redis
+docker run --network minha-rede app  <span class="tok-comment"># usa "redis" como hostname — DNS interno</span></pre>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th></th><th>Default bridge</th><th>User-defined bridge</th></tr></thead>
+            <tbody>
+              <tr><td>DNS por nome</td><td>❌</td><td>✅</td></tr>
+              <tr><td>Isolamento</td><td>Todos juntos</td><td>Isolado por rede</td></tr>
+              <tr><td>Inspeção</td><td>Limitada</td><td><code>docker network inspect</code></td></tr>
+            </tbody>
+          </table></div>
+          <div class="callout danger">
+            <div class="callout-label">Nunca use a default bridge em produção</div>
+            <p>Sem DNS por nome e sem isolamento real. Sempre crie redes nomeadas.</p>
+          </div>
+
+          <h2>awsvpc — o modo de rede do ECS/Fargate</h2>
+          <p>Cada Task ECS recebe um ENI próprio, com IP privado da VPC. Security Groups por Task, VPC Flow Logs por Task, funciona com Service Connect e Cloud Map.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "networkMode": "awsvpc",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-xxx"],
+      "securityGroups": ["sg-xxx"],
+      "assignPublicIp": "DISABLED"
+    }
+  }
+}</pre>
+          </div>
+
+          <h2>Service Mesh — além do networking básico</h2>
+          <p>Para mTLS entre serviços, circuit breaking, rate limiting e tracing distribuído no nível de rede — entra o service mesh. No ECS: AWS App Mesh (Envoy sidecar) ou ECS Service Connect. No K8s: Istio, Linkerd, Cilium.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">shell</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>Request → [Envoy sidecar] → [App container]
+               ↓
+         xDS control plane (App Mesh / Istio)
+         (rotas, retries, timeouts, mTLS)</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="topic-divider"></div>
+
+      <div class="topic" id="ecs-service-connect">
+        <div class="topic-eyebrow">Networking · 02</div>
+        <h1 class="topic-title">ECS Service Connect na prática</h1>
+        <div class="prose">
+          <h2>Service Connect vs Service Discovery (Cloud Map)</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th></th><th>Cloud Map</th><th>Service Connect</th></tr></thead>
+            <tbody>
+              <tr><td>DNS</td><td>✅ (Route 53)</td><td>✅ (localhost-like)</td></tr>
+              <tr><td>Load balancing</td><td>Client-side</td><td>Envoy proxy</td></tr>
+              <tr><td>Retry automático</td><td>❌</td><td>✅</td></tr>
+              <tr><td>Timeout config</td><td>❌</td><td>✅</td></tr>
+              <tr><td>Métricas p50/p99</td><td>❌</td><td>✅ CloudWatch</td></tr>
+              <tr><td>mTLS</td><td>❌</td><td>Em roadmap</td></tr>
+            </tbody>
+          </table></div>
+
+          <h2>Configuração de Service Connect</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "serviceConnectConfiguration": {
+    "enabled": true,
+    "namespace": "meu-cluster.local",
+    "services": [{
+      "portName": "http",
+      "clientAliases": [{
+        "port": 8080,
+        "dnsName": "agente-orchestrator"
+      }]
+    }]
+  }
+}</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># Agente A chama agente B — sem descoberta de IP manual</span>
+import httpx
+
+<span class="tok-comment"># "agente-orchestrator" resolve via Envoy local</span>
+response = httpx.post(
+    "http://agente-orchestrator:8080/invoke",
+    json=payload,
+    timeout=30.0
+)</pre>
+          </div>
+          <div class="callout info">
+            <div class="callout-label">O que o Envoy faz automaticamente</div>
+            <p>Retry em 503, timeout configurável, métricas de latência p50/p99 no CloudWatch — sem nenhum código extra.</p>
+          </div>
+
+          <h2>gRPC entre agentes — appProtocol crítico</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "portMappings": [{
+    "name": "grpc",
+    "containerPort": 50051,
+    "protocol": "tcp",
+    "appProtocol": "grpc"  <span class="tok-comment">// request-level LB para HTTP/2 — crítico</span>
+  }]
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="tag-row">
+        <span class="tag">docker0</span><span class="tag">veth pairs</span><span class="tag">bridge</span>
+        <span class="tag">awsvpc</span><span class="tag">ENI</span><span class="tag">Service Connect</span>
+        <span class="tag">Envoy</span><span class="tag">VXLAN</span><span class="tag">gRPC</span>
+      </div>
+    </div>
+
+    <!-- ══════════ ECS AVANÇADO ══════════ -->
+    <div class="section" id="s-ecs" data-s="ecs">
+
+      <div class="topic" id="task-definition">
+        <div class="topic-eyebrow">ECS Avançado · 01</div>
+        <h1 class="topic-title">Task Definitions em profundidade</h1>
+        <div class="prose">
+          <h2>Task Definition é imutável e versionada</h2>
+          <p>Cada <code>register-task-definition</code> cria uma nova revisão. Você nunca edita — só cria novas. Isso garante auditoria e rollback trivial.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># Rollback imediato para revisão anterior</span>
+aws ecs update-service \
+  --cluster prod \
+  --service agente-orchestrator \
+  --task-definition agente-orchestrator:42</pre>
+          </div>
+
+          <h2>Anatomy completa</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "family": "agente-orchestrator",
+  "taskRoleArn":      "arn:aws:iam::xxx:role/AgentTaskRole",
+  "executionRoleArn": "arn:aws:iam::xxx:role/ECSExecutionRole",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024", "memory": "2048",
+  "containerDefinitions": [{
+    "name": "orchestrator",
+    "image": "xxx.dkr.ecr.region.amazonaws.com/orchestrator:sha-abc123",
+    "essential": true,
+    "portMappings": [{ "name": "http", "containerPort": 8080, "appProtocol": "http" }],
+    "environment": [
+      { "name": "ENVIRONMENT", "value": "production" }
+    ],
+    "secrets": [
+      { "name": "ANTHROPIC_API_KEY", "valueFrom": "arn:aws:secretsmanager:...:anthropic-key" },
+      { "name": "REDIS_URL",         "valueFrom": "arn:aws:secretsmanager:...:redis-url" }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group":         "/ecs/agente-orchestrator",
+        "awslogs-region":        "us-east-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "healthCheck": {
+      "command":     ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
+      "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 60
+    },
+    "stopTimeout": 120,
+    "linuxParameters": { "initProcessEnabled": true }
+  }]
+}</pre>
+          </div>
+
+          <h2>taskRole vs executionRole — confusão clássica</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Role</th><th>Quem usa</th><th>Para quê</th></tr></thead>
+            <tbody>
+              <tr><td><strong>executionRole</strong></td><td>ECS Agent (setup)</td><td>Pull ECR, buscar secrets, enviar logs para CloudWatch</td></tr>
+              <tr><td><strong>taskRole</strong></td><td>Código no container (runtime)</td><td>S3, DynamoDB, Bedrock, SQS — assinar requests SigV4</td></tr>
+            </tbody>
+          </table></div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">shell</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>ECS Agent → executionRole → [pull ECR, fetch secrets] → container inicia
+Container → taskRole    → [S3.getObject, sqs.sendMessage, bedrock.invoke]</pre>
+          </div>
+
+          <h2>stopTimeout — crítico para graceful shutdown</h2>
+          <div class="callout warn">
+            <div class="callout-label">LangGraph Checkpointing + stopTimeout</div>
+            <p>O ECS envia SIGTERM e aguarda <code>stopTimeout</code> segundos antes de SIGKILL. Para agentes com checkpointing você precisa de tempo para: (1) parar de aceitar novos requests — drain do ALB leva ~30s; (2) finalizar checkpoint no Redis/DynamoDB; (3) commitar transações abertas. <strong>Defina stopTimeout maior que o deregistration_delay do target group.</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="topic-divider"></div>
+
+      <div class="topic" id="capacity-providers">
+        <div class="topic-eyebrow">ECS Avançado · 02</div>
+        <h1 class="topic-title">Capacity Providers: Fargate vs EC2 Auto Scaling</h1>
+        <div class="prose">
+          <h2>Fargate vs FARGATE_SPOT</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "capacityProviderStrategy": [
+    {
+      "capacityProvider": "FARGATE",      <span class="tok-comment">// on-demand</span>
+      "weight": 1,
+      "base": 2                           <span class="tok-comment">// mínimo 2 tasks garantidas aqui</span>
+    },
+    {
+      "capacityProvider": "FARGATE_SPOT", <span class="tok-comment">// até 70% mais barato</span>
+      "weight": 4,
+      "base": 0
+    }
+  ]
+}</pre>
+          </div>
+          <div class="callout danger">
+            <div class="callout-label">NÃO use SPOT para</div>
+            <p>Agentes com estado crítico sem checkpoint, serviços com SLA rígido, e tasks com <code>stopTimeout</code> alto que não conseguem salvar estado em 2 min — o aviso de interrupção do SPOT é só 2 min via SIGTERM.</p>
+          </div>
+
+          <h2>EC2 Auto Scaling com Managed Scaling</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "autoScalingGroupProvider": {
+    "autoScalingGroupArn": "arn:aws:autoscaling:...",
+    "managedScaling": {
+      "status": "ENABLED",
+      "targetCapacity": 80,         <span class="tok-comment">// 80% utilizado, 20% de folga para novas tasks</span>
+      "minimumScalingStepSize": 1,
+      "maximumScalingStepSize": 10
+    },
+    "managedTerminationProtection": "ENABLED" <span class="tok-comment">// nunca mata instância com task rodando</span>
+  }
+}</pre>
+          </div>
+
+          <h2>Service Auto Scaling — por CPU</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>aws application-autoscaling put-scaling-policy \
+  --service-namespace ecs \
+  --resource-id service/prod/agente-orchestrator \
+  --scalable-dimension ecs:service:DesiredCount \
+  --policy-type TargetTrackingScaling \
+  --target-tracking-scaling-policy-configuration '{
+    "TargetValue": 60.0,
+    "PredefinedMetricSpecification": {
+      "PredefinedMetricType": "ECSServiceAverageCPUUtilization"
+    },
+    "ScaleInCooldown": 300,
+    "ScaleOutCooldown": 60
+  }'</pre>
+          </div>
+
+          <h2>Service Auto Scaling — por SQS queue depth</h2>
+          <p>Para agentes triggerados por filas — escala proporcionalmente ao backlog, não à CPU:</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "CustomizedMetricSpecification": {
+    "MetricName": "ApproximateNumberOfMessagesVisible",
+    "Namespace": "AWS/SQS",
+    "Dimensions": [{ "Name": "QueueName", "Value": "agent-tasks" }],
+    "Statistic": "Average"
+  },
+  "TargetValue": 10  <span class="tok-comment">// ~10 mensagens por task rodando</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="tag-row">
+        <span class="tag">Task Definition</span><span class="tag">taskRole</span><span class="tag">executionRole</span>
+        <span class="tag">stopTimeout</span><span class="tag">FARGATE_SPOT</span><span class="tag">Capacity Provider</span>
+        <span class="tag">Auto Scaling</span><span class="tag">SQS</span><span class="tag">graceful shutdown</span>
+      </div>
+    </div>
+
+    <!-- ══════════ OTIMIZAÇÃO ══════════ -->
+    <div class="section" id="s-optimization" data-s="optimization">
+
+      <div class="topic" id="image-size">
+        <div class="topic-eyebrow">Otimização · 01</div>
+        <h1 class="topic-title">Reduzindo tamanho de imagem: do básico ao extremo</h1>
+        <div class="prose">
+          <h2>Por que tamanho importa em produção</h2>
+          <ul>
+            <li><strong>Pull time:</strong> nova Task precisa baixar a imagem antes de iniciar. 1GB = minutos de cold start.</li>
+            <li><strong>Superfície de ataque:</strong> cada binário desnecessário é um vetor de ataque em potencial.</li>
+            <li><strong>Scan de vulnerabilidades:</strong> menos packages = menos CVEs para gerenciar.</li>
+          </ul>
+
+          <h2>Hierarquia de base images</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Imagem</th><th>Tamanho</th><th>Quando usar</th></tr></thead>
+            <tbody>
+              <tr><td><code>ubuntu:22.04</code></td><td>~80MB</td><td>Raramente em produção</td></tr>
+              <tr><td><code>python:3.12</code></td><td>~1.0GB</td><td>Só em desenvolvimento local</td></tr>
+              <tr><td><code>python:3.12-slim</code></td><td>~130MB</td><td>✅ Ideal para Python em produção</td></tr>
+              <tr><td><code>python:3.12-alpine</code></td><td>~55MB</td><td>⚠️ Cuidado com musl libc</td></tr>
+              <tr><td><code>distroless/python3</code></td><td>~50MB</td><td>✅ Produção com segurança máxima</td></tr>
+              <tr><td><code>scratch</code></td><td>0MB</td><td>Só para binários estáticos (Go)</td></tr>
+            </tbody>
+          </table></div>
+
+          <h2>Alpine: a armadilha do musl libc</h2>
+          <p>Alpine usa musl ao invés de glibc. Muitas libs Python com extensões C (numpy, pandas, cryptography) são compiladas contra glibc. Em Alpine, você precisa compilar do zero — o que anula o ganho de tamanho.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-bad"># ❌ Alpine + numpy = dor de cabeça</span>
+<span class="tok-key">FROM</span> python:3.12-alpine
+<span class="tok-key">RUN</span> pip install numpy  <span class="tok-comment"># pode falhar ou demorar muito (compila C)</span>
+
+<span class="tok-good"># ✅ slim é o melhor custo-benefício para Python</span>
+<span class="tok-key">FROM</span> python:3.12-slim
+<span class="tok-key">RUN</span> pip install numpy  <span class="tok-comment"># wheels pré-compilados, funciona sempre</span></pre>
+          </div>
+
+          <h2>Distroless — o padrão de produção seguro</h2>
+          <p>Sem shell, sem package manager, sem utilitários de sistema. Um atacante que invade o container não tem <code>/bin/bash</code> para trabalhar.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-key">FROM</span> python:3.12-slim AS builder
+<span class="tok-key">WORKDIR</span> /app
+<span class="tok-key">COPY</span> requirements.txt .
+<span class="tok-key">RUN</span> pip install --prefix=/install -r requirements.txt
+<span class="tok-key">COPY</span> src/ ./src/
+
+<span class="tok-key">FROM</span> gcr.io/distroless/python3-debian12
+<span class="tok-key">COPY</span> --from=builder /install /usr/local
+<span class="tok-key">COPY</span> --from=builder /app/src /app/src
+<span class="tok-key">WORKDIR</span> /app
+<span class="tok-key">CMD</span> ["src/main.py"]</pre>
+          </div>
+
+          <h2>Técnicas de redução de camadas</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">dockerfile</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-bad"># ❌ Cada RUN cria uma camada — apt cache fica gravado</span>
+<span class="tok-key">RUN</span> apt-get update
+<span class="tok-key">RUN</span> apt-get install -y curl
+<span class="tok-key">RUN</span> rm -rf /var/lib/apt/lists/*
+
+<span class="tok-good"># ✅ Uma camada, cache limpo</span>
+<span class="tok-key">RUN</span> apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+<span class="tok-key">RUN</span> pip install --no-cache-dir -r requirements.txt</pre>
+          </div>
+
+          <h2>Resultado típico de otimização</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Estratégia</th><th>Tamanho</th></tr></thead>
+            <tbody>
+              <tr><td><code>python:3.12</code> base sem cuidado</td><td>~1.4GB</td></tr>
+              <tr><td><code>python:3.12-slim</code> + multi-stage</td><td>~180MB</td></tr>
+              <tr><td><code>slim</code> + multi-stage + <code>--no-cache-dir</code></td><td>~140MB</td></tr>
+              <tr><td>distroless + multi-stage</td><td>~95MB</td></tr>
+            </tbody>
+          </table></div>
+          <div class="callout info">
+            <div class="callout-label">Cold start no ECS Fargate</div>
+            <p>A diferença de 1.4GB vs 95MB pode ser <strong>3–4 minutos a mais</strong> para uma nova Task escalar — crítico quando o Capacity Provider precisa provisionar nova capacidade.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="topic-divider"></div>
+
+      <div class="topic" id="ecr-lifecycle">
+        <div class="topic-eyebrow">Otimização · 02</div>
+        <h1 class="topic-title">ECR: lifecycle policies e image scanning</h1>
+        <div class="prose">
+          <h2>Lifecycle policies — evitar acumular imagens</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre>{
+  "rules": [
+    {
+      "rulePriority": 1,
+      "description": "Manter últimas 10 imagens tagged com sha-",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["sha-"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 10
+      },
+      "action": { "type": "expire" }
+    },
+    {
+      "rulePriority": 2,
+      "description": "Manter latest, main, staging",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["latest", "main", "staging"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 3
+      },
+      "action": { "type": "expire" }
+    },
+    {
+      "rulePriority": 3,
+      "description": "Remover untagged após 7 dias",
+      "selection": {
+        "tagStatus": "untagged",
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": 7
+      },
+      "action": { "type": "expire" }
+    }
+  ]
+}</pre>
+          </div>
+
+          <h2>Estratégia de tagging — nunca use só :latest em produção</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-bad"># ❌ :latest é ambíguo — qual versão exatamente?</span>
+docker push myrepo/app:latest
+
+<span class="tok-good"># ✅ Tag imutável com SHA do commit</span>
+GIT_SHA=$(git rev-parse --short HEAD)
+docker build -t myrepo/app:sha-${GIT_SHA} .
+docker push myrepo/app:sha-${GIT_SHA}
+
+<span class="tok-comment"># Atualiza :latest também (para referência humana)</span>
+docker tag myrepo/app:sha-${GIT_SHA} myrepo/app:latest
+docker push myrepo/app:latest</pre>
+          </div>
+          <div class="callout info">
+            <div class="callout-label">Task Definition + SHA tag</div>
+            <p>Na Task Definition do ECS, sempre referencie pela tag SHA — não por <code>:latest</code>. Isso garante rollback determinístico: <code>agente-orchestrator:42</code> sempre aponta para o mesmo binário.</p>
+          </div>
+
+          <h2>ECR Image Scanning</h2>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+            <pre><span class="tok-comment"># Scan automático no push</span>
+aws ecr put-image-scanning-configuration \
+  --repository-name minha-app \
+  --image-scanning-configuration scanOnPush=true
+
+<span class="tok-comment"># Consultar resultados</span>
+aws ecr describe-image-scan-findings \
+  --repository-name minha-app \
+  --image-id imageTag=sha-abc123</pre>
+          </div>
+          <p><strong>Enhanced scanning</strong> (via Inspector V2): análise contínua, não só no push. Detecta CVEs em packages do OS e em libs Python/Node. Integra com EventBridge para alertas automáticos quando novas CVEs aparecem em imagens já deployadas.</p>
+        </div>
+      </div>
+
+      <div class="tag-row">
+        <span class="tag">ECR</span><span class="tag">lifecycle policy</span><span class="tag">image scanning</span>
+        <span class="tag">Inspector V2</span><span class="tag">sha tag</span><span class="tag">distroless</span>
+        <span class="tag">alpine</span><span class="tag">musl libc</span><span class="tag">cold start</span>
+      </div>
+
+      <div class="pagination">
+        <a href="#">← Kubernetes &amp; EKS</a>
+        <span class="pg-label">containers-advanced</span>
+        <a href="#">Token Propagation →</a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const SIDEBAR_MAP = {
+    internals:    [{ id: 'overlay-fs',          label: 'OverlayFS & Copy-on-Write' }, { id: 'namespaces-cgroups', label: 'Namespaces & cgroups' }],
+    build:        [{ id: 'multi-stage',          label: 'Multi-stage builds' },        { id: 'buildkit-cache',    label: 'BuildKit: cache & paralelismo' }],
+    networking:   [{ id: 'network-drivers',      label: 'Bridge, host, overlay' },     { id: 'ecs-service-connect', label: 'ECS Service Connect' }],
+    ecs:          [{ id: 'task-definition',       label: 'Task Definitions' },           { id: 'capacity-providers', label: 'Capacity Providers' }],
+    optimization: [{ id: 'image-size',            label: 'Tamanho de imagem' },         { id: 'ecr-lifecycle',     label: 'ECR: lifecycle & scanning' }],
+  };
+
+  let currentSection = 'internals';
+
+  function buildSidebar(section) {
+    const aside = document.getElementById('aside');
+    aside.setAttribute('data-s', section);
+    aside.innerHTML = '<span class="sidebar-label">Tópicos</span>' +
+      SIDEBAR_MAP[section].map(i =>
+        `<a class="sidebar-link" href="#${i.id}" data-id="${i.id}">${i.label}</a>`
+      ).join('');
+    updateActive();
+  }
+
+  function showSection(section, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('s-' + section).classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    currentSection = section;
+    buildSidebar(section);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateActive() {
+    const topics = document.querySelectorAll('#s-' + currentSection + ' .topic');
+    let active = null;
+    topics.forEach(t => { if (t.getBoundingClientRect().top <= 120) active = t.id; });
+    document.querySelectorAll('.sidebar-link').forEach(l => {
+      l.classList.toggle('active', l.dataset.id === active);
+    });
+  }
+
+  window.addEventListener('scroll', () => {
+    const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+    updateActive();
+  }, { passive: true });
+
+  function copyCode(btn) {
+    const text = btn.closest('.code-block').querySelector('pre').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copiado'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+    }).catch(() => {});
+  }
+
+  buildSidebar('internals');
+</script>
+</body>
+</html>
