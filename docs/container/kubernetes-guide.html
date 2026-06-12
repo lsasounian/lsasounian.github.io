@@ -1,289 +1,174 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kubernetes & EKS — Do Zero ao Entendimento</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kubernetes & EKS — Documentação</title>
+<link rel="stylesheet" href="../../assets/css/theme.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+:root { --accent: var(--blue); --accent-dim: var(--blue-dim); }
 
-  :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --surface2: #1c2128;
-    --border: #30363d;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --blue: #388bfd;
-    --blue-dim: #1f3b6e;
-    --green: #3fb950;
-    --green-dim: #1a3a25;
-    --orange: #e3b341;
-    --orange-dim: #3d2e0e;
-    --purple: #bc8cff;
-    --purple-dim: #2d1f57;
-    --red: #f85149;
-    --red-dim: #3d1a1a;
-    --teal: #39d0d0;
-    --teal-dim: #0f2f2f;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Inter', sans-serif;
-  }
+/* ── CARDS — icon/label/desc grid ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin: 24px 0; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; transition: border-color .2s, transform .2s; }
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.card .icon { font-size: 28px; margin-bottom: 12px; }
+.card .label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.card .desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+@media (max-width: 860px) { .cards { grid-template-columns: 1fr; } }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── HIGHLIGHT BOXES ── */
+.box { border-radius: 10px; padding: 18px 20px; margin: 16px 0; border: 1px solid var(--border); border-left: 3px solid; background: var(--card); }
+.box p { font-size: .9rem; color: var(--text); margin-bottom: 0; }
+.box .box-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.box.blue   { border-left-color: var(--blue);   background: color-mix(in srgb, var(--blue) 8%, transparent); }
+.box.blue .box-title { color: var(--blue); }
+.box.green  { border-left-color: var(--green);  background: color-mix(in srgb, var(--green) 8%, transparent); }
+.box.green .box-title { color: var(--green); }
+.box.orange { border-left-color: var(--amber);  background: color-mix(in srgb, var(--amber) 8%, transparent); }
+.box.orange .box-title { color: var(--amber); }
+.box.purple { border-left-color: var(--purple); background: color-mix(in srgb, var(--purple) 8%, transparent); }
+.box.purple .box-title { color: var(--purple); }
+.box.teal   { border-left-color: var(--cyan);   background: color-mix(in srgb, var(--cyan) 8%, transparent); }
+.box.teal .box-title { color: var(--cyan); }
 
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-  }
+/* ── COMPARISON COLUMNS ── */
+.compare-col { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.compare-col h3 { margin-bottom: 14px; margin-top: 0; }
+.compare-col ul { list-style: none; padding-left: 0; }
+.compare-col li { font-size: .875rem; color: var(--muted); padding: 5px 0; display: flex; gap: 8px; margin-bottom: 0; }
+.eks .compare-col:first-child { border-color: var(--amber); }
+.eks .compare-col:first-child h3 { color: var(--amber); }
+.eks .compare-col:last-child { border-color: var(--blue); }
+.eks .compare-col:last-child h3 { color: var(--blue); }
 
-  /* NAV */
-  nav {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(13,17,23,0.92);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 24px;
-    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  }
-  nav .brand { font-weight: 700; font-size: 15px; color: var(--blue); white-space: nowrap; }
-  nav .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
-  nav .tab {
-    padding: 6px 14px; border-radius: 6px; border: none;
-    background: transparent; color: var(--muted);
-    font-family: var(--sans); font-size: 13px; cursor: pointer;
-    transition: all 0.15s;
-  }
-  nav .tab:hover { background: var(--surface); color: var(--text); }
-  nav .tab.active { background: var(--blue-dim); color: var(--blue); font-weight: 600; }
-
-  /* SECTIONS */
-  section { display: none; max-width: 900px; margin: 0 auto; padding: 40px 24px; }
-  section.active { display: block; }
-
-  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-  h2 { font-size: 20px; font-weight: 600; margin: 32px 0 12px; }
-  h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-  p { color: var(--muted); font-size: 15px; margin-bottom: 16px; line-height: 1.7; }
-  p strong { color: var(--text); font-weight: 600; }
-
-  .subtitle { font-size: 16px; color: var(--muted); margin-bottom: 32px; }
-
-  /* CARDS */
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin: 24px 0; }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 20px;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-  .card:hover { border-color: var(--blue); transform: translateY(-2px); }
-  .card .icon { font-size: 28px; margin-bottom: 12px; }
-  .card .label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-  .card .desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
-
-  /* DIAGRAM */
-  .diagram {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 28px; margin: 24px 0;
-    font-family: var(--mono); font-size: 12px;
-  }
-  .diagram pre { color: var(--text); line-height: 1.8; overflow-x: auto; }
-
-  /* HIGHLIGHT BOXES */
-  .box {
-    border-radius: 10px; padding: 18px 20px; margin: 16px 0;
-    border-left: 3px solid;
-  }
-  .box.blue { background: var(--blue-dim); border-color: var(--blue); }
-  .box.green { background: var(--green-dim); border-color: var(--green); }
-  .box.orange { background: var(--orange-dim); border-color: var(--orange); }
-  .box.purple { background: var(--purple-dim); border-color: var(--purple); }
-  .box.teal { background: var(--teal-dim); border-color: var(--teal); }
-  .box .box-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-  .box.blue .box-title { color: var(--blue); }
-  .box.green .box-title { color: var(--green); }
-  .box.orange .box-title { color: var(--orange); }
-  .box.purple .box-title { color: var(--purple); }
-  .box.teal .box-title { color: var(--teal); }
-  .box p { font-size: 13px; margin-bottom: 0; }
-
-  /* TABLE */
-  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
-  th { background: var(--surface2); color: var(--muted); text-align: left; padding: 10px 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; }
-  td { padding: 10px 14px; border-top: 1px solid var(--border); color: var(--text); vertical-align: top; }
-  tr:hover td { background: var(--surface); }
-
-  /* CODE */
-  code {
-    font-family: var(--mono); font-size: 12px;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 4px; padding: 2px 6px; color: var(--teal);
-  }
-  .code-block {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 20px; margin: 16px 0;
-    overflow-x: auto;
-  }
-  .code-block pre { font-family: var(--mono); font-size: 12px; line-height: 1.8; color: var(--text); }
-  .code-block .kw { color: var(--purple); }
-  .code-block .str { color: var(--green); }
-  .code-block .cmt { color: var(--muted); }
-  .code-block .num { color: var(--orange); }
-  .code-block .key { color: var(--blue); }
-
-  /* LAYERS VISUAL */
-  .layers { display: flex; flex-direction: column; gap: 10px; margin: 24px 0; }
-  .layer {
-    border-radius: 8px; padding: 14px 18px;
-    display: flex; align-items: center; gap: 14px;
-    border: 1px solid transparent;
-  }
-  .layer-icon { font-size: 20px; flex-shrink: 0; }
-  .layer-name { font-size: 14px; font-weight: 700; width: 140px; flex-shrink: 0; }
-  .layer-desc { font-size: 13px; color: var(--muted); }
-  .l1 { background: var(--blue-dim); border-color: var(--blue); }
-  .l1 .layer-name { color: var(--blue); }
-  .l2 { background: var(--purple-dim); border-color: var(--purple); }
-  .l2 .layer-name { color: var(--purple); }
-  .l3 { background: var(--teal-dim); border-color: var(--teal); }
-  .l3 .layer-name { color: var(--teal); }
-  .l4 { background: var(--green-dim); border-color: var(--green); }
-  .l4 .layer-name { color: var(--green); }
-  .l5 { background: var(--orange-dim); border-color: var(--orange); }
-  .l5 .layer-name { color: var(--orange); }
-
-  /* COMPARISON */
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
-  .compare-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
-  .compare-col h3 { font-size: 14px; margin-bottom: 14px; }
-  .compare-col ul { list-style: none; }
-  .compare-col li { font-size: 13px; color: var(--muted); padding: 5px 0; display: flex; gap: 8px; }
-  .compare-col li::before { content: "•"; flex-shrink: 0; }
-  .eks .compare-col:first-child { border-color: var(--orange); }
-  .eks .compare-col:first-child h3 { color: var(--orange); }
-  .eks .compare-col:last-child { border-color: var(--blue); }
-  .eks .compare-col:last-child h3 { color: var(--blue); }
-
-  /* FLOW */
-  .flow { display: flex; flex-direction: column; gap: 0; margin: 24px 0; }
-  .flow-step { display: flex; align-items: flex-start; gap: 16px; }
-  .flow-line { display: flex; flex-direction: column; align-items: center; }
-  .flow-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-  .flow-connector { width: 2px; height: 32px; background: var(--border); }
-  .flow-content { padding-bottom: 24px; padding-top: 4px; }
-  .flow-content .title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-  .flow-content .body { font-size: 13px; color: var(--muted); }
-
-  /* PILL BADGE */
-  .badge {
-    display: inline-block; padding: 2px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .badge.green { background: var(--green-dim); color: var(--green); }
-  .badge.blue { background: var(--blue-dim); color: var(--blue); }
-  .badge.orange { background: var(--orange-dim); color: var(--orange); }
-  .badge.purple { background: var(--purple-dim); color: var(--purple); }
-
-  @media (max-width: 600px) {
-    .compare { grid-template-columns: 1fr; }
-    .cards { grid-template-columns: 1fr; }
-    nav { gap: 8px; }
-  }
+/* ── LAYERS — l1-l5 colored rows ── */
+.layers { display: flex; flex-direction: column; gap: 10px; margin: 24px 0; }
+.layer { border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; border: 1px solid transparent; }
+.layer-icon { font-size: 20px; flex-shrink: 0; }
+.layer-name { font-size: 14px; font-weight: 700; width: 140px; flex-shrink: 0; }
+.layer-desc { font-size: 13px; color: var(--muted); }
+.l1 { background: color-mix(in srgb, var(--blue) 10%, transparent); border-color: var(--blue); } .l1 .layer-name { color: var(--blue); }
+.l2 { background: color-mix(in srgb, var(--purple) 10%, transparent); border-color: var(--purple); } .l2 .layer-name { color: var(--purple); }
+.l3 { background: color-mix(in srgb, var(--cyan) 10%, transparent); border-color: var(--cyan); } .l3 .layer-name { color: var(--cyan); }
+.l4 { background: color-mix(in srgb, var(--green) 10%, transparent); border-color: var(--green); } .l4 .layer-name { color: var(--green); }
+.l5 { background: color-mix(in srgb, var(--amber) 10%, transparent); border-color: var(--amber); } .l5 .layer-name { color: var(--amber); }
+@media (max-width: 860px) { .layer { flex-wrap: wrap; } }
 </style>
 </head>
 <body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
 
-<nav>
-  <div class="brand">☸ K8s / EKS</div>
-  <div class="tabs">
-    <button class="tab active" onclick="show('intro')">O que é?</button>
-    <button class="tab" onclick="show('arch')">Arquitetura</button>
-    <button class="tab" onclick="show('objects')">Objetos</button>
-    <button class="tab" onclick="show('networking')">Rede</button>
-    <button class="tab" onclick="show('eks')">EKS na AWS</button>
-    <button class="tab" onclick="show('yaml')">YAML na prática</button>
-    <button class="tab" onclick="show('mental')">Mapa Mental</button>
-  </div>
-</nav>
+<aside class="sidebar">
+  <a href="../../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">K8S</span>
+    <span class="doc-title">Kubernetes &amp; EKS</span>
+  </a>
+  <nav>
+    <div class="nav-section">Fundamentos</div>
+    <a href="#intro">O que é Kubernetes?</a>
+    <a href="#arch">Arquitetura</a>
+    <a href="#objects">Objetos</a>
 
-<!-- ======================== INTRO ======================== -->
-<section id="intro" class="active">
-  <h1>Kubernetes do zero</h1>
-  <p class="subtitle">Você já sabe que existem pods. Agora vamos entender tudo ao redor deles.</p>
+    <div class="nav-section">Rede &amp; AWS</div>
+    <a href="#networking">Rede</a>
+    <a href="#eks">EKS na AWS</a>
 
-  <h2>O problema que o Kubernetes resolve</h2>
-  <p>Imagine que você tem uma aplicação em Docker. Ela roda perfeitamente na sua máquina. Mas e quando você precisar de:</p>
+    <div class="nav-section">Prática</div>
+    <a href="#yaml">YAML na prática</a>
+    <a href="#mental">Mapa Mental</a>
+  </nav>
+</aside>
 
-  <div class="cards">
-    <div class="card">
-      <div class="icon">📈</div>
-      <div class="label">Escalar automaticamente</div>
-      <div class="desc">Quando o tráfego sobe, subir mais instâncias. Quando cai, reduzir. Sem intervenção manual.</div>
+<main class="main">
+<div class="wrapper">
+
+  <header class="doc-header">
+    <div class="doc-num">Containers · Kubernetes &amp; EKS</div>
+    <h1>Kubernetes &amp; <em>EKS</em><br/>Do Zero ao Entendimento</h1>
+    <p class="doc-lead">Você já sabe que existem pods. Agora vamos entender tudo ao redor deles: do conceito de Pod ao cluster completo, com Control Plane e Worker Nodes trabalhando juntos. Cobrimos os principais objetos (Deployments, Services, ConfigMaps), a rede interna e o Ingress, as integrações nativas do EKS na AWS (IRSA, node groups) e exemplos práticos de YAML e <code>kubectl</code> para o dia a dia.</p>
+  </header>
+
+  <!-- ======================== INTRO ======================== -->
+  <section class="section" id="intro">
+    <div class="section-label">Fundamentos</div>
+    <h2><em>Kubernetes</em> do zero</h2>
+
+    <h3>O problema que o Kubernetes resolve</h3>
+    <p>Imagine que você tem uma aplicação em Docker. Ela roda perfeitamente na sua máquina. Mas e quando você precisar de:</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="icon">📈</div>
+        <div class="label">Escalar automaticamente</div>
+        <div class="desc">Quando o tráfego sobe, subir mais instâncias. Quando cai, reduzir. Sem intervenção manual.</div>
+      </div>
+      <div class="card">
+        <div class="icon">💀</div>
+        <div class="label">Recuperar de falhas</div>
+        <div class="desc">Se um container morrer, alguém precisa perceber e subir outro. Quem faz isso sem K8s?</div>
+      </div>
+      <div class="card">
+        <div class="icon">🚀</div>
+        <div class="label">Deploy sem downtime</div>
+        <div class="desc">Atualizar a versão 1 para v2 sem que os usuários percebam nenhuma interrupção.</div>
+      </div>
+      <div class="card">
+        <div class="icon">🖥️</div>
+        <div class="label">Múltiplas máquinas</div>
+        <div class="desc">Distribuir os containers entre vários servidores e decidir quem vai para qual máquina.</div>
+      </div>
     </div>
-    <div class="card">
-      <div class="icon">💀</div>
-      <div class="label">Recuperar de falhas</div>
-      <div class="desc">Se um container morrer, alguém precisa perceber e subir outro. Quem faz isso sem K8s?</div>
+
+    <div class="box blue">
+      <div class="box-title">Definição simples</div>
+      <p>Kubernetes (K8s) é um <strong>orquestrador de containers</strong>. Ele pega seus containers Docker e decide: onde rodam, quantas cópias existem, como se comunicam, e o que acontece quando algo dá errado.</p>
     </div>
-    <div class="card">
-      <div class="icon">🚀</div>
-      <div class="label">Deploy sem downtime</div>
-      <div class="desc">Atualizar a versão 1 para v2 sem que os usuários percebam nenhuma interrupção.</div>
+
+    <h3>A analogia da companhia aérea</h3>
+    <p>Pense assim: seus containers são os <strong>passageiros</strong>. As máquinas (servidores) são os <strong>aviões</strong>. O Kubernetes é o <strong>sistema de controle do aeroporto</strong> — ele sabe quais aviões estão disponíveis, quantas vagas tem cada um, e distribui os passageiros de forma inteligente.</p>
+
+    <h3>Kubernetes vs Docker — qual a diferença?</h3>
+    <div class="compare eks">
+      <div class="compare-col">
+        <h3>🐳 Docker</h3>
+        <ul>
+          <li><span>Empacota e roda um container</span></li>
+          <li><span>Funciona em uma máquina só</span></li>
+          <li><span>Você gerencia manualmente</span></li>
+          <li><span>Ótimo para desenvolvimento local</span></li>
+          <li><span><code>docker run minha-app</code></span></li>
+        </ul>
+      </div>
+      <div class="compare-col">
+        <h3>☸ Kubernetes</h3>
+        <ul>
+          <li><span>Orquestra muitos containers</span></li>
+          <li><span>Funciona em um cluster de máquinas</span></li>
+          <li><span>Gerencia automaticamente</span></li>
+          <li><span>Ótimo para produção</span></li>
+          <li><span><code>kubectl apply -f app.yaml</code></span></li>
+        </ul>
+      </div>
     </div>
-    <div class="card">
-      <div class="icon">🖥️</div>
-      <div class="label">Múltiplas máquinas</div>
-      <div class="desc">Distribuir os containers entre vários servidores e decidir quem vai para qual máquina.</div>
+
+    <div class="box green">
+      <div class="box-title">💡 Resumo de uma linha</div>
+      <p>Docker = roda um container. Kubernetes = gerencia centenas de containers em múltiplas máquinas.</p>
     </div>
-  </div>
+  </section>
 
-  <div class="box blue">
-    <div class="box-title">Definição simples</div>
-    <p>Kubernetes (K8s) é um <strong>orquestrador de containers</strong>. Ele pega seus containers Docker e decide: onde rodam, quantas cópias existem, como se comunicam, e o que acontece quando algo dá errado.</p>
-  </div>
+  <!-- ======================== ARCH ======================== -->
+  <section class="section" id="arch">
+    <div class="section-label">Fundamentos</div>
+    <h2><em>Arquitetura</em> do Kubernetes</h2>
 
-  <h2>A analogia da companhia aérea</h2>
-  <p>Pense assim: seus containers são os <strong>passageiros</strong>. As máquinas (servidores) são os <strong>aviões</strong>. O Kubernetes é o <strong>sistema de controle do aeroporto</strong> — ele sabe quais aviões estão disponíveis, quantas vagas tem cada um, e distribui os passageiros de forma inteligente.</p>
+    <p>Um cluster K8s tem dois tipos de máquinas: o cérebro (Control Plane) e os trabalhadores (Nodes).</p>
 
-  <h2>Kubernetes vs Docker — qual a diferença?</h2>
-  <div class="compare eks">
-    <div class="compare-col">
-      <h3>🐳 Docker</h3>
-      <ul>
-        <li><span>Empacota e roda um container</span></li>
-        <li><span>Funciona em uma máquina só</span></li>
-        <li><span>Você gerencia manualmente</span></li>
-        <li><span>Ótimo para desenvolvimento local</span></li>
-        <li><span><code>docker run minha-app</code></span></li>
-      </ul>
-    </div>
-    <div class="compare-col">
-      <h3>☸ Kubernetes</h3>
-      <ul>
-        <li><span>Orquestra muitos containers</span></li>
-        <li><span>Funciona em um cluster de máquinas</span></li>
-        <li><span>Gerencia automaticamente</span></li>
-        <li><span>Ótimo para produção</span></li>
-        <li><span><code>kubectl apply -f app.yaml</code></span></li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="box green">
-    <div class="box-title">💡 Resumo de uma linha</div>
-    <p>Docker = roda um container. Kubernetes = gerencia centenas de containers em múltiplas máquinas.</p>
-  </div>
-</section>
-
-<!-- ======================== ARCH ======================== -->
-<section id="arch">
-  <h1>Arquitetura do Kubernetes</h1>
-  <p class="subtitle">Um cluster K8s tem dois tipos de máquinas: o cérebro (Control Plane) e os trabalhadores (Nodes).</p>
-
-  <div class="diagram">
-    <pre>
+    <div class="diagram">
+      <pre>
 ┌─────────────────────────────────────────────────────────┐
 │                    CLUSTER KUBERNETES                   │
 │                                                         │
@@ -317,214 +202,210 @@
 │  │  kubelet     │ │              │ │  └────────┘  │  │
 │  └──────────────┘ └──────────────┘ └──────────────┘  │
 └─────────────────────────────────────────────────────────┘
-    </pre>
-  </div>
+      </pre>
+    </div>
 
-  <h2>Control Plane — o cérebro</h2>
-  <div class="layers">
-    <div class="layer l1">
-      <div class="layer-icon">🚪</div>
-      <div class="layer-name">API Server</div>
-      <div class="layer-desc">Único ponto de entrada do cluster. Todo comando <code>kubectl</code> vai parar aqui. É uma REST API.</div>
-    </div>
-    <div class="layer l2">
-      <div class="layer-icon">🗄️</div>
-      <div class="layer-name">etcd</div>
-      <div class="layer-desc">Banco de dados chave-valor distribuído. Guarda <strong>todo o estado do cluster</strong>: quais pods existem, em qual nó, qual é o estado desejado.</div>
-    </div>
-    <div class="layer l3">
-      <div class="layer-icon">📅</div>
-      <div class="layer-name">Scheduler</div>
-      <div class="layer-desc">Quando um novo pod precisa ser criado, o Scheduler decide <strong>em qual Node ele vai rodar</strong>, baseado em recursos disponíveis (CPU/RAM).</div>
-    </div>
-    <div class="layer l4">
-      <div class="layer-icon">🔁</div>
-      <div class="layer-name">Controller Manager</div>
-      <div class="layer-desc">Fica em loop perguntando: "o estado atual é igual ao estado desejado?" Se não, age para corrigir. É o guardião da configuração.</div>
-    </div>
-  </div>
-
-  <h2>Worker Nodes — os trabalhadores</h2>
-  <div class="layers">
-    <div class="layer l5">
-      <div class="layer-icon">🤖</div>
-      <div class="layer-name">kubelet</div>
-      <div class="layer-desc">Agente que roda em cada Node. Recebe ordens do Control Plane e garante que os pods estejam rodando corretamente naquela máquina.</div>
-    </div>
-    <div class="layer l3">
-      <div class="layer-icon">🌐</div>
-      <div class="layer-name">kube-proxy</div>
-      <div class="layer-desc">Gerencia as regras de rede do Node. Permite que os pods se comuniquem entre si e com o mundo externo.</div>
-    </div>
-    <div class="layer l1">
-      <div class="layer-icon">🐳</div>
-      <div class="layer-name">Container Runtime</div>
-      <div class="layer-desc">Quem realmente roda os containers. Normalmente é o <strong>containerd</strong> (ou Docker). O K8s não roda containers diretamente.</div>
-    </div>
-  </div>
-
-  <div class="box orange">
-    <div class="box-title">🔑 Conceito-chave: Estado Desejado vs Estado Atual</div>
-    <p>O K8s funciona com a ideia de "reconciliação". Você diz <em>o que quer</em> (ex: 3 réplicas da minha app), e o sistema fica <strong>eternamente tentando garantir</strong> que isso seja verdade. Se um pod morrer, ele sobe outro. Se uma máquina cair, ele move os pods. Isso é o coração do Kubernetes.</p>
-  </div>
-</section>
-
-<!-- ======================== OBJECTS ======================== -->
-<section id="objects">
-  <h1>Objetos do Kubernetes</h1>
-  <p class="subtitle">Os "blocos de construção" que você vai usar no dia a dia.</p>
-
-  <div class="box blue">
-    <div class="box-title">Como funciona a hierarquia</div>
-    <p>Container → Pod → ReplicaSet → Deployment → Service. Cada camada adiciona uma capacidade nova.</p>
-  </div>
-
-  <h2>Pod — a unidade básica</h2>
-  <p>Você já sabe que existe. Mas entendendo melhor:</p>
-
-  <div class="cards">
-    <div class="card">
-      <div class="icon">📦</div>
-      <div class="label">O que é</div>
-      <div class="desc">Um Pod é o menor objeto deployável no K8s. Ele <strong>agrupa um ou mais containers</strong> que compartilham rede e armazenamento.</div>
-    </div>
-    <div class="card">
-      <div class="icon">🌐</div>
-      <div class="label">Rede compartilhada</div>
-      <div class="desc">Containers dentro do mesmo pod compartilham o mesmo IP e podem se comunicar via <code>localhost</code>.</div>
-    </div>
-    <div class="card">
-      <div class="icon">⚡</div>
-      <div class="label">Efêmero por natureza</div>
-      <div class="desc">Pods são <strong>descartáveis</strong>. Quando morrem, não voltam. Por isso você não gerencia pods diretamente — usa Deployments.</div>
-    </div>
-  </div>
-
-  <h2>Deployment — gerenciador de pods</h2>
-  <p>O objeto que você vai mais usar. Você descreve <em>quantas réplicas</em> do seu pod quer, e o Deployment garante isso.</p>
-
-  <div class="flow">
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--blue-dim);color:var(--blue);">1</div>
-        <div class="flow-connector"></div>
+    <h3>Control Plane — o cérebro</h3>
+    <div class="layers">
+      <div class="layer l1">
+        <div class="layer-icon">🚪</div>
+        <div class="layer-name">API Server</div>
+        <div class="layer-desc">Único ponto de entrada do cluster. Todo comando <code>kubectl</code> vai parar aqui. É uma REST API.</div>
       </div>
-      <div class="flow-content">
-        <div class="title">Você cria um Deployment</div>
-        <div class="body">"Quero 3 réplicas da minha-app:v2"</div>
+      <div class="layer l2">
+        <div class="layer-icon">🗄️</div>
+        <div class="layer-name">etcd</div>
+        <div class="layer-desc">Banco de dados chave-valor distribuído. Guarda <strong>todo o estado do cluster</strong>: quais pods existem, em qual nó, qual é o estado desejado.</div>
+      </div>
+      <div class="layer l3">
+        <div class="layer-icon">📅</div>
+        <div class="layer-name">Scheduler</div>
+        <div class="layer-desc">Quando um novo pod precisa ser criado, o Scheduler decide <strong>em qual Node ele vai rodar</strong>, baseado em recursos disponíveis (CPU/RAM).</div>
+      </div>
+      <div class="layer l4">
+        <div class="layer-icon">🔁</div>
+        <div class="layer-name">Controller Manager</div>
+        <div class="layer-desc">Fica em loop perguntando: "o estado atual é igual ao estado desejado?" Se não, age para corrigir. É o guardião da configuração.</div>
       </div>
     </div>
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--purple-dim);color:var(--purple);">2</div>
-        <div class="flow-connector"></div>
-      </div>
-      <div class="flow-content">
-        <div class="title">Deployment cria um ReplicaSet</div>
-        <div class="body">Um ReplicaSet é responsável por manter exatamente N cópias rodando</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--teal-dim);color:var(--teal);">3</div>
-        <div class="flow-connector"></div>
-      </div>
-      <div class="flow-content">
-        <div class="title">ReplicaSet cria os Pods</div>
-        <div class="body">3 pods são criados e distribuídos nos Nodes pelo Scheduler</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--green-dim);color:var(--green);">4</div>
-        <div class="flow-connector"></div>
-      </div>
-      <div class="flow-content">
-        <div class="title">Monitoramento contínuo</div>
-        <div class="body">Se um pod morrer, o ReplicaSet cria outro automaticamente. Sempre 3.</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--orange-dim);color:var(--orange);">5</div>
-      </div>
-      <div class="flow-content">
-        <div class="title">Rolling Update</div>
-        <div class="body">Ao atualizar para v3, o Deployment sobe novos pods antes de derrubar os antigos — zero downtime.</div>
-      </div>
-    </div>
-  </div>
 
-  <h2>Service — descoberta e balanceamento</h2>
-  <p>Pods têm IPs que mudam o tempo todo (quando morrem e reiniciam). O <strong>Service</strong> é um IP fixo que fica na frente dos pods e balanceia o tráfego.</p>
+    <h3>Worker Nodes — os trabalhadores</h3>
+    <div class="layers">
+      <div class="layer l5">
+        <div class="layer-icon">🤖</div>
+        <div class="layer-name">kubelet</div>
+        <div class="layer-desc">Agente que roda em cada Node. Recebe ordens do Control Plane e garante que os pods estejam rodando corretamente naquela máquina.</div>
+      </div>
+      <div class="layer l3">
+        <div class="layer-icon">🌐</div>
+        <div class="layer-name">kube-proxy</div>
+        <div class="layer-desc">Gerencia as regras de rede do Node. Permite que os pods se comuniquem entre si e com o mundo externo.</div>
+      </div>
+      <div class="layer l1">
+        <div class="layer-icon">🐳</div>
+        <div class="layer-name">Container Runtime</div>
+        <div class="layer-desc">Quem realmente roda os containers. Normalmente é o <strong>containerd</strong> (ou Docker). O K8s não roda containers diretamente.</div>
+      </div>
+    </div>
 
-  <table>
-    <tr><th>Tipo</th><th>Quando usar</th><th>Exemplo</th></tr>
-    <tr>
-      <td><code>ClusterIP</code> <span class="badge green">padrão</span></td>
-      <td>Comunicação interna entre serviços (dentro do cluster)</td>
-      <td>Sua API chamando o banco de dados</td>
-    </tr>
-    <tr>
-      <td><code>NodePort</code></td>
-      <td>Expor para fora do cluster, via porta no Node</td>
-      <td>Testes locais / ambientes simples</td>
-    </tr>
-    <tr>
-      <td><code>LoadBalancer</code> <span class="badge blue">AWS</span></td>
-      <td>Expor para internet, cria um LB automaticamente (NLB/ALB na AWS)</td>
-      <td>API pública de produção</td>
-    </tr>
-  </table>
+    <div class="box orange">
+      <div class="box-title">🔑 Conceito-chave: Estado Desejado vs Estado Atual</div>
+      <p>O K8s funciona com a ideia de "reconciliação". Você diz <em>o que quer</em> (ex: 3 réplicas da minha app), e o sistema fica <strong>eternamente tentando garantir</strong> que isso seja verdade. Se um pod morrer, ele sobe outro. Se uma máquina cair, ele move os pods. Isso é o coração do Kubernetes.</p>
+    </div>
+  </section>
 
-  <h2>Outros objetos importantes</h2>
-  <div class="cards">
-    <div class="card">
-      <div class="icon">⚙️</div>
-      <div class="label">ConfigMap</div>
-      <div class="desc">Armazena configurações não-sensíveis (URLs, feature flags) separadas do código. Injetadas como variáveis de ambiente nos pods.</div>
-    </div>
-    <div class="card">
-      <div class="icon">🔐</div>
-      <div class="label">Secret</div>
-      <div class="desc">Igual ao ConfigMap, mas para dados sensíveis (passwords, tokens, certificados). Armazenado com encoding base64.</div>
-    </div>
-    <div class="card">
-      <div class="icon">🗂️</div>
-      <div class="label">Namespace</div>
-      <div class="desc">Divisão lógica dentro do cluster. Use para separar ambientes (prod, staging, dev) ou times dentro do mesmo cluster.</div>
-    </div>
-    <div class="card">
-      <div class="icon">📊</div>
-      <div class="label">HPA</div>
-      <div class="desc">Horizontal Pod Autoscaler. Aumenta ou diminui o número de réplicas automaticamente baseado em CPU/memória ou métricas customizadas.</div>
-    </div>
-    <div class="card">
-      <div class="icon">📁</div>
-      <div class="label">PersistentVolume</div>
-      <div class="desc">Armazenamento persistente para pods. Ao contrário dos pods, não é efêmero. Usado por bancos de dados.</div>
-    </div>
-    <div class="card">
-      <div class="icon">🚪</div>
-      <div class="label">Ingress</div>
-      <div class="desc">Roteamento HTTP/HTTPS para dentro do cluster. Um único ponto de entrada que roteia para vários Services por path ou hostname.</div>
-    </div>
-  </div>
-</section>
+  <!-- ======================== OBJECTS ======================== -->
+  <section class="section" id="objects">
+    <div class="section-label">Fundamentos</div>
+    <h2><em>Objetos</em> do Kubernetes</h2>
 
-<!-- ======================== NETWORKING ======================== -->
-<section id="networking">
-  <h1>Rede no Kubernetes</h1>
-  <p class="subtitle">Como os pods se encontram e conversam dentro e fora do cluster.</p>
+    <p>Os "blocos de construção" que você vai usar no dia a dia.</p>
 
-  <div class="box purple">
-    <div class="box-title">A regra fundamental do K8s networking</div>
-    <p>Todo pod pode se comunicar com qualquer outro pod, em qualquer Node, <strong>sem NAT</strong>. Cada pod tem seu próprio IP único no cluster.</p>
-  </div>
+    <div class="box blue">
+      <div class="box-title">Como funciona a hierarquia</div>
+      <p>Container → Pod → ReplicaSet → Deployment → Service. Cada camada adiciona uma capacidade nova.</p>
+    </div>
 
-  <h2>Fluxo de uma requisição externa</h2>
-  <div class="diagram">
-    <pre>
+    <h3>Pod — a unidade básica</h3>
+    <p>Você já sabe que existe. Mas entendendo melhor:</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="icon">📦</div>
+        <div class="label">O que é</div>
+        <div class="desc">Um Pod é o menor objeto deployável no K8s. Ele <strong>agrupa um ou mais containers</strong> que compartilham rede e armazenamento.</div>
+      </div>
+      <div class="card">
+        <div class="icon">🌐</div>
+        <div class="label">Rede compartilhada</div>
+        <div class="desc">Containers dentro do mesmo pod compartilham o mesmo IP e podem se comunicar via <code>localhost</code>.</div>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <div class="label">Efêmero por natureza</div>
+        <div class="desc">Pods são <strong>descartáveis</strong>. Quando morrem, não voltam. Por isso você não gerencia pods diretamente — usa Deployments.</div>
+      </div>
+    </div>
+
+    <h3>Deployment — gerenciador de pods</h3>
+    <p>O objeto que você vai mais usar. Você descreve <em>quantas réplicas</em> do seu pod quer, e o Deployment garante isso.</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-n">1</div>
+        <div class="flow-content">
+          <div class="flow-title">Você cria um Deployment</div>
+          <div class="flow-desc">"Quero 3 réplicas da minha-app:v2"</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">2</div>
+        <div class="flow-content">
+          <div class="flow-title">Deployment cria um ReplicaSet</div>
+          <div class="flow-desc">Um ReplicaSet é responsável por manter exatamente N cópias rodando</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">3</div>
+        <div class="flow-content">
+          <div class="flow-title">ReplicaSet cria os Pods</div>
+          <div class="flow-desc">3 pods são criados e distribuídos nos Nodes pelo Scheduler</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">4</div>
+        <div class="flow-content">
+          <div class="flow-title">Monitoramento contínuo</div>
+          <div class="flow-desc">Se um pod morrer, o ReplicaSet cria outro automaticamente. Sempre 3.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">5</div>
+        <div class="flow-content">
+          <div class="flow-title">Rolling Update</div>
+          <div class="flow-desc">Ao atualizar para v3, o Deployment sobe novos pods antes de derrubar os antigos — zero downtime.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Service — descoberta e balanceamento</h3>
+    <p>Pods têm IPs que mudam o tempo todo (quando morrem e reiniciam). O <strong>Service</strong> é um IP fixo que fica na frente dos pods e balanceia o tráfego.</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Tipo</th><th>Quando usar</th><th>Exemplo</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ClusterIP</code> <span class="pill green">padrão</span></td>
+          <td>Comunicação interna entre serviços (dentro do cluster)</td>
+          <td>Sua API chamando o banco de dados</td>
+        </tr>
+        <tr>
+          <td><code>NodePort</code></td>
+          <td>Expor para fora do cluster, via porta no Node</td>
+          <td>Testes locais / ambientes simples</td>
+        </tr>
+        <tr>
+          <td><code>LoadBalancer</code> <span class="pill blue">AWS</span></td>
+          <td>Expor para internet, cria um LB automaticamente (NLB/ALB na AWS)</td>
+          <td>API pública de produção</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Outros objetos importantes</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">⚙️</div>
+        <div class="label">ConfigMap</div>
+        <div class="desc">Armazena configurações não-sensíveis (URLs, feature flags) separadas do código. Injetadas como variáveis de ambiente nos pods.</div>
+      </div>
+      <div class="card">
+        <div class="icon">🔐</div>
+        <div class="label">Secret</div>
+        <div class="desc">Igual ao ConfigMap, mas para dados sensíveis (passwords, tokens, certificados). Armazenado com encoding base64.</div>
+      </div>
+      <div class="card">
+        <div class="icon">🗂️</div>
+        <div class="label">Namespace</div>
+        <div class="desc">Divisão lógica dentro do cluster. Use para separar ambientes (prod, staging, dev) ou times dentro do mesmo cluster.</div>
+      </div>
+      <div class="card">
+        <div class="icon">📊</div>
+        <div class="label">HPA</div>
+        <div class="desc">Horizontal Pod Autoscaler. Aumenta ou diminui o número de réplicas automaticamente baseado em CPU/memória ou métricas customizadas.</div>
+      </div>
+      <div class="card">
+        <div class="icon">📁</div>
+        <div class="label">PersistentVolume</div>
+        <div class="desc">Armazenamento persistente para pods. Ao contrário dos pods, não é efêmero. Usado por bancos de dados.</div>
+      </div>
+      <div class="card">
+        <div class="icon">🚪</div>
+        <div class="label">Ingress</div>
+        <div class="desc">Roteamento HTTP/HTTPS para dentro do cluster. Um único ponto de entrada que roteia para vários Services por path ou hostname.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================== NETWORKING ======================== -->
+  <section class="section" id="networking">
+    <div class="section-label">Rede &amp; AWS</div>
+    <h2><em>Rede</em> no Kubernetes</h2>
+
+    <p>Como os pods se encontram e conversam dentro e fora do cluster.</p>
+
+    <div class="box purple">
+      <div class="box-title">A regra fundamental do K8s networking</div>
+      <p>Todo pod pode se comunicar com qualquer outro pod, em qualquer Node, <strong>sem NAT</strong>. Cada pod tem seu próprio IP único no cluster.</p>
+    </div>
+
+    <h3>Fluxo de uma requisição externa</h3>
+    <div class="diagram">
+      <pre>
 Internet
    │
    ▼
@@ -551,30 +432,34 @@ Internet
 │ Pod  │  │ Pod  │  ← pods com label app=minha-api
 │  #1  │  │  #2  │
 └──────┘  └──────┘
-    </pre>
-  </div>
+      </pre>
+    </div>
 
-  <h2>DNS interno — como pods se encontram</h2>
-  <p>O K8s tem um DNS interno (CoreDNS). Cada Service ganha automaticamente um nome DNS no formato:</p>
+    <h3>DNS interno — como pods se encontram</h3>
+    <p>O K8s tem um DNS interno (CoreDNS). Cada Service ganha automaticamente um nome DNS no formato:</p>
 
-  <div class="code-block">
-    <pre><span class="cmt"># Formato completo</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">DNS — formato do Service</span>
+      </div>
+      <pre><code><span class="cm"># Formato completo</span>
 nome-do-service.namespace.svc.cluster.local
 
-<span class="cmt"># Exemplos práticos</span>
+<span class="cm"># Exemplos práticos</span>
 minha-api.production.svc.cluster.local
 postgres.default.svc.cluster.local
 
-<span class="cmt"># Dentro do mesmo namespace, pode abreviar</span>
-minha-api        <span class="cmt"># funciona!</span>
-postgres:5432    <span class="cmt"># funciona!</span></pre>
-  </div>
+<span class="cm"># Dentro do mesmo namespace, pode abreviar</span>
+minha-api        <span class="cm"># funciona!</span>
+postgres:5432    <span class="cm"># funciona!</span></code></pre>
+    </div>
 
-  <h2>Ingress — roteamento HTTP</h2>
-  <p>O Ingress é um objeto que define regras de roteamento HTTP. Mas ele precisa de um <strong>Ingress Controller</strong> para funcionar (ex: nginx, AWS ALB Controller).</p>
+    <h3>Ingress — roteamento HTTP</h3>
+    <p>O Ingress é um objeto que define regras de roteamento HTTP. Mas ele precisa de um <strong>Ingress Controller</strong> para funcionar (ex: nginx, AWS ALB Controller).</p>
 
-  <div class="diagram">
-    <pre>
+    <div class="diagram">
+      <pre>
 Ingress Rules:
   host: api.meudominio.com
     /v1/*   → service: api-svc, port: 8080
@@ -582,253 +467,270 @@ Ingress Rules:
 
   host: web.meudominio.com
     /*      → service: web-svc, port: 3000
-    </pre>
-  </div>
-
-  <div class="box teal">
-    <div class="box-title">Na AWS com EKS</div>
-    <p>Você pode usar o <strong>AWS Load Balancer Controller</strong> que faz Ingress virar um ALB automaticamente, com suporte a HTTPS (ACM), regras por path, autenticação via Cognito/OIDC, e muito mais.</p>
-  </div>
-</section>
-
-<!-- ======================== EKS ======================== -->
-<section id="eks">
-  <h1>Amazon EKS</h1>
-  <p class="subtitle">Kubernetes gerenciado pela AWS — sem precisar operar o Control Plane.</p>
-
-  <div class="box orange">
-    <div class="box-title">O que a AWS faz por você no EKS</div>
-    <p>A AWS opera e escala o Control Plane (API Server, etcd, Scheduler...). Você não vê essas máquinas, não paga por elas separadamente (paga $0.10/hora pelo cluster), e a AWS garante alta disponibilidade do cérebro do cluster.</p>
-  </div>
-
-  <h2>K8s puro vs EKS</h2>
-  <div class="compare eks">
-    <div class="compare-col">
-      <h3>☸ Kubernetes puro (self-managed)</h3>
-      <ul>
-        <li><span>Você instala e mantém o Control Plane</span></li>
-        <li><span>Você atualiza o etcd, API Server...</span></li>
-        <li><span>Você cuida do backup do etcd</span></li>
-        <li><span>Você garante HA do Control Plane</span></li>
-        <li><span>Mais controle, mais trabalho</span></li>
-      </ul>
+      </pre>
     </div>
-    <div class="compare-col">
-      <h3>☁️ EKS (managed)</h3>
-      <ul>
-        <li><span>AWS opera o Control Plane</span></li>
-        <li><span>Atualizações com um clique</span></li>
-        <li><span>etcd gerenciado automaticamente</span></li>
-        <li><span>HA garantida pela AWS (multi-AZ)</span></li>
-        <li><span>Integração nativa com IAM, VPC, ALB...</span></li>
-      </ul>
+
+    <div class="box teal">
+      <div class="box-title">Na AWS com EKS</div>
+      <p>Você pode usar o <strong>AWS Load Balancer Controller</strong> que faz Ingress virar um ALB automaticamente, com suporte a HTTPS (ACM), regras por path, autenticação via Cognito/OIDC, e muito mais.</p>
     </div>
-  </div>
+  </section>
 
-  <h2>Tipos de Node no EKS</h2>
-  <div class="cards">
-    <div class="card">
-      <div class="icon">🔧</div>
-      <div class="label">Managed Node Groups</div>
-      <div class="desc">EC2s gerenciadas pela AWS. A AWS cuida do provisionamento, update e termination dos nodes. Você define o tipo de instância e o autoscaling.</div>
+  <!-- ======================== EKS ======================== -->
+  <section class="section" id="eks">
+    <div class="section-label">Rede &amp; AWS</div>
+    <h2>Amazon <em>EKS</em></h2>
+
+    <p>Kubernetes gerenciado pela AWS — sem precisar operar o Control Plane.</p>
+
+    <div class="box orange">
+      <div class="box-title">O que a AWS faz por você no EKS</div>
+      <p>A AWS opera e escala o Control Plane (API Server, etcd, Scheduler...). Você não vê essas máquinas, não paga por elas separadamente (paga $0.10/hora pelo cluster), e a AWS garante alta disponibilidade do cérebro do cluster.</p>
     </div>
-    <div class="card">
-      <div class="icon">⚡</div>
-      <div class="label">Fargate</div>
-      <div class="desc">Serverless. Sem EC2, sem gerenciar nodes. Cada pod recebe seus próprios recursos dedicados. Você paga por CPU/RAM por segundo do pod.</div>
-    </div>
-    <div class="card">
-      <div class="icon">🛠️</div>
-      <div class="label">Self-managed Nodes</div>
-      <div class="desc">EC2s que você mesmo provisiona e registra no cluster. Máximo de controle, máximo de responsabilidade.</div>
-    </div>
-  </div>
 
-  <h2>Integrações nativas da AWS</h2>
-
-  <table>
-    <tr><th>Componente AWS</th><th>Para que serve no EKS</th></tr>
-    <tr><td><strong>IAM</strong></td><td>Controle de acesso. Pods podem assumir IAM Roles via IRSA (sem credenciais hardcoded)</td></tr>
-    <tr><td><strong>VPC</strong></td><td>Os pods recebem IPs reais da sua VPC (via CNI plugin). Você controla subnets públicas/privadas</td></tr>
-    <tr><td><strong>ALB / NLB</strong></td><td>Criados automaticamente quando você aplica um Ingress ou Service type:LoadBalancer</td></tr>
-    <tr><td><strong>ECR</strong></td><td>Registry privado para suas imagens Docker. Integração nativa com autenticação IAM</td></tr>
-    <tr><td><strong>CloudWatch</strong></td><td>Logs e métricas dos pods. Container Insights para dashboards automáticos</td></tr>
-    <tr><td><strong>Secrets Manager</strong></td><td>Injetar secrets do AWS Secrets Manager diretamente nos pods como variáveis de ambiente</td></tr>
-    <tr><td><strong>Karpenter</strong></td><td>Autoscaler de nodes mais inteligente que o cluster-autoscaler, nativo para AWS</td></tr>
-  </table>
-
-  <h2>IRSA — como seus pods acessam a AWS sem credenciais</h2>
-
-  <div class="flow">
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--blue-dim);color:var(--blue);">1</div>
-        <div class="flow-connector"></div>
+    <h3>K8s puro vs EKS</h3>
+    <div class="compare eks">
+      <div class="compare-col">
+        <h3>☸ Kubernetes puro (self-managed)</h3>
+        <ul>
+          <li><span>Você instala e mantém o Control Plane</span></li>
+          <li><span>Você atualiza o etcd, API Server...</span></li>
+          <li><span>Você cuida do backup do etcd</span></li>
+          <li><span>Você garante HA do Control Plane</span></li>
+          <li><span>Mais controle, mais trabalho</span></li>
+        </ul>
       </div>
-      <div class="flow-content">
-        <div class="title">Você cria uma IAM Role com uma trust policy</div>
-        <div class="body">A trust policy permite que um ServiceAccount do K8s assuma essa Role</div>
+      <div class="compare-col">
+        <h3>☁️ EKS (managed)</h3>
+        <ul>
+          <li><span>AWS opera o Control Plane</span></li>
+          <li><span>Atualizações com um clique</span></li>
+          <li><span>etcd gerenciado automaticamente</span></li>
+          <li><span>HA garantida pela AWS (multi-AZ)</span></li>
+          <li><span>Integração nativa com IAM, VPC, ALB...</span></li>
+        </ul>
       </div>
     </div>
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--purple-dim);color:var(--purple);">2</div>
-        <div class="flow-connector"></div>
+
+    <h3>Tipos de Node no EKS</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">🔧</div>
+        <div class="label">Managed Node Groups</div>
+        <div class="desc">EC2s gerenciadas pela AWS. A AWS cuida do provisionamento, update e termination dos nodes. Você define o tipo de instância e o autoscaling.</div>
       </div>
-      <div class="flow-content">
-        <div class="title">Você anota o ServiceAccount com o ARN da Role</div>
-        <div class="body"><code>eks.amazonaws.com/role-arn: arn:aws:iam::123:role/minha-role</code></div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <div class="label">Fargate</div>
+        <div class="desc">Serverless. Sem EC2, sem gerenciar nodes. Cada pod recebe seus próprios recursos dedicados. Você paga por CPU/RAM por segundo do pod.</div>
       </div>
-    </div>
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--teal-dim);color:var(--teal);">3</div>
-        <div class="flow-connector"></div>
-      </div>
-      <div class="flow-content">
-        <div class="title">O pod usa esse ServiceAccount</div>
-        <div class="body">O EKS injeta um token JWT no pod automaticamente</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="flow-line">
-        <div class="flow-dot" style="background:var(--green-dim);color:var(--green);">4</div>
-      </div>
-      <div class="flow-content">
-        <div class="title">SDK da AWS troca o JWT por credenciais temporárias</div>
-        <div class="body">Via STS AssumeRoleWithWebIdentity. O pod acessa S3, DynamoDB, etc. sem nenhum <code>AWS_ACCESS_KEY</code> hardcoded.</div>
+      <div class="card">
+        <div class="icon">🛠️</div>
+        <div class="label">Self-managed Nodes</div>
+        <div class="desc">EC2s que você mesmo provisiona e registra no cluster. Máximo de controle, máximo de responsabilidade.</div>
       </div>
     </div>
-  </div>
 
-  <div class="box green">
-    <div class="box-title">🔑 IRSA é essencial para produção</div>
-    <p>Nunca passe <code>AWS_ACCESS_KEY_ID</code> como variável de ambiente no pod. Use IRSA — é mais seguro, as credenciais são temporárias e rotacionadas automaticamente.</p>
-  </div>
-</section>
+    <h3>Integrações nativas da AWS</h3>
 
-<!-- ======================== YAML ======================== -->
-<section id="yaml">
-  <h1>YAML na prática</h1>
-  <p class="subtitle">Como tudo isso se traduz em código real.</p>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Componente AWS</th><th>Para que serve no EKS</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>IAM</strong></td><td>Controle de acesso. Pods podem assumir IAM Roles via IRSA (sem credenciais hardcoded)</td></tr>
+        <tr><td><strong>VPC</strong></td><td>Os pods recebem IPs reais da sua VPC (via CNI plugin). Você controla subnets públicas/privadas</td></tr>
+        <tr><td><strong>ALB / NLB</strong></td><td>Criados automaticamente quando você aplica um Ingress ou Service type:LoadBalancer</td></tr>
+        <tr><td><strong>ECR</strong></td><td>Registry privado para suas imagens Docker. Integração nativa com autenticação IAM</td></tr>
+        <tr><td><strong>CloudWatch</strong></td><td>Logs e métricas dos pods. Container Insights para dashboards automáticos</td></tr>
+        <tr><td><strong>Secrets Manager</strong></td><td>Injetar secrets do AWS Secrets Manager diretamente nos pods como variáveis de ambiente</td></tr>
+        <tr><td><strong>Karpenter</strong></td><td>Autoscaler de nodes mais inteligente que o cluster-autoscaler, nativo para AWS</td></tr>
+      </tbody>
+    </table>
+    </div>
 
-  <h2>Deployment completo anotado</h2>
-  <div class="code-block">
-    <pre><span class="key">apiVersion</span>: <span class="str">apps/v1</span>           <span class="cmt"># versão da API do K8s para este objeto</span>
-<span class="key">kind</span>: <span class="str">Deployment</span>              <span class="cmt"># tipo do objeto</span>
-<span class="key">metadata</span>:
-  <span class="key">name</span>: <span class="str">minha-api</span>
-  <span class="key">namespace</span>: <span class="str">production</span>
-<span class="key">spec</span>:
-  <span class="key">replicas</span>: <span class="num">3</span>                   <span class="cmt"># quero 3 cópias rodando</span>
-  <span class="key">selector</span>:
-    <span class="key">matchLabels</span>:
-      <span class="key">app</span>: <span class="str">minha-api</span>            <span class="cmt"># este Deployment gerencia pods com esse label</span>
-  <span class="key">template</span>:                      <span class="cmt"># template dos pods que serão criados</span>
-    <span class="key">metadata</span>:
-      <span class="key">labels</span>:
-        <span class="key">app</span>: <span class="str">minha-api</span>
-    <span class="key">spec</span>:
-      <span class="key">serviceAccountName</span>: <span class="str">minha-api-sa</span>  <span class="cmt"># para IRSA</span>
-      <span class="key">containers</span>:
-      - <span class="key">name</span>: <span class="str">app</span>
-        <span class="key">image</span>: <span class="str">123.dkr.ecr.us-east-1.amazonaws.com/minha-api:v2</span>
-        <span class="key">ports</span>:
-        - <span class="key">containerPort</span>: <span class="num">8080</span>
-        <span class="key">env</span>:
-        - <span class="key">name</span>: <span class="str">DATABASE_URL</span>
-          <span class="key">valueFrom</span>:
-            <span class="key">secretKeyRef</span>:              <span class="cmt"># busca de um Secret do K8s</span>
-              <span class="key">name</span>: <span class="str">db-secrets</span>
-              <span class="key">key</span>: <span class="str">url</span>
-        <span class="key">resources</span>:                      <span class="cmt"># SEMPRE defina limites!</span>
-          <span class="key">requests</span>:
-            <span class="key">cpu</span>: <span class="str">"100m"</span>               <span class="cmt"># 0.1 vCPU garantido</span>
-            <span class="key">memory</span>: <span class="str">"256Mi"</span>
-          <span class="key">limits</span>:
-            <span class="key">cpu</span>: <span class="str">"500m"</span>               <span class="cmt"># máximo 0.5 vCPU</span>
-            <span class="key">memory</span>: <span class="str">"512Mi"</span>
-        <span class="key">readinessProbe</span>:                 <span class="cmt"># K8s só manda tráfego quando estiver pronto</span>
-          <span class="key">httpGet</span>:
-            <span class="key">path</span>: <span class="str">/health</span>
-            <span class="key">port</span>: <span class="num">8080</span>
-          <span class="key">initialDelaySeconds</span>: <span class="num">10</span>
-          <span class="key">periodSeconds</span>: <span class="num">5</span></pre>
-  </div>
+    <h3>IRSA — como seus pods acessam a AWS sem credenciais</h3>
 
-  <h2>Service</h2>
-  <div class="code-block">
-    <pre><span class="key">apiVersion</span>: <span class="str">v1</span>
-<span class="key">kind</span>: <span class="str">Service</span>
-<span class="key">metadata</span>:
-  <span class="key">name</span>: <span class="str">minha-api-svc</span>
-  <span class="key">namespace</span>: <span class="str">production</span>
-<span class="key">spec</span>:
-  <span class="key">type</span>: <span class="str">ClusterIP</span>             <span class="cmt"># apenas interno — use LoadBalancer para expor</span>
-  <span class="key">selector</span>:
-    <span class="key">app</span>: <span class="str">minha-api</span>            <span class="cmt"># encaminha tráfego para pods com esse label</span>
-  <span class="key">ports</span>:
-  - <span class="key">port</span>: <span class="num">80</span>                  <span class="cmt"># porta que outros serviços chamam</span>
-    <span class="key">targetPort</span>: <span class="num">8080</span>          <span class="cmt"># porta que o container escuta</span></pre>
-  </div>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-n">1</div>
+        <div class="flow-content">
+          <div class="flow-title">Você cria uma IAM Role com uma trust policy</div>
+          <div class="flow-desc">A trust policy permite que um ServiceAccount do K8s assuma essa Role</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">2</div>
+        <div class="flow-content">
+          <div class="flow-title">Você anota o ServiceAccount com o ARN da Role</div>
+          <div class="flow-desc"><code>eks.amazonaws.com/role-arn: arn:aws:iam::123:role/minha-role</code></div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">3</div>
+        <div class="flow-content">
+          <div class="flow-title">O pod usa esse ServiceAccount</div>
+          <div class="flow-desc">O EKS injeta um token JWT no pod automaticamente</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">4</div>
+        <div class="flow-content">
+          <div class="flow-title">SDK da AWS troca o JWT por credenciais temporárias</div>
+          <div class="flow-desc">Via STS AssumeRoleWithWebIdentity. O pod acessa S3, DynamoDB, etc. sem nenhum <code>AWS_ACCESS_KEY</code> hardcoded.</div>
+        </div>
+      </div>
+    </div>
 
-  <h2>HPA — autoscaling automático</h2>
-  <div class="code-block">
-    <pre><span class="key">apiVersion</span>: <span class="str">autoscaling/v2</span>
-<span class="key">kind</span>: <span class="str">HorizontalPodAutoscaler</span>
-<span class="key">metadata</span>:
-  <span class="key">name</span>: <span class="str">minha-api-hpa</span>
-<span class="key">spec</span>:
-  <span class="key">scaleTargetRef</span>:
-    <span class="key">apiVersion</span>: <span class="str">apps/v1</span>
-    <span class="key">kind</span>: <span class="str">Deployment</span>
-    <span class="key">name</span>: <span class="str">minha-api</span>
-  <span class="key">minReplicas</span>: <span class="num">2</span>
-  <span class="key">maxReplicas</span>: <span class="num">20</span>
-  <span class="key">metrics</span>:
-  - <span class="key">type</span>: <span class="str">Resource</span>
-    <span class="key">resource</span>:
-      <span class="key">name</span>: <span class="str">cpu</span>
-      <span class="key">target</span>:
-        <span class="key">type</span>: <span class="str">Utilization</span>
-        <span class="key">averageUtilization</span>: <span class="num">70</span>   <span class="cmt"># escala quando CPU > 70%</span></pre>
-  </div>
+    <div class="box green">
+      <div class="box-title">🔑 IRSA é essencial para produção</div>
+      <p>Nunca passe <code>AWS_ACCESS_KEY_ID</code> como variável de ambiente no pod. Use IRSA — é mais seguro, as credenciais são temporárias e rotacionadas automaticamente.</p>
+    </div>
+  </section>
 
-  <h2>Comandos kubectl essenciais</h2>
-  <div class="code-block">
-    <pre><span class="cmt"># Aplicar qualquer YAML</span>
+  <!-- ======================== YAML ======================== -->
+  <section class="section" id="yaml">
+    <div class="section-label">Prática</div>
+    <h2><em>YAML</em> na prática</h2>
+
+    <p>Como tudo isso se traduz em código real.</p>
+
+    <h3>Deployment completo anotado</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">YAML</span>
+      </div>
+      <pre><code><span class="dc">apiVersion</span>: <span class="st">apps/v1</span>           <span class="cm"># versão da API do K8s para este objeto</span>
+<span class="dc">kind</span>: <span class="st">Deployment</span>              <span class="cm"># tipo do objeto</span>
+<span class="dc">metadata</span>:
+  <span class="dc">name</span>: <span class="st">minha-api</span>
+  <span class="dc">namespace</span>: <span class="st">production</span>
+<span class="dc">spec</span>:
+  <span class="dc">replicas</span>: <span class="nb">3</span>                   <span class="cm"># quero 3 cópias rodando</span>
+  <span class="dc">selector</span>:
+    <span class="dc">matchLabels</span>:
+      <span class="dc">app</span>: <span class="st">minha-api</span>            <span class="cm"># este Deployment gerencia pods com esse label</span>
+  <span class="dc">template</span>:                      <span class="cm"># template dos pods que serão criados</span>
+    <span class="dc">metadata</span>:
+      <span class="dc">labels</span>:
+        <span class="dc">app</span>: <span class="st">minha-api</span>
+    <span class="dc">spec</span>:
+      <span class="dc">serviceAccountName</span>: <span class="st">minha-api-sa</span>  <span class="cm"># para IRSA</span>
+      <span class="dc">containers</span>:
+      - <span class="dc">name</span>: <span class="st">app</span>
+        <span class="dc">image</span>: <span class="st">123.dkr.ecr.us-east-1.amazonaws.com/minha-api:v2</span>
+        <span class="dc">ports</span>:
+        - <span class="dc">containerPort</span>: <span class="nb">8080</span>
+        <span class="dc">env</span>:
+        - <span class="dc">name</span>: <span class="st">DATABASE_URL</span>
+          <span class="dc">valueFrom</span>:
+            <span class="dc">secretKeyRef</span>:              <span class="cm"># busca de um Secret do K8s</span>
+              <span class="dc">name</span>: <span class="st">db-secrets</span>
+              <span class="dc">key</span>: <span class="st">url</span>
+        <span class="dc">resources</span>:                      <span class="cm"># SEMPRE defina limites!</span>
+          <span class="dc">requests</span>:
+            <span class="dc">cpu</span>: <span class="st">"100m"</span>               <span class="cm"># 0.1 vCPU garantido</span>
+            <span class="dc">memory</span>: <span class="st">"256Mi"</span>
+          <span class="dc">limits</span>:
+            <span class="dc">cpu</span>: <span class="st">"500m"</span>               <span class="cm"># máximo 0.5 vCPU</span>
+            <span class="dc">memory</span>: <span class="st">"512Mi"</span>
+        <span class="dc">readinessProbe</span>:                 <span class="cm"># K8s só manda tráfego quando estiver pronto</span>
+          <span class="dc">httpGet</span>:
+            <span class="dc">path</span>: <span class="st">/health</span>
+            <span class="dc">port</span>: <span class="nb">8080</span>
+          <span class="dc">initialDelaySeconds</span>: <span class="nb">10</span>
+          <span class="dc">periodSeconds</span>: <span class="nb">5</span></code></pre>
+    </div>
+
+    <h3>Service</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">YAML</span>
+      </div>
+      <pre><code><span class="dc">apiVersion</span>: <span class="st">v1</span>
+<span class="dc">kind</span>: <span class="st">Service</span>
+<span class="dc">metadata</span>:
+  <span class="dc">name</span>: <span class="st">minha-api-svc</span>
+  <span class="dc">namespace</span>: <span class="st">production</span>
+<span class="dc">spec</span>:
+  <span class="dc">type</span>: <span class="st">ClusterIP</span>             <span class="cm"># apenas interno — use LoadBalancer para expor</span>
+  <span class="dc">selector</span>:
+    <span class="dc">app</span>: <span class="st">minha-api</span>            <span class="cm"># encaminha tráfego para pods com esse label</span>
+  <span class="dc">ports</span>:
+  - <span class="dc">port</span>: <span class="nb">80</span>                  <span class="cm"># porta que outros serviços chamam</span>
+    <span class="dc">targetPort</span>: <span class="nb">8080</span>          <span class="cm"># porta que o container escuta</span></code></pre>
+    </div>
+
+    <h3>HPA — autoscaling automático</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">YAML</span>
+      </div>
+      <pre><code><span class="dc">apiVersion</span>: <span class="st">autoscaling/v2</span>
+<span class="dc">kind</span>: <span class="st">HorizontalPodAutoscaler</span>
+<span class="dc">metadata</span>:
+  <span class="dc">name</span>: <span class="st">minha-api-hpa</span>
+<span class="dc">spec</span>:
+  <span class="dc">scaleTargetRef</span>:
+    <span class="dc">apiVersion</span>: <span class="st">apps/v1</span>
+    <span class="dc">kind</span>: <span class="st">Deployment</span>
+    <span class="dc">name</span>: <span class="st">minha-api</span>
+  <span class="dc">minReplicas</span>: <span class="nb">2</span>
+  <span class="dc">maxReplicas</span>: <span class="nb">20</span>
+  <span class="dc">metrics</span>:
+  - <span class="dc">type</span>: <span class="st">Resource</span>
+    <span class="dc">resource</span>:
+      <span class="dc">name</span>: <span class="st">cpu</span>
+      <span class="dc">target</span>:
+        <span class="dc">type</span>: <span class="st">Utilization</span>
+        <span class="dc">averageUtilization</span>: <span class="nb">70</span>   <span class="cm"># escala quando CPU > 70%</span></code></pre>
+    </div>
+
+    <h3>Comandos kubectl essenciais</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">BASH</span>
+      </div>
+      <pre><code><span class="cm"># Aplicar qualquer YAML</span>
 kubectl apply -f meu-deploy.yaml
 
-<span class="cmt"># Ver pods rodando</span>
+<span class="cm"># Ver pods rodando</span>
 kubectl get pods -n production
 
-<span class="cmt"># Ver logs de um pod</span>
+<span class="cm"># Ver logs de um pod</span>
 kubectl logs -f minha-api-abc123 -n production
 
-<span class="cmt"># Entrar no shell de um pod</span>
+<span class="cm"># Entrar no shell de um pod</span>
 kubectl exec -it minha-api-abc123 -n production -- /bin/sh
 
-<span class="cmt"># Ver eventos do cluster (ótimo para debug)</span>
+<span class="cm"># Ver eventos do cluster (ótimo para debug)</span>
 kubectl get events -n production --sort-by=.lastTimestamp
 
-<span class="cmt"># Descrever um pod (ver por que não está subindo)</span>
+<span class="cm"># Descrever um pod (ver por que não está subindo)</span>
 kubectl describe pod minha-api-abc123 -n production
 
-<span class="cmt"># Escalar manualmente</span>
+<span class="cm"># Escalar manualmente</span>
 kubectl scale deployment minha-api --replicas=5 -n production
 
-<span class="cmt"># Ver uso de CPU/RAM dos pods</span>
-kubectl top pods -n production</pre>
-  </div>
-</section>
+<span class="cm"># Ver uso de CPU/RAM dos pods</span>
+kubectl top pods -n production</code></pre>
+    </div>
+  </section>
 
-<!-- ======================== MENTAL MAP ======================== -->
-<section id="mental">
-  <h1>Mapa Mental — tudo junto</h1>
-  <p class="subtitle">Como as peças se encaixam no seu contexto de arquitetura AWS.</p>
+  <!-- ======================== MENTAL MAP ======================== -->
+  <section class="section" id="mental">
+    <div class="section-label">Prática</div>
+    <h2>Mapa Mental — <em>tudo junto</em></h2>
 
-  <div class="diagram">
-    <pre>
+    <p>Como as peças se encaixam no seu contexto de arquitetura AWS.</p>
+
+    <div class="diagram">
+      <pre>
                           INTERNET
                              │
                         ┌────┴────┐
@@ -864,39 +766,63 @@ Cada Deployment:
   • tem Secrets para tokens/passwords
   • tem HPA para autoscaling
   • tem readinessProbe para zero-downtime deploys
-    </pre>
+      </pre>
+    </div>
+
+    <h3>Glossário rápido</h3>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Termo</th><th>O que é</th><th>Analogia</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Cluster</strong></td><td>O conjunto de tudo: control plane + nodes</td><td>A empresa inteira</td></tr>
+        <tr><td><strong>Node</strong></td><td>Uma máquina (EC2) no cluster</td><td>Um escritório da empresa</td></tr>
+        <tr><td><strong>Pod</strong></td><td>Um ou mais containers rodando juntos</td><td>Uma mesa com funcionários</td></tr>
+        <tr><td><strong>Deployment</strong></td><td>Gerencia quantas réplicas de um pod existem</td><td>O RH que garante N vagas preenchidas</td></tr>
+        <tr><td><strong>Service</strong></td><td>IP fixo na frente dos pods, balanceia tráfego</td><td>A recepcionista que direciona chamadas</td></tr>
+        <tr><td><strong>Ingress</strong></td><td>Roteamento HTTP externo para Services</td><td>O porteiro do prédio que sabe onde cada andar fica</td></tr>
+        <tr><td><strong>Namespace</strong></td><td>Divisão lógica do cluster</td><td>Departamentos da empresa</td></tr>
+        <tr><td><strong>ConfigMap</strong></td><td>Configurações não-secretas</td><td>Manual de operações público</td></tr>
+        <tr><td><strong>Secret</strong></td><td>Dados sensíveis</td><td>Cofre com senhas</td></tr>
+        <tr><td><strong>HPA</strong></td><td>Autoscaler de pods</td><td>Contratação temporária em pico de demanda</td></tr>
+        <tr><td><strong>IRSA</strong></td><td>Permissão IAM para pods na AWS</td><td>Crachá de acesso por função, sem chave física</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="box green">
+      <div class="box-title">🎯 Próximos passos recomendados</div>
+      <p><strong>1.</strong> Instale o <code>kubectl</code> e o <code>eksctl</code> localmente. <strong>2.</strong> Crie um cluster EKS de teste com <code>eksctl create cluster</code>. <strong>3.</strong> Faça deploy de uma app simples com Deployment + Service. <strong>4.</strong> Adicione um Ingress com AWS LB Controller. <strong>5.</strong> Configure IRSA para acesso ao S3 ou DynamoDB. Aí o resto é prática!</p>
+    </div>
+  </section>
+
+  <div class="doc-footer">
+    <a href="../../index.html">← Voltar para DevDocs</a>
+    <span>Kubernetes &amp; EKS</span>
+    <a href="containers-advanced.html">Próximo: Containers Avançado →</a>
   </div>
 
-  <h2>Glossário rápido</h2>
-  <table>
-    <tr><th>Termo</th><th>O que é</th><th>Analogia</th></tr>
-    <tr><td><strong>Cluster</strong></td><td>O conjunto de tudo: control plane + nodes</td><td>A empresa inteira</td></tr>
-    <tr><td><strong>Node</strong></td><td>Uma máquina (EC2) no cluster</td><td>Um escritório da empresa</td></tr>
-    <tr><td><strong>Pod</strong></td><td>Um ou mais containers rodando juntos</td><td>Uma mesa com funcionários</td></tr>
-    <tr><td><strong>Deployment</strong></td><td>Gerencia quantas réplicas de um pod existem</td><td>O RH que garante N vagas preenchidas</td></tr>
-    <tr><td><strong>Service</strong></td><td>IP fixo na frente dos pods, balanceia tráfego</td><td>A recepcionista que direciona chamadas</td></tr>
-    <tr><td><strong>Ingress</strong></td><td>Roteamento HTTP externo para Services</td><td>O porteiro do prédio que sabe onde cada andar fica</td></tr>
-    <tr><td><strong>Namespace</strong></td><td>Divisão lógica do cluster</td><td>Departamentos da empresa</td></tr>
-    <tr><td><strong>ConfigMap</strong></td><td>Configurações não-secretas</td><td>Manual de operações público</td></tr>
-    <tr><td><strong>Secret</strong></td><td>Dados sensíveis</td><td>Cofre com senhas</td></tr>
-    <tr><td><strong>HPA</strong></td><td>Autoscaler de pods</td><td>Contratação temporária em pico de demanda</td></tr>
-    <tr><td><strong>IRSA</strong></td><td>Permissão IAM para pods na AWS</td><td>Crachá de acesso por função, sem chave física</td></tr>
-  </table>
-
-  <div class="box green">
-    <div class="box-title">🎯 Próximos passos recomendados</div>
-    <p><strong>1.</strong> Instale o <code>kubectl</code> e o <code>eksctl</code> localmente. <strong>2.</strong> Crie um cluster EKS de teste com <code>eksctl create cluster</code>. <strong>3.</strong> Faça deploy de uma app simples com Deployment + Service. <strong>4.</strong> Adicione um Ingress com AWS LB Controller. <strong>5.</strong> Configure IRSA para acesso ao S3 ou DynamoDB. Aí o resto é prática!</p>
-  </div>
-</section>
+</div>
+</main>
 
 <script>
-  function show(id) {
-    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    event.target.classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
 </script>
+
 </body>
 </html>
