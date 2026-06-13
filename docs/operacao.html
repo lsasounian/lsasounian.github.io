@@ -1,325 +1,262 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Operação e Deploy — Multi-Agent AWS</title>
-<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-:root { --accent: var(--purple); --accent-dim: var(--purple-dim); }
-
-.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
-.callout.purple .callout-label { color: var(--purple); }
-.callout.green .callout-label  { color: var(--green); }
-.callout.warn .callout-label   { color: var(--amber); }
-.callout.danger .callout-label { color: var(--red); }
-
-.code-filename { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-
-.d-green  { color: var(--green); }
-.d-red    { color: var(--red); }
-.d-blue   { color: var(--blue); }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+  :root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--accent:#3ecf8e;--accent2:#60d8b0;--text:#c9d1d9;--muted:#6e7681;--green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--orange:#e07840;--sidebar-w:240px;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;}
+  nav{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;overflow-y:auto;flex-shrink:0;}
+  .nav-back{display:block;padding:8px 20px 20px;color:var(--muted);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+  .nav-back:hover{color:var(--text);}
+  .nav-group{margin-bottom:20px;padding:0 20px;}
+  .nav-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .nav-group a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 0;}
+  .nav-group a:hover{color:var(--text);}
+  main{margin-left:var(--sidebar-w);max-width:860px;padding:64px 56px;width:100%;}
+  .doc-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .doc-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  h1{font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:#e6edf3;margin-bottom:12px;}
+  .doc-subtitle{font-size:17px;color:var(--muted);font-weight:300;max-width:600px;margin-bottom:40px;line-height:1.6;}
+  .doc-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
+  .section{margin-bottom:72px;}
+  .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  h2{font-size:24px;font-weight:600;color:#e6edf3;margin-bottom:16px;letter-spacing:-.01em;}
+  h3{font-size:18px;font-weight:600;color:#e6edf3;margin-bottom:12px;margin-top:40px;}
+  p{color:var(--text);margin-bottom:16px;max-width:700px;line-height:1.75;}
+  .code-block{margin-bottom:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .code-header{background:#1c2128;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+  .code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;}
+  .code-filename{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);}
+  pre{background:#161b22;padding:24px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;margin:0;}
+  .cm{color:#6e7681;font-style:italic;}.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.cls{color:#ffa657;}.st{color:#a5d6ff;}.nb{color:#79c0ff;}.dc{color:#3fb950;}
+  .callout{border-left:3px solid var(--border);padding:20px 24px;margin:24px 0;border-radius:0 6px 6px 0;background:var(--surface);font-size:14px;line-height:1.7;}
+  .callout.why{border-left-color:var(--accent);}.callout.warn{border-left-color:var(--yellow);}.callout.tip{border-left-color:var(--green);}.callout.danger{border-left-color:var(--red);}
+  .callout-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+  .callout.why .callout-title{color:var(--accent);}.callout.warn .callout-title{color:var(--yellow);}.callout.tip .callout-title{color:var(--green);}.callout.danger .callout-title{color:var(--red);}
+  .callout p{color:var(--muted);margin-bottom:10px;max-width:none;font-size:14px;}.callout p:last-child{margin-bottom:0;}.callout strong{color:var(--text);}
+  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin:24px 0;color:var(--text);overflow-x:auto;}
+  .d-green{color:var(--green);}.d-red{color:var(--red);}.d-yellow{color:var(--yellow);}.d-muted{color:var(--muted);}.d-blue{color:var(--blue);}.d-orange{color:var(--orange);}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:24px 0;font-family:'IBM Plex Mono',monospace;}
+  th{text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+  td{padding:10px 14px;border:1px solid var(--border);vertical-align:top;line-height:1.6;}
+  tr:hover td{background:#1c2128;}
+  code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;color:var(--accent2);}
+  .doc-footer{margin-top:80px;padding-top:32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
 </style>
 </head>
 <body>
-<div class="glow glow-1"></div>
-<div class="glow glow-2"></div>
-
-<aside class="sidebar">
-  <a href="../index.html" class="back-link">← DevDocs</a>
-  <a href="#" class="sidebar-logo">
-    <span class="doc-tag">08</span>
-    <span class="doc-title">Operação e Deploy</span>
-  </a>
-  <nav>
-    <div class="nav-section">Contexto</div>
-    <a href="#problema">O problema com checkpoints</a>
-    <a href="#graceful">Graceful shutdown primeiro</a>
-
-    <div class="nav-section">Blue/Green</div>
-    <a href="#bg-conceito">Conceito e fluxo</a>
-    <a href="#bg-terraform">Terraform</a>
+<nav>
+  <a href="https://lsasounian.github.io/index.html" class="nav-back">← DevDocs</a>
+  <div class="nav-group">
+    <div class="nav-group-title">Contexto</div>
+    <a href="#problema-checkpoints">O problema com checkpoints ativos</a>
+    <a href="#graceful">Graceful shutdown — pré-requisito</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Blue/Green</div>
+    <a href="#bg-conceito">Conceito e por que é o mais seguro</a>
+    <a href="#bg-terraform">Terraform — dois Target Groups</a>
     <a href="#bg-appspec">AppSpec e hooks</a>
-
-    <div class="nav-section">Canary</div>
-    <a href="#canary-conceito">Weighted routing</a>
-    <a href="#canary-rollback">Rollback automático</a>
-    <a href="#canary-progressao">Progressão e estratégias</a>
-
-    <div class="nav-section">Rolling</div>
-    <a href="#rolling-conceito">ECS nativo</a>
-    <a href="#rolling-circuit">Circuit breaker de deploy</a>
-
-    <div class="nav-section">Multi-cluster</div>
-    <a href="#multicluster-problema">Problema de ordem</a>
-    <a href="#multicluster-contrato">Versionamento de contrato</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Canary</div>
+    <a href="#canary-conceito">Weighted routing progressivo</a>
+    <a href="#canary-rollback">Rollback automático por alarme</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Rolling</div>
+    <a href="#rolling-conceito">ECS nativo — quando usar</a>
+    <a href="#rolling-limite">Limitação em multi-cluster</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Multi-cluster</div>
     <a href="#multicluster-ordem">Ordem de deploy</a>
-
-    <div class="nav-section">Referência</div>
+    <a href="#multicluster-contrato">Versionamento de contrato</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Referência</div>
     <a href="#nlb-alb">NLB vs ALB</a>
     <a href="#comparativo">Comparativo final</a>
-  </nav>
-</aside>
+  </div>
+</nav>
+<main>
+  <div class="doc-eyebrow">Multi-Agent AWS · Produção</div>
+  <h1>Operação e Deploy</h1>
+  <p class="doc-subtitle">A presença de checkpoints LangGraph ativos muda o que "deploy sem downtime" significa. Threads em execução precisam terminar antes que o ECS task seja removido — ou serem retomados pelo Recovery Worker.</p>
+  <div class="doc-tags">
+    <span class="tag">Blue/Green</span><span class="tag">Canary</span><span class="tag">Rolling</span>
+    <span class="tag">CodeDeploy</span><span class="tag">ALB</span><span class="tag">Multi-cluster</span>
+  </div>
 
-<div class="main">
-  <div class="wrapper">
+  <div class="section" id="problema-checkpoints">
+    <div class="section-eyebrow">Contexto</div>
+    <h2>Por que deploy com checkpoints ativos é diferente</h2>
 
-    <div class="doc-header">
-      <div class="doc-num">Multi-Agent Production System · Operação</div>
-      <h1>Operação <em>&amp; Deploy</em><br>Estratégias para ECS</h1>
-      <p class="doc-lead">Três estratégias de deploy para ECS com checkpoints LangGraph ativos — Blue/Green, Canary e Rolling — com tradeoffs detalhados para cada cenário. Multi-cluster coordination e NLB vs ALB.</p>
-      <div class="tags">
-        <span class="tag">Blue/Green</span><span class="tag">Canary</span><span class="tag">Rolling</span>
-        <span class="tag">CodeDeploy</span><span class="tag">ALB</span><span class="tag">NLB</span>
-        <span class="tag">Multi-cluster</span><span class="tag">X-API-Version</span>
-      </div>
-    </div>
+    <p>Em um sistema sem estado persistido, deploy é simples: sobe nova versão, drena a antiga, pronto. Em um sistema com LangGraph e RedisSaver, há threads em execução no momento do deploy. Quando o ECS drena o container, esses threads são interrompidos.</p>
 
-    <section class="section" id="problema">
-      <div class="section-label">Contexto</div>
-      <h2>O problema específico com checkpoints ativos</h2>
-      <p>Deploy em ECS sem checkpoints é simples: sobe nova versão, drena a antiga. Com LangGraph + RedisSaver, existe uma complicação: threads podem estar em execução no momento do deploy. Se o ECS task for drenado no meio de uma execução, o checkpoint do estado intermediário está no Redis — mas ninguém sabe que o thread precisa ser retomado até o heartbeat expirar e o OrphanScanner detectar.</p>
-      <div class="diagram">
-        <pre><span class="d-red">Sem graceful shutdown:</span>
-Thread thread-123 está em execução na Task v1 — node_b executando
-  └─► Deploy inicia → ECS drena Task v1 → SIGTERM
-  └─► Processo recebe SIGTERM → Python não trata → processo termina imediatamente
-  └─► node_b: checkpoint anterior (node_a) está no Redis ✓
-  └─► node_b em execução: sem checkpoint salvo ✗
-  └─► Recovery Worker precisa retomar — mas leva até 50s para detectar
+    <p>O melhor caso: o graceful shutdown funciona corretamente, o thread termina antes do SIGKILL, o checkpoint final é salvo. O caso mais comum sem configuração adequada: o ECS mata o processo antes do thread terminar, o checkpoint fica no estado do nó anterior, o Recovery Worker retoma em até 50s, o usuário experimenta uma pausa.</p>
 
-<span class="d-green">Com graceful shutdown + stop_timeout adequado:</span>
-SIGTERM recebido → FastAPI para de aceitar novos requests
-  └─► Aguarda tasks ativas terminarem (até 25s)
-  └─► node_b termina normalmente → checkpoint salvo
-  └─► Heartbeat deletado → OrphanScanner não detecta como órfão
-  └─► Deploy continua sem recovery necessário</pre>
-      </div>
-      <div class="callout purple">
-        <div class="callout-label">Por que o graceful shutdown é pré-requisito de qualquer estratégia de deploy</div>
-        <p>Blue/Green, Canary e Rolling são estratégias de <em>quando</em> trocar o tráfego. Graceful shutdown resolve o que acontece com os requests <em>em andamento</em> no momento da troca. Sem ele, todas as três estratégias ainda causam interrupções para threads LangGraph que estavam executando.</p>
-      </div>
-    </section>
+    <p>O objetivo das estratégias de deploy aqui não é apenas "zero downtime" no sentido de disponibilidade HTTP — é minimizar a janela em que threads ficam interrompidos e precisam ser retomados pelo Recovery Worker.</p>
+  </div>
 
-    <section class="section" id="graceful">
-      <div class="section-label">Pré-requisito</div>
-      <h2>Graceful shutdown correto</h2>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">app.py — lifespan + shutdown</span>
-            <span class="code-lang">python</span>
-          </div>
-        </div>
-        <pre><code><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
-<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException
-<span class="kw">import</span> asyncio
+  <div class="section" id="graceful">
+    <div class="section-eyebrow">Pré-requisito</div>
+    <h2>Graceful shutdown — deve ser configurado antes de qualquer estratégia</h2>
+
+    <p>Independente de qual estratégia de deploy você escolher, o graceful shutdown é o pré-requisito. Sem ele, o ECS mata o processo imediatamente após SIGTERM, interrompendo qualquer thread em execução. Com ele, o processo para de aceitar novos requests e aguarda os em andamento terminarem.</p>
+
+    <p>O <code>stop_timeout</code> no task definition define quanto tempo o ECS espera entre o SIGTERM e o SIGKILL. Deve ser maior ou igual ao tempo máximo esperado de execução de um agente. Para um agente de booking que pode levar até 60s, configure 120s — com margem para overhead de shutdown e operações de cleanup.</p>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">app.py — graceful shutdown</span></div>
+      <pre><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
 
 _active_tasks: set[asyncio.Task] = set()
 _shutting_down = <span class="kw">False</span>
 
 
 <span class="dc">@asynccontextmanager</span>
-<span class="kw">async def</span> <span class="fn">lifespan</span>(app: <span class="tp">FastAPI</span>):
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app):
     <span class="kw">yield</span>
     <span class="kw">global</span> _shutting_down
     _shutting_down = <span class="kw">True</span>
-
     <span class="kw">if</span> _active_tasks:
         logger.info(<span class="st">"Aguardando %d task(s) ativas..."</span>, len(_active_tasks))
-        <span class="cm"># timeout=25 deixa margem para overhead — stop_timeout do ECS deve ser 120s</span>
+        <span class="cm"># 25s de timeout: deixa margem para overhead após as tasks terminarem.
+        # stop_timeout no task definition deve ser 120s — bem acima disso.</span>
         <span class="kw">await</span> asyncio.wait(_active_tasks, timeout=<span class="nb">25.0</span>)
-
-    logger.info(<span class="st">"Shutdown completo."</span>)
-
-
-app = FastAPI(lifespan=lifespan)
 
 
 <span class="dc">@app</span>.post(<span class="st">"/agents/invoke"</span>)
-<span class="kw">async def</span> <span class="fn">invoke</span>(body: <span class="tp">InvokeRequest</span>):
+<span class="kw">async def</span> <span class="fn">invoke</span>(body: <span class="cls">InvokeRequest</span>):
     <span class="kw">if</span> _shutting_down:
-        <span class="cm"># 503 durante shutdown — ALB vai retentar em outro target</span>
-        <span class="kw">raise</span> HTTPException(status_code=<span class="nb">503</span>, detail=<span class="st">"Serviço em manutenção."</span>)
-
+        <span class="kw">raise</span> HTTPException(status_code=<span class="nb">503</span>, detail=<span class="st">"Em manutenção."</span>)
     task = asyncio.current_task()
     _active_tasks.add(task)
     <span class="kw">try</span>:
         <span class="kw">return await</span> run_agent(body.thread_id, body.input)
     <span class="kw">finally</span>:
-        _active_tasks.discard(task)</code></pre>
-      </div>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">terraform — stop_timeout e deregistration_delay</span>
-            <span class="code-lang">hcl</span>
-          </div>
-        </div>
-        <pre><code><span class="cm"># stop_timeout: segundos que o ECS aguarda após SIGTERM antes de SIGKILL
-# Deve ser >= tempo máximo de execução de um agente (ex: 120s para booking)</span>
-resource <span class="st">"aws_ecs_task_definition"</span> <span class="st">"agent"</span> {
+        _active_tasks.discard(task)</pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform — stop_timeout e deregistration_delay</span></div>
+      <pre>resource <span class="st">"aws_ecs_task_definition"</span> <span class="st">"agent"</span> {
   container_definitions = jsonencode([{
     name        = <span class="st">"agent"</span>
-    stopTimeout = <span class="nb">120</span>
-    <span class="cm"># ... demais configs</span>
+    stopTimeout = <span class="nb">120</span>  <span class="cm"># segundos entre SIGTERM e SIGKILL — deve ser >= max exec time</span>
   }])
 }
 
-<span class="cm"># deregistration_delay: tempo que o ALB aguarda antes de remover o target
-# Permite que connections existentes terminem antes de drenar
-# Deve ser ligeiramente menor que stop_timeout</span>
 resource <span class="st">"aws_lb_target_group"</span> <span class="st">"agent"</span> {
-  deregistration_delay = <span class="nb">100</span>
-  health_check {
-    path                = <span class="st">"/health"</span>
-    healthy_threshold   = <span class="nb">2</span>
-    unhealthy_threshold = <span class="nb">3</span>
-    interval            = <span class="nb">10</span>
-  }
-}</code></pre>
-      </div>
-    </section>
+  deregistration_delay = <span class="nb">100</span>  <span class="cm"># ALB drena conexões antes de remover o target
+  # Deve ser ligeiramente menor que stop_timeout — deixa o processo terminar limpo</span>
+  health_check { path = <span class="st">"/health"</span>; interval = <span class="nb">10</span>; healthy_threshold = <span class="nb">2</span> }
+}</pre>
+    </div>
+  </div>
 
-    <section class="section" id="bg-conceito">
-      <div class="section-label">Estratégia 1</div>
-      <h2>Blue/Green com CodeDeploy</h2>
-      <p>O CodeDeploy gerencia dois Target Groups — BLUE (versão atual) e GREEN (nova versão). O tráfego de produção continua 100% no BLUE enquanto o GREEN aquece, passa nos health checks, e é validado por smoke tests. A troca é instantânea — uma mudança de peso no ALB listener.</p>
-      <div class="diagram">
-        <pre>ALB Listener :443
-  └─► Production rule → <span class="d-blue">Target Group BLUE</span> (100%) ← tráfego atual
+  <div class="section" id="bg-conceito">
+    <div class="section-eyebrow">Estratégia 1</div>
+    <h2>Blue/Green — o mais seguro para checkpoints ativos</h2>
 
-Deploy inicia:
-  1. CodeDeploy sobe Tasks GREEN (v2) → health checks passam
-  2. Smoke tests via test listener (porta :8080) → validam GREEN diretamente
-  3. CodeDeploy troca: ALB → <span class="d-green">Target Group GREEN</span> (100%)
-  4. Tasks BLUE recebem SIGTERM → graceful shutdown (até 120s)
-  5. Deploy finalizado — BLUE descartado
+    <p>O Blue/Green com CodeDeploy mantém dois Target Groups — BLUE (versão atual) e GREEN (nova versão). O tráfego continua 100% no BLUE enquanto o GREEN sobe, aquece e passa nos health checks. A troca é instantânea — uma modificação no ALB listener. Se algo der errado, o rollback é igualmente instantâneo — volta para o BLUE que ainda está rodando.</p>
 
-Em caso de falha:
-  └─► CodeDeploy reverte: ALB → BLUE (instantâneo — zero downtime)</pre>
-      </div>
-    </section>
+    <p>Para checkpoints ativos, a vantagem é clara: as Tasks BLUE continuam processando threads em andamento normalmente enquanto as Tasks GREEN servem novos requests. Quando o CodeDeploy drena o BLUE após a troca, o graceful shutdown cuida dos threads em andamento. Não há momento em que uma Task está sendo drenada enquanto ainda recebe novos requests de alta carga.</p>
 
-    <section class="section" id="bg-terraform">
-      <h3>Terraform — dois Target Groups</h3>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">terraform/blue_green.tf</span>
-            <span class="code-lang">hcl</span>
-          </div>
-        </div>
-        <pre><code><span class="cm"># ECS Service com deployment_controller CODE_DEPLOY</span>
-resource <span class="st">"aws_ecs_service"</span> <span class="st">"agent"</span> {
-  name            = <span class="st">"booking-agent"</span>
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.agent.arn
-  desired_count   = <span class="nb">3</span>
+    <div class="callout why">
+      <div class="callout-title">Por que Blue/Green é mais seguro que Rolling para checkpoints</div>
+      <p>No Rolling Update, cada Task v1 começa a ser drenada antes de todas as Tasks v2 estarem prontas. Durante a transição, Tasks v1 (sendo drenadas) e Tasks v2 (recebendo novos requests) coexistem — e o mesmo <code>thread_id</code> poderia teoricamente chegar em Tasks de versões diferentes se o lock distribuído não estiver configurado.</p>
+      <p>No Blue/Green, a separação é absoluta: BLUE serve requests, GREEN aquece sem tráfego de usuário. A troca acontece em um único momento, depois do qual todo o tráfego vai para GREEN e BLUE começa a drenar. A janela de coexistência é controlada e previsível.</p>
+    </div>
 
-  deployment_controller {
-    type = <span class="st">"CODE_DEPLOY"</span>  <span class="cm"># entrega o controle de deploy ao CodeDeploy</span>
-  }
+    <div class="diagram">
+Deploy Blue/Green:
 
+1. CodeDeploy sobe Tasks GREEN (v2) — sem tráfego de usuário
+2. Tasks GREEN passam nos health checks
+3. Smoke tests via test listener (:8080) → validam v2 diretamente
+4. CodeDeploy troca: ALB → <span class="d-green">GREEN (100%)</span>
+5. Tasks BLUE recebem SIGTERM
+   └─► graceful shutdown: threads em andamento terminam normalmente
+   └─► Recovery Worker captura qualquer órfão remanescente (raro)
+6. BLUE descartado após drenar
+
+Rollback:
+   └─► CodeDeploy reverte: ALB → <span class="d-blue">BLUE (100%)</span> — instantâneo
+   └─► GREEN descartado
+    </div>
+
+    <h3 id="bg-terraform">Terraform — dois Target Groups</h3>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/blue_green.tf</span></div>
+      <pre>resource <span class="st">"aws_ecs_service"</span> <span class="st">"agent"</span> {
+  deployment_controller { type = <span class="st">"CODE_DEPLOY"</span> }
   load_balancer {
     target_group_arn = aws_lb_target_group.blue.arn
-    container_name   = <span class="st">"agent"</span>
-    container_port   = <span class="nb">8000</span>
+    container_name   = <span class="st">"agent"</span>; container_port = <span class="nb">8000</span>
   }
-
-  <span class="cm"># lifecycle: impede que o Terraform gerencie o target group após o primeiro deploy
-  # CodeDeploy é quem alterna entre BLUE e GREEN</span>
-  lifecycle {
-    ignore_changes = [task_definition, load_balancer]
-  }
+  <span class="cm"># lifecycle: CodeDeploy gerencia a alternância — Terraform não deve interferir</span>
+  lifecycle { ignore_changes = [task_definition, load_balancer] }
 }
 
-<span class="cm"># Target Group BLUE — versão atual</span>
 resource <span class="st">"aws_lb_target_group"</span> <span class="st">"blue"</span> {
-  name                 = <span class="st">"agent-blue"</span>
-  port                 = <span class="nb">8000</span>
-  protocol             = <span class="st">"HTTP"</span>
-  vpc_id               = var.vpc_id
-  target_type          = <span class="st">"ip"</span>
+  name                 = <span class="st">"agent-blue"</span>; port = <span class="nb">8000</span>
+  protocol             = <span class="st">"HTTP"</span>; target_type = <span class="st">"ip"</span>; vpc_id = var.vpc_id
   deregistration_delay = <span class="nb">100</span>
-  health_check { path = <span class="st">"/health"</span>; interval = <span class="nb">10</span>; healthy_threshold = <span class="nb">2</span> }
+  health_check { path = <span class="st">"/health"</span>; interval = <span class="nb">10</span> }
 }
 
-<span class="cm"># Target Group GREEN — nova versão (inicialmente vazio)</span>
 resource <span class="st">"aws_lb_target_group"</span> <span class="st">"green"</span> {
-  name                 = <span class="st">"agent-green"</span>
-  port                 = <span class="nb">8000</span>
-  protocol             = <span class="st">"HTTP"</span>
-  vpc_id               = var.vpc_id
-  target_type          = <span class="st">"ip"</span>
+  name                 = <span class="st">"agent-green"</span>; port = <span class="nb">8000</span>
+  protocol             = <span class="st">"HTTP"</span>; target_type = <span class="st">"ip"</span>; vpc_id = var.vpc_id
   deregistration_delay = <span class="nb">100</span>
-  health_check { path = <span class="st">"/health"</span>; interval = <span class="nb">10</span>; healthy_threshold = <span class="nb">2</span> }
+  health_check { path = <span class="st">"/health"</span>; interval = <span class="nb">10</span> }
 }
 
 <span class="cm"># Listener de produção: tráfego real → BLUE (CodeDeploy alterna para GREEN)</span>
 resource <span class="st">"aws_lb_listener"</span> <span class="st">"prod"</span> {
-  load_balancer_arn = aws_lb.main.arn
-  port              = <span class="nb">443</span>; protocol = <span class="st">"HTTPS"</span>
-  default_action {
-    type             = <span class="st">"forward"</span>
-    target_group_arn = aws_lb_target_group.blue.arn
-  }
+  load_balancer_arn = aws_lb.main.arn; port = <span class="nb">443</span>; protocol = <span class="st">"HTTPS"</span>
+  default_action { type = <span class="st">"forward"</span>; target_group_arn = aws_lb_target_group.blue.arn }
 }
 
-<span class="cm"># Listener de teste: smoke tests acessam GREEN diretamente antes da troca</span>
+<span class="cm"># Listener de teste: smoke tests acessam GREEN antes da troca</span>
 resource <span class="st">"aws_lb_listener"</span> <span class="st">"test"</span> {
-  load_balancer_arn = aws_lb.main.arn
-  port              = <span class="nb">8080</span>; protocol = <span class="st">"HTTP"</span>
-  default_action {
-    type             = <span class="st">"forward"</span>
-    target_group_arn = aws_lb_target_group.green.arn
-  }
+  load_balancer_arn = aws_lb.main.arn; port = <span class="nb">8080</span>; protocol = <span class="st">"HTTP"</span>
+  default_action { type = <span class="st">"forward"</span>; target_group_arn = aws_lb_target_group.green.arn }
 }
 
-<span class="cm"># CodeDeploy deployment group</span>
 resource <span class="st">"aws_codedeploy_deployment_group"</span> <span class="st">"agent"</span> {
-  app_name              = aws_codedeploy_app.agent.name
-  deployment_group_name = <span class="st">"booking-agent-dg"</span>
-  service_role_arn      = aws_iam_role.codedeploy.arn
-
   deployment_config_name = <span class="st">"CodeDeployDefault.ECSAllAtOnce"</span>
-
-  ecs_service {
-    cluster_name = aws_ecs_cluster.main.name
-    service_name = aws_ecs_service.agent.name
-  }
-
+  ecs_service { cluster_name = aws_ecs_cluster.main.name; service_name = aws_ecs_service.agent.name }
   load_balancer_info {
     target_group_pair_info {
       prod_traffic_route { listener_arns = [aws_lb_listener.prod.arn] }
       test_traffic_route { listener_arns = [aws_lb_listener.test.arn] }
-      target_group { name = aws_lb_target_group.blue.name  }
+      target_group { name = aws_lb_target_group.blue.name }
       target_group { name = aws_lb_target_group.green.name }
     }
   }
-
   auto_rollback_configuration {
     enabled = <span class="kw">true</span>
     events  = [<span class="st">"DEPLOYMENT_FAILURE"</span>, <span class="st">"DEPLOYMENT_STOP_ON_ALARM"</span>]
   }
-}</code></pre>
-      </div>
-    </section>
+}</pre>
+    </div>
 
-    <section class="section" id="bg-appspec">
-      <h3>AppSpec e hooks</h3>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">appspec.yml</span>
-            <span class="code-lang">yaml</span>
-          </div>
-        </div>
-        <pre><code>version: 0.0
+    <h3 id="bg-appspec">AppSpec e smoke tests</h3>
+
+    <p>O hook <code>BeforeAllowTraffic</code> roda antes de qualquer tráfego de usuário chegar ao GREEN. É o momento para smoke tests — validar que a nova versão responde corretamente nos endpoints críticos antes de expor ao usuário.</p>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">yaml</span><span class="code-filename">appspec.yml</span></div>
+      <pre>version: 0.0
 Resources:
   - TargetService:
       Type: AWS::ECS::Service
@@ -328,117 +265,49 @@ Resources:
         LoadBalancerInfo:
           ContainerName: <span class="st">"agent"</span>
           ContainerPort: 8000
-
 Hooks:
-  <span class="cm"># BeforeAllowTraffic: roda ANTES de trocar o tráfego para GREEN
-  # Ideal para smoke tests — valida a nova versão sem expor ao usuário</span>
-  - BeforeAllowTraffic: <span class="st">"BeforeTrafficHook"</span>
+  - BeforeAllowTraffic: <span class="st">"SmokTestsHook"</span>   <span class="cm"># valida GREEN antes da troca</span>
+  - AfterAllowTraffic: <span class="st">"MonitoringHook"</span>    <span class="cm"># monitora métricas pós-troca</span></pre>
+    </div>
 
-  <span class="cm"># AfterAllowTraffic: roda DEPOIS da troca — monitora métricas por N minutos
-  # Se alarmes dispararem aqui, CodeDeploy reverte para BLUE automaticamente</span>
-  - AfterAllowTraffic: <span class="st">"AfterTrafficHook"</span></code></pre>
-      </div>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">hooks/before_traffic.py — smoke tests</span>
-            <span class="code-lang">python</span>
-          </div>
-        </div>
-        <pre><code><span class="kw">import</span> httpx, sys
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">hooks/smoke_tests.py</span></div>
+      <pre><span class="kw">import</span> httpx, sys
 
-<span class="cm"># Hook roda contra o test listener (porta 8080) — acessa GREEN diretamente
-# antes de qualquer tráfego de usuário chegar à nova versão</span>
-TEST_ENDPOINT = <span class="st">"http://alb-dns:8080"</span>
+TEST_ENDPOINT = <span class="st">"http://alb-dns:8080"</span>  <span class="cm"># test listener — acessa GREEN diretamente</span>
 
+checks = [
+    (<span class="st">"/health"</span>,                <span class="nb">200</span>),
+    (<span class="st">"/health/circuit-breakers"</span>, <span class="nb">200</span>),
+    (<span class="st">"/health/bulkheads"</span>,      <span class="nb">200</span>),
+]
 
-<span class="kw">def</span> <span class="fn">run_smoke_tests</span>():
-    checks = [
-        (<span class="st">"/health"</span>,             <span class="nb">200</span>),
-        (<span class="st">"/health/circuit-breakers"</span>, <span class="nb">200</span>),
-        (<span class="st">"/health/bulkheads"</span>,   <span class="nb">200</span>),
-    ]
-    <span class="kw">for</span> path, expected_status <span class="kw">in</span> checks:
-        resp = httpx.get(<span class="st">f"{TEST_ENDPOINT}{path}"</span>, timeout=<span class="nb">10</span>)
-        <span class="kw">if</span> resp.status_code != expected_status:
-            print(<span class="st">f"FAIL: {path} returned {resp.status_code}, expected {expected_status}"</span>)
-            sys.exit(<span class="nb">1</span>)
-        print(<span class="st">f"OK: {path} → {resp.status_code}"</span>)
+<span class="kw">for</span> path, expected <span class="kw">in</span> checks:
+    resp = httpx.get(<span class="st">f"{TEST_ENDPOINT}{path}"</span>, timeout=<span class="nb">10</span>)
+    <span class="kw">if</span> resp.status_code != expected:
+        print(<span class="st">f"FAIL: {path} → {resp.status_code} (esperado {expected})"</span>)
+        sys.exit(<span class="nb">1</span>)
+    print(<span class="st">f"OK: {path}"</span>)
 
-    print(<span class="st">"Smoke tests passed. Permitindo tráfego para GREEN."</span>)
+print(<span class="st">"Smoke tests passaram. Liberando tráfego para GREEN."</span>)</pre>
+    </div>
+  </div>
 
+  <div class="section" id="canary-conceito">
+    <div class="section-eyebrow">Estratégia 2</div>
+    <h2>Canary — validação progressiva com rollback automático</h2>
 
-<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
-    run_smoke_tests()</code></pre>
-      </div>
-    </section>
+    <p>O Canary envia uma fração pequena do tráfego (10%) para a nova versão enquanto monitora métricas. Se error rate ou latência aumentam além dos thresholds configurados, o CodeDeploy reverte automaticamente — sem intervenção manual. Se as métricas ficam estáveis, progride para 100%.</p>
 
-    <section class="section" id="canary-conceito">
-      <div class="section-label">Estratégia 2</div>
-      <h2>Canary — weighted routing progressivo</h2>
-      <p>Em vez de trocar 100% do tráfego de uma vez, o Canary envia uma fração pequena (10%) para a nova versão enquanto monitora métricas. Se algo der errado, o rollback acontece automaticamente via CloudWatch Alarms — sem intervenção manual.</p>
-      <div class="diagram">
-        <pre>ALB Listener :443 — Canary em andamento
-  ├─► <span class="d-blue">90%</span> → Target Group BLUE  (v1) ← tráfego principal
-  └─► <span class="d-green">10%</span> → Target Group GREEN (v2) ← canary
+    <p>O Canary é ideal para releases de features novas onde você quer validar comportamento em produção antes de expor a todos os usuários. Não é ideal para breaking changes de schema A2A — nesses casos, use Blue/Green com sequência controlada.</p>
 
-Após estabilidade confirmada (CloudWatch Alarms OK por N minutos):
-  └─► CodeDeploy progressão: 25% → 50% → 75% → 100%
-  └─► Tasks BLUE drenadas gradualmente
+    <h3 id="canary-rollback">Rollback automático via CloudWatch Alarms</h3>
 
-<span class="d-red">Se alarme disparar durante o canary:</span>
-  └─► CodeDeploy rollback automático: 100% → BLUE
-  └─► Tasks GREEN descartadas
-  └─► Sem intervenção manual necessária</pre>
-      </div>
-    </section>
-
-    <section class="section" id="canary-rollback">
-      <h3>Rollback automático via CloudWatch Alarms</h3>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">terraform/canary.tf</span>
-            <span class="code-lang">hcl</span>
-          </div>
-        </div>
-        <pre><code><span class="cm"># Alarme de error rate — dispara se > 10 erros 5xx por minuto</span>
-resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"error_rate"</span> {
-  alarm_name          = <span class="st">"agent-5xx-canary"</span>
-  comparison_operator = <span class="st">"GreaterThanThreshold"</span>
-  evaluation_periods  = <span class="nb">2</span>
-  metric_name         = <span class="st">"HTTPCode_Target_5XX_Count"</span>
-  namespace           = <span class="st">"AWS/ApplicationELB"</span>
-  period              = <span class="nb">60</span>
-  statistic           = <span class="st">"Sum"</span>
-  threshold           = <span class="nb">10</span>
-  alarm_description   = <span class="st">"Canary rollback trigger: 5xx rate"</span>
-
-  dimensions = {
-    LoadBalancer = aws_lb.main.arn_suffix
-  }
-}
-
-<span class="cm"># Alarme de latência P99 — dispara se > 3s</span>
-resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"p99_latency"</span> {
-  alarm_name          = <span class="st">"agent-p99-canary"</span>
-  comparison_operator = <span class="st">"GreaterThanThreshold"</span>
-  evaluation_periods  = <span class="nb">2</span>
-  metric_name         = <span class="st">"TargetResponseTime"</span>
-  namespace           = <span class="st">"AWS/ApplicationELB"</span>
-  period              = <span class="nb">60</span>
-  extended_statistic  = <span class="st">"p99"</span>
-  threshold           = <span class="nb">3</span>
-}
-
-<span class="cm"># CodeDeploy deployment group com canary e rollback por alarme</span>
-resource <span class="st">"aws_codedeploy_deployment_group"</span> <span class="st">"agent_canary"</span> {
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/canary.tf</span></div>
+      <pre>resource <span class="st">"aws_codedeploy_deployment_group"</span> <span class="st">"canary"</span> {
+  <span class="cm"># 10% do tráfego por 5 minutos, depois 100% se métricas OK</span>
   deployment_config_name = <span class="st">"CodeDeployDefault.ECSCanary10Percent5Minutes"</span>
-  <span class="cm"># Alternativas:
-  # ECSCanary10Percent5Minutes  → 10% por 5min, depois 100%
-  # ECSLinear10PercentEvery1Minutes → 10% por minuto até 100%</span>
 
   auto_rollback_configuration {
     enabled = <span class="kw">true</span>
@@ -446,294 +315,206 @@ resource <span class="st">"aws_codedeploy_deployment_group"</span> <span class="
   }
 
   alarm_configuration {
+    enabled = <span class="kw">true</span>
     alarms  = [aws_cloudwatch_metric_alarm.error_rate.name,
                aws_cloudwatch_metric_alarm.p99_latency.name]
-    enabled = <span class="kw">true</span>
   }
-}</code></pre>
-      </div>
-    </section>
+}
 
-    <section class="section" id="canary-progressao">
-      <h3>Estratégias de progressão disponíveis</h3>
-      <div class="table-wrap">
-      <table>
-        <thead><tr><th>Config CodeDeploy</th><th>Comportamento</th><th>Quando usar</th></tr></thead>
-        <tbody>
-          <tr><td><code>ECSAllAtOnce</code></td><td>100% imediato — sem canary</td><td>Blue/Green puro</td></tr>
-          <tr><td><code>ECSCanary10Percent5Minutes</code></td><td>10% por 5min → 100%</td><td>Features sem breaking change</td></tr>
-          <tr><td><code>ECSCanary10Percent15Minutes</code></td><td>10% por 15min → 100%</td><td>Mudanças com risco médio</td></tr>
-          <tr><td><code>ECSLinear10PercentEvery1Minutes</code></td><td>+10% por minuto até 100%</td><td>Validação gradual de performance</td></tr>
-          <tr><td><code>ECSLinear10PercentEvery3Minutes</code></td><td>+10% a cada 3min até 100%</td><td>Alta carga — mais tempo de observação</td></tr>
-        </tbody>
-      </table>
-      </div>
-    </section>
+resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"error_rate"</span> {
+  alarm_name          = <span class="st">"agent-5xx-canary"</span>
+  metric_name         = <span class="st">"HTTPCode_Target_5XX_Count"</span>
+  namespace           = <span class="st">"AWS/ApplicationELB"</span>
+  comparison_operator = <span class="st">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="nb">2</span>; period = <span class="nb">60</span>; statistic = <span class="st">"Sum"</span>; threshold = <span class="nb">10</span>
+}
 
-    <section class="section" id="rolling-conceito">
-      <div class="section-label">Estratégia 3</div>
-      <h2>Rolling Update — ECS nativo</h2>
-      <p>O ECS substitui tasks gradualmente sem CodeDeploy ou Target Group duplicado. Mais simples de operar, menor custo — mas sem smoke tests pré-tráfego e rollback mais lento (depende do circuit breaker nativo do ECS detectar falhas).</p>
-      <div class="diagram">
-        <pre>desired_count=3, maximum_percent=150%, minimum_healthy_percent=100%
+resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"p99_latency"</span> {
+  alarm_name          = <span class="st">"agent-p99-canary"</span>
+  metric_name         = <span class="st">"TargetResponseTime"</span>
+  namespace           = <span class="st">"AWS/ApplicationELB"</span>
+  comparison_operator = <span class="st">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="nb">2</span>; period = <span class="nb">60</span>; extended_statistic = <span class="st">"p99"</span>; threshold = <span class="nb">3</span>
+}</pre>
+    </div>
+  </div>
 
-Estado inicial:  [v1] [v1] [v1]
-Passo 1:         [v1] [v1] [v1] [v2]    ← sobe v2 (150% capacity)
-Passo 2:         [v1] [v1] [v2]         ← drena 1 v1 após v2 passar no health check
-Passo 3:         [v1] [v2] [v2]         ← sobe mais 1 v2, drena 1 v1
-Passo 4:         [v2] [v2] [v2]         ← completo
+  <div class="section" id="rolling-conceito">
+    <div class="section-eyebrow">Estratégia 3</div>
+    <h2>Rolling Update — quando usar e quando evitar</h2>
 
-Em nenhum momento: capacity < 100% (minimum_healthy_percent=100)</pre>
-      </div>
-    </section>
+    <p>O Rolling Update é a estratégia nativa do ECS sem CodeDeploy. O ECS substitui Tasks gradualmente — sobe uma nova antes de drenar uma antiga — com <code>minimum_healthy_percent=100</code> garantindo que nunca cai abaixo da capacidade configurada.</p>
 
-    <section class="section" id="rolling-circuit">
-      <h3>Circuit breaker de deploy</h3>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">terraform/rolling.tf</span>
-            <span class="code-lang">hcl</span>
-          </div>
-        </div>
-        <pre><code>resource <span class="st">"aws_ecs_service"</span> <span class="st">"agent"</span> {
-  deployment_controller { type = <span class="st">"ECS"</span> }  <span class="cm"># rolling nativo</span>
+    <p>O Rolling é adequado para hotfixes urgentes onde a simplicidade importa mais que o controle fino, ou para mudanças que não afetam o estado do grafo — correções de bug em lógica de negócio, ajustes de configuração, atualizações de dependências sem mudança de schema.</p>
 
-  <span class="cm"># deployment_circuit_breaker: rollback automático se health checks falharem
-  # durante o rolling. Evita que uma versão quebrada continue sendo deployada.</span>
-  deployment_circuit_breaker {
-    enable   = <span class="kw">true</span>
-    rollback = <span class="kw">true</span>
-  }
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/rolling.tf</span></div>
+      <pre>resource <span class="st">"aws_ecs_service"</span> <span class="st">"agent"</span> {
+  deployment_controller { type = <span class="st">"ECS"</span> }
 
-  <span class="cm"># maximum_percent=150: pode ter até 4 tasks durante o deploy (3 * 1.5)
-  # minimum_healthy_percent=100: nunca fica abaixo de 3 tasks saudáveis</span>
+  <span class="cm"># circuit_breaker: rollback automático se health checks falharem.
+  # Evita que uma versão quebrada continue sendo deployada.</span>
+  deployment_circuit_breaker { enable = <span class="kw">true</span>; rollback = <span class="kw">true</span> }
+
+  <span class="cm"># Com desired_count=3:
+  # maximum_percent=150 → pode ter até 4 tasks durante o deploy
+  # minimum_healthy_percent=100 → nunca cai abaixo de 3 tasks saudáveis</span>
   deployment_maximum_percent         = <span class="nb">150</span>
   deployment_minimum_healthy_percent = <span class="nb">100</span>
-}</code></pre>
-      </div>
-      <div class="callout warn">
-        <div class="callout-label">Limitação do Rolling para multi-cluster</div>
-        <p>O Rolling Update não oferece controle explícito da ordem de deploy entre clusters. Se você tem <code>booking-agent</code> e <code>search-agent</code> em clusters separados com um contrato A2A evoluindo, o Rolling pode deployar os dois em ordens imprevisíveis. <strong>Para breaking changes A2A entre clusters, use Blue/Green com sequência manual controlada.</strong></p>
-      </div>
-    </section>
+}</pre>
+    </div>
 
-    <section class="section" id="multicluster-problema">
-      <div class="section-label">Multi-cluster</div>
-      <h2>O problema de ordem em multi-cluster</h2>
-      <p>Quando agentes em clusters diferentes evoluem o schema do estado A2A, a ordem de deploy importa. Se você deploya o produtor (search-agent v2 com novo formato de resposta) antes do consumidor (booking-agent v2 que sabe interpretar o novo formato), o booking-agent v1 ainda em produção vai receber respostas v2 que não sabe processar.</p>
-      <div class="diagram">
-        <pre><span class="d-red">Ordem errada:</span>
-  1. Deploy search-agent v2  ← agora responde com formato v2
-  2. booking-agent v1 chama search-agent v2
-  3. booking-agent v1 recebe resposta v2 que não sabe parsear → erro
+    <h3 id="rolling-limite">Limitação crítica em multi-cluster</h3>
 
-<span class="d-green">Ordem correta — consumidor antes do produtor:</span>
-  1. Deploy booking-agent v2  ← aceita tanto v1 quanto v2 de resposta
-  2. Valida booking-agent v2 estável (15-30min de métricas)
-  3. Deploy search-agent v2   ← agora pode responder com v2
-  4. booking-agent v2 processa v2 corretamente ✓
-  5. Após estável: deploy search-agent v2.1 remove suporte a v1</pre>
-      </div>
-    </section>
+    <p>O Rolling Update não oferece controle de ordem entre clusters. Se você tem <code>booking-agent</code> e <code>search-agent</code> em clusters separados com um contrato A2A que está evoluindo, o Rolling pode deployar os dois em qualquer ordem. Se o search-agent v2 (que responde com o novo formato) for deployado antes do booking-agent v2 (que sabe interpretar o novo formato), o booking-agent v1 ainda em produção vai receber respostas que não sabe processar.</p>
 
-    <section class="section" id="multicluster-contrato">
-      <h3>Versionamento de contrato A2A</h3>
-      <p>Durante a janela de migração, o search-agent v2 precisa responder em ambos os formatos. O header <code>X-API-Version</code> permite que o booking-agent sinalize qual versão espera receber.</p>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">a2a_client.py — versionamento de contrato</span>
-            <span class="code-lang">python</span>
-          </div>
-        </div>
-        <pre><code><span class="kw">async def</span> <span class="fn">call_search_agent</span>(payload: dict, token: str) -> dict:
-    headers = {
-        <span class="st">"Authorization"</span>:   <span class="st">f"Bearer {token}"</span>,
-        <span class="st">"X-API-Version"</span>:   <span class="st">"v2"</span>,   <span class="cm"># versão do contrato que esperamos</span>
-        <span class="st">"X-Min-API-Version"</span>: <span class="st">"v1"</span>, <span class="cm"># versão mínima que aceitamos</span>
-    }
-    inject(headers)
-    <span class="kw">async with</span> httpx.AsyncClient() <span class="kw">as</span> client:
-        <span class="kw">return</span> (<span class="kw">await</span> client.post(endpoint, json=payload, headers=headers)).json()</code></pre>
-      </div>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">app.py — search-agent v2 com backward compat</span>
-            <span class="code-lang">python</span>
-          </div>
-        </div>
-        <pre><code><span class="dc">@app</span>.post(<span class="st">"/search/invoke"</span>)
-<span class="kw">async def</span> <span class="fn">search_invoke</span>(request: <span class="tp">Request</span>, body: <span class="tp">SearchRequest</span>):
-    requested_version = request.headers.get(<span class="st">"X-API-Version"</span>, <span class="st">"v1"</span>)
-    result = <span class="kw">await</span> run_search_graph(body)
+    <p>Para qualquer mudança que afete o contrato A2A entre clusters, use Blue/Green com sequência controlada no pipeline de CI/CD.</p>
+  </div>
 
+  <div class="section" id="multicluster-ordem">
+    <div class="section-eyebrow">Multi-cluster</div>
+    <h2>Ordem de deploy entre clusters</h2>
+
+    <p>A regra fundamental é: <strong>deploy do consumidor antes do produtor</strong>. O agente que consome a API deve aceitar o novo formato antes do agente que produz começar a emiti-lo. Isso garante que durante a janela de migração — enquanto os dois estão sendo deployados — qualquer combinação de versões funciona.</p>
+
+    <div class="diagram">
+<span class="d-red">Ordem errada (produtor primeiro):</span>
+1. Deploy search-agent v2 → responde com formato v2
+2. booking-agent v1 chama search-agent v2
+3. booking-agent v1 recebe formato v2 → não sabe parsear → erro
+
+<span class="d-green">Ordem correta (consumidor primeiro):</span>
+1. Deploy booking-agent v2 → aceita v1 e v2 de resposta
+2. Valida por 15 min → métricas estáveis
+3. Deploy search-agent v2 → responde com v2
+4. booking-agent v2 processa v2 corretamente ✓
+5. Após estável: deploy search-agent v2.1 remove backward compat com v1
+    </div>
+
+    <h3 id="multicluster-contrato">Versionamento de contrato A2A</h3>
+
+    <p>Durante a janela de migração, o search-agent v2 precisa responder em ambos os formatos. O header <code>X-API-Version</code> permite que o booking-agent sinalize qual versão espera.</p>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">a2a_client.py + app.py search-agent</span></div>
+      <pre><span class="cm"># No booking-agent v2: sinaliza que espera v2</span>
+headers = {
+    <span class="st">"Authorization"</span>:   <span class="st">f"Bearer {token}"</span>,
+    <span class="st">"X-API-Version"</span>:   <span class="st">"v2"</span>,
+    <span class="st">"X-Min-API-Version"</span>: <span class="st">"v1"</span>,  <span class="cm"># aceita v1 também — backward compat</span>
+}
+
+<span class="cm"># No search-agent v2: responde com a versão solicitada</span>
+<span class="dc">@app</span>.post(<span class="st">"/search/invoke"</span>)
+<span class="kw">async def</span> <span class="fn">search_invoke</span>(request: <span class="cls">Request</span>, body: <span class="cls">SearchRequest</span>):
+    requested = request.headers.get(<span class="st">"X-API-Version"</span>, <span class="st">"v1"</span>)
+    result    = <span class="kw">await</span> run_search_graph(body)
     <span class="cm"># Suporta v1 e v2 durante a janela de migração.
-    # Após booking-agent v2 estável, remova o branch v1.</span>
-    <span class="kw">if</span> requested_version == <span class="st">"v1"</span>:
-        <span class="kw">return</span> format_response_v1(result)
-    <span class="kw">return</span> format_response_v2(result)</code></pre>
-      </div>
-    </section>
+    # Após booking-agent v2 estável e nenhum v1 em produção: remova o branch v1.</span>
+    <span class="kw">return</span> format_response_v1(result) <span class="kw">if</span> requested == <span class="st">"v1"</span> <span class="kw">else</span> format_response_v2(result)</pre>
+    </div>
 
-    <section class="section" id="multicluster-ordem">
-      <h3>Sequência completa de deploy multi-cluster</h3>
-      <div class="code-wrap">
-        <div class="code-header">
-          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span class="code-filename">.github/workflows/deploy.yml — multi-cluster</span>
-            <span class="code-lang">yaml</span>
-          </div>
-        </div>
-        <pre><code>jobs:
-  deploy-booking-agent-v2:
-    <span class="cm"># Consumidor primeiro — aceita v1 e v2 de resposta</span>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">yaml</span><span class="code-filename">.github/workflows/deploy.yml</span></div>
+      <pre>jobs:
+  deploy-booking-v2:
     steps:
       - name: Deploy booking-agent v2
         run: aws deploy create-deployment --deployment-group booking-agent-dg ...
-
       - name: Aguarda estabilização (15min)
         run: sleep 900
+      - name: Valida métricas
+        run: python scripts/validate_metrics.py --service booking-agent
 
-      - name: Valida métricas do booking-agent v2
-        run: python scripts/validate_metrics.py --service booking-agent --window 15m
-
-  deploy-search-agent-v2:
-    needs: deploy-booking-agent-v2  <span class="cm"># só roda após o consumidor estável</span>
-    <span class="cm"># Produtor depois — agora pode responder com v2</span>
+  deploy-search-v2:
+    needs: deploy-booking-v2  <span class="cm"># só após consumidor estável</span>
     steps:
       - name: Deploy search-agent v2
         run: aws deploy create-deployment --deployment-group search-agent-dg ...
-
       - name: Aguarda estabilização (15min)
         run: sleep 900
 
   remove-v1-compat:
-    needs: deploy-search-agent-v2
-    <span class="cm"># Remove suporte a v1 apenas quando ambos estão em v2</span>
+    needs: deploy-search-v2
     steps:
-      - name: Deploy search-agent v2.1 (sem compat v1)
-        run: aws deploy create-deployment --deployment-group search-agent-dg ...</code></pre>
-      </div>
-    </section>
-
-    <section class="section" id="nlb-alb">
-      <div class="section-label">Infraestrutura</div>
-      <h2>NLB vs ALB</h2>
-      <div class="table-wrap">
-      <table>
-        <thead><tr><th>Característica</th><th>ALB</th><th>NLB</th></tr></thead>
-        <tbody>
-          <tr><td>Protocolo</td><td>HTTP/HTTPS/WebSocket</td><td>TCP/UDP/TLS</td></tr>
-          <tr><td>Weighted routing</td><td>Sim — nativo</td><td>Não — precisa Route 53 ou proxy</td></tr>
-          <tr><td>Path-based routing</td><td>Sim</td><td>Não</td></tr>
-          <tr><td>Header-based routing</td><td>Sim</td><td>Não</td></tr>
-          <tr><td>Blue/Green com CodeDeploy</td><td>Sim — nativo</td><td>Parcial — via target group swap</td></tr>
-          <tr><td>Latência</td><td>~1-2ms overhead</td><td>~0.1ms overhead</td></tr>
-          <tr><td>Preserva IP do cliente</td><td>X-Forwarded-For</td><td>IP real preservado</td></tr>
-          <tr><td>gRPC</td><td>Sim</td><td>Sim (TCP passthrough)</td></tr>
-          <tr><td>Ideal para</td><td>HTTP REST entre agentes, usuário → agente</td><td>gRPC A2A interno, alta performance</td></tr>
-        </tbody>
-      </table>
-      </div>
-      <div class="callout green">
-        <div class="callout-label">Recomendação para o sistema multi-agent</div>
-        <p><strong>ALB externo</strong> (usuário → agente): weighted routing, Blue/Green via CodeDeploy, header-based routing para canary por usuário beta. <strong>NLB interno</strong> (agente → agente via A2A): menor latência, gRPC direto quando aplicável. Blue/Green no NLB interno: via DNS swap no Route 53 (CNAME de <code>search-agent.internal</code> para o novo target group).</p>
-      </div>
-    </section>
-
-    <section class="section" id="comparativo">
-      <div class="section-label">Referência</div>
-      <h2>Comparativo das três estratégias</h2>
-      <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Critério</th>
-            <th>Blue/Green</th>
-            <th>Canary</th>
-            <th>Rolling</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>Rollback</strong></td>
-            <td>Instantâneo — troca de TG no ALB</td>
-            <td>Automático por alarme CloudWatch</td>
-            <td>Circuit breaker ECS — mais lento</td>
-          </tr>
-          <tr>
-            <td><strong>Impacto em checkpoints</strong></td>
-            <td>Zero — v1 processa até drenar gracefully</td>
-            <td>Mínimo — só 10% vai para v2 no canary</td>
-            <td>Médio — tasks v1 substituídas gradualmente</td>
-          </tr>
-          <tr>
-            <td><strong>Custo durante deploy</strong></td>
-            <td>Alto — dobra tasks (BLUE + GREEN)</td>
-            <td>Alto durante a fase canary</td>
-            <td>Baixo — +33% tasks temporariamente</td>
-          </tr>
-          <tr>
-            <td><strong>Smoke tests pré-tráfego</strong></td>
-            <td>Sim — via test listener porta 8080</td>
-            <td>Sim — via hook BeforeAllowTraffic</td>
-            <td>Não — primeira task já recebe tráfego</td>
-          </tr>
-          <tr>
-            <td><strong>Multi-cluster coordination</strong></td>
-            <td>Melhor — ordem explícita no pipeline</td>
-            <td>Bom — progressivo por cluster</td>
-            <td>Arriscado — sem controle de ordem</td>
-          </tr>
-          <tr>
-            <td><strong>Complexidade de infra</strong></td>
-            <td>Alta — 2 TGs, CodeDeploy, AppSpec</td>
-            <td>Alta — igual ao Blue/Green</td>
-            <td>Baixa — ECS nativo</td>
-          </tr>
-          <tr>
-            <td><strong>Ideal para</strong></td>
-            <td>Breaking changes A2A, schema migration, releases críticas</td>
-            <td>Features sem breaking change, validação de performance em produção</td>
-            <td>Hotfixes urgentes, mudanças sem impacto em estado</td>
-          </tr>
-        </tbody>
-      </table>
-      </div>
-    </section>
-
-    <div class="doc-footer">
-      <a href="testabilidade.html">← Testabilidade</a>
-      <span>Operação e Deploy</span>
-      <a href="../index.html">Voltar para DevDocs →</a>
+      - name: Deploy search-agent v2.1 (remove compat v1)
+        run: aws deploy create-deployment --deployment-group search-agent-dg ...</pre>
     </div>
-
   </div>
-</div>
 
-<script>
-  // Active nav link on scroll
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.sidebar nav a');
+  <div class="section" id="nlb-alb">
+    <div class="section-eyebrow">Infraestrutura</div>
+    <h2>NLB vs ALB para o sistema multi-agent</h2>
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        navLinks.forEach(l => l.classList.remove('active'));
-        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
-        if (active) active.classList.add('active');
-      }
-    });
-  }, { threshold: 0.3 });
+    <p>A escolha entre NLB e ALB tem implicações diretas nas estratégias de deploy disponíveis. O ALB suporta weighted routing nativo — necessário para Canary e para o dual-listener do Blue/Green. O NLB não suporta weighted routing — Blue/Green via NLB exige DNS swap no Route 53.</p>
 
-  sections.forEach(s => observer.observe(s));
-</script>
+    <p>A recomendação para este sistema: <strong>ALB externo</strong> para tráfego usuário→agente, onde você precisa de Blue/Green e Canary. <strong>NLB interno</strong> para comunicação A2A de alta frequência entre agentes, onde a latência menor importa e você controla o deploy de ambos os lados.</p>
 
+    <table>
+      <thead><tr><th>Característica</th><th>ALB</th><th>NLB</th></tr></thead>
+      <tbody>
+        <tr><td>Weighted routing</td><td>Sim — nativo</td><td>Não — precisa Route 53</td></tr>
+        <tr><td>Blue/Green com CodeDeploy</td><td>Sim — nativo</td><td>Parcial — via DNS swap</td></tr>
+        <tr><td>Latência overhead</td><td>~1-2ms</td><td>~0.1ms</td></tr>
+        <tr><td>Header-based routing</td><td>Sim</td><td>Não</td></tr>
+        <tr><td>Ideal para</td><td>Externo: usuário→agente, A2A REST</td><td>Interno: A2A alta frequência, gRPC</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="comparativo">
+    <div class="section-eyebrow">Referência</div>
+    <h2>Comparativo das três estratégias</h2>
+
+    <table>
+      <thead>
+        <tr><th>Critério</th><th>Blue/Green</th><th>Canary</th><th>Rolling</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Rollback</strong></td>
+          <td>Instantâneo — troca de Target Group</td>
+          <td>Automático por CloudWatch Alarm</td>
+          <td>Circuit breaker ECS — mais lento</td>
+        </tr>
+        <tr>
+          <td><strong>Checkpoints ativos</strong></td>
+          <td>Zero impacto — BLUE processa até drenar com graceful shutdown</td>
+          <td>Mínimo — só 10% vai para v2 durante canary</td>
+          <td>Médio — Tasks v1 drenadas enquanto v2 recebe novos requests</td>
+        </tr>
+        <tr>
+          <td><strong>Custo durante deploy</strong></td>
+          <td>Alto — dobra as Tasks temporariamente</td>
+          <td>Alto — duas versões simultâneas durante canary</td>
+          <td>Baixo — +33% Tasks temporariamente</td>
+        </tr>
+        <tr>
+          <td><strong>Smoke tests pré-tráfego</strong></td>
+          <td>Sim — test listener porta 8080</td>
+          <td>Sim — hook BeforeAllowTraffic</td>
+          <td>Não — primeira Task nova já recebe tráfego</td>
+        </tr>
+        <tr>
+          <td><strong>Multi-cluster</strong></td>
+          <td>Melhor — ordem explícita no pipeline</td>
+          <td>Bom — progressivo por cluster</td>
+          <td>Arriscado — sem controle de ordem</td>
+        </tr>
+        <tr>
+          <td><strong>Ideal para</strong></td>
+          <td>Breaking changes A2A, schema migration, releases críticas</td>
+          <td>Features novas, validação de performance em produção</td>
+          <td>Hotfixes urgentes, mudanças sem impacto em estado</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="doc-footer">
+    <span>DevDocs · Multi-Agent AWS</span>
+    <span>Operação e Deploy · Jun 2026</span>
+  </div>
+</main>
 </body>
 </html>
