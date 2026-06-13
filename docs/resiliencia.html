@@ -4,107 +4,78 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resiliência — Multi-Agent AWS</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
-  :root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--accent:#e05a2b;--accent2:#f0a060;--text:#c9d1d9;--muted:#6e7681;--green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--sidebar-w:240px;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;}
-  nav{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;overflow-y:auto;flex-shrink:0;}
-  .nav-back{display:block;padding:8px 20px 20px;color:var(--muted);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
-  .nav-back:hover{color:var(--text);}
-  .nav-group{margin-bottom:20px;padding:0 20px;}
-  .nav-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  .nav-group a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 0;}
-  .nav-group a:hover{color:var(--text);}
-  main{margin-left:var(--sidebar-w);max-width:860px;padding:64px 56px;width:100%;}
-  .doc-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-  .doc-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);}
-  h1{font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:#e6edf3;margin-bottom:12px;}
-  .doc-subtitle{font-size:17px;color:var(--muted);font-weight:300;max-width:600px;margin-bottom:40px;line-height:1.6;}
-  .doc-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
-  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
-  .section{margin-bottom:72px;}
-  .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  h2{font-size:24px;font-weight:600;color:#e6edf3;margin-bottom:16px;letter-spacing:-.01em;}
-  h3{font-size:18px;font-weight:600;color:#e6edf3;margin-bottom:12px;margin-top:40px;}
-  p{color:var(--text);margin-bottom:16px;max-width:700px;line-height:1.75;}
-  .code-block{margin-bottom:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
-  .code-header{background:#1c2128;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
-  .code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;}
-  .code-filename{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);}
-  pre{background:#161b22;padding:24px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;margin:0;}
-  .cm{color:#6e7681;font-style:italic;}.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.cls{color:#ffa657;}.st{color:#a5d6ff;}.nb{color:#79c0ff;}.dc{color:#3fb950;}
-  .callout{border-left:3px solid var(--border);padding:20px 24px;margin:24px 0;border-radius:0 6px 6px 0;background:var(--surface);font-size:14px;line-height:1.7;}
-  .callout.why{border-left-color:var(--accent);}
-  .callout.warn{border-left-color:var(--yellow);}
-  .callout.tip{border-left-color:var(--green);}
-  .callout.danger{border-left-color:var(--red);}
-  .callout-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
-  .callout.why .callout-title{color:var(--accent);}
-  .callout.warn .callout-title{color:var(--yellow);}
-  .callout.tip .callout-title{color:var(--green);}
-  .callout.danger .callout-title{color:var(--red);}
-  .callout p{color:var(--muted);margin-bottom:10px;max-width:none;font-size:14px;}
-  .callout p:last-child{margin-bottom:0;}
-  .callout strong{color:var(--text);}
-  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin:24px 0;color:var(--text);overflow-x:auto;}
-  .d-green{color:var(--green);}.d-red{color:var(--red);}.d-yellow{color:var(--yellow);}.d-muted{color:var(--muted);}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin:24px 0;font-family:'IBM Plex Mono',monospace;}
-  th{text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
-  td{padding:10px 14px;border:1px solid var(--border);vertical-align:top;line-height:1.6;}
-  tr:hover td{background:#1c2128;}
-  code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;color:var(--accent2);}
-  .doc-footer{margin-top:80px;padding-top:32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
+:root { --accent: var(--purple); --accent-dim: var(--purple-dim); }
+
+.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.callout.purple .callout-label { color: var(--purple); }
+.callout.green .callout-label  { color: var(--green); }
+.callout.warn .callout-label   { color: var(--amber); }
+.callout.danger .callout-label { color: var(--red); }
+
+.code-filename { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+.d-green  { color: var(--green); }
+.d-red    { color: var(--red); }
+.d-yellow { color: var(--amber); }
 </style>
 </head>
 <body>
-<nav>
-  <a href="https://lsasounian.github.io/index.html" class="nav-back">← DevDocs</a>
-  <div class="nav-group">
-    <div class="nav-group-title">Contexto</div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<aside class="sidebar">
+  <a href="../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">04</span>
+    <span class="doc-title">Resiliência</span>
+  </a>
+  <nav>
+    <div class="nav-section">Contexto</div>
     <a href="#problema">Por que é diferente em multi-agent</a>
     <a href="#ordem">Ordem de aplicação</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Circuit Breaker</div>
+
+    <div class="nav-section">Circuit Breaker</div>
     <a href="#cb-estados">Os três estados</a>
     <a href="#cb-impl">Implementação</a>
     <a href="#cb-config">Configuração por serviço</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Bulkhead</div>
+
+    <div class="nav-section">Bulkhead</div>
     <a href="#bh-isolamento">Isolamento de recursos</a>
     <a href="#bh-impl">Implementação com anyio</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Retry + Backoff</div>
+
+    <div class="nav-section">Retry + Backoff</div>
     <a href="#retry-thundering">Thundering herd</a>
     <a href="#retry-impl">Implementação</a>
     <a href="#retry-integracao">Como os três interagem</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Cascading Timeout</div>
+
+    <div class="nav-section">Cascading Timeout</div>
     <a href="#timeout-problema">O problema de timeouts independentes</a>
     <a href="#timeout-impl">Budget propagado</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Backpressure</div>
+
+    <div class="nav-section">Backpressure</div>
     <a href="#bp-fila">Fila ilimitada</a>
     <a href="#bp-lua">Lua atômico</a>
-  </div>
-</nav>
-<main>
-  <div class="doc-eyebrow">Multi-Agent AWS · Produção</div>
-  <h1>Resiliência</h1>
-  <p class="doc-subtitle">Cinco camadas de proteção — cada uma com responsabilidade distinta. A ordem em que se compõem importa tanto quanto cada implementação individual.</p>
-  <div class="doc-tags">
-    <span class="tag">Circuit Breaker</span><span class="tag">Bulkhead</span><span class="tag">Retry</span>
-    <span class="tag">Cascading Timeout</span><span class="tag">Backpressure</span><span class="tag">anyio</span>
+  </nav>
+</aside>
+
+<div class="main">
+<div class="wrapper">
+
+  <div class="doc-header">
+    <div class="doc-num">Multi-Agent Production System · Resiliência</div>
+    <h1><em>Resiliência</em></h1>
+    <p class="doc-lead">Cinco camadas de proteção — cada uma com responsabilidade distinta. A ordem em que se compõem importa tanto quanto cada implementação individual.</p>
+    <div class="tags">
+      <span class="tag">Circuit Breaker</span><span class="tag">Bulkhead</span><span class="tag">Retry</span>
+      <span class="tag">Cascading Timeout</span><span class="tag">Backpressure</span><span class="tag">anyio</span>
+    </div>
   </div>
 
   <!-- ─── PROBLEMA ─── -->
-  <div class="section" id="problema">
-    <div class="section-eyebrow">Contexto</div>
+  <section class="section" id="problema">
+    <div class="section-label">Contexto</div>
     <h2>Por que resiliência em multi-agent é diferente</h2>
 
     <p>Em um sistema single-agent, uma falha afeta uma requisição. Você adiciona retry, talvez um timeout, e resolve. Em multi-agent, o mesmo problema tem uma dinâmica diferente: um agente downstream que começa a falhar não afeta só as requisições que dependem dele diretamente — ele afeta todos os outros agentes que compartilham os mesmos recursos.</p>
@@ -113,8 +84,7 @@
 
     <p>A solução não é um mecanismo único, mas cinco camadas com responsabilidades distintas que trabalham juntas:</p>
 
-    <div class="diagram">
-<span class="d-red">Sem resiliência — falha em cascata:</span>
+    <div class="diagram"><pre><span class="d-red">Sem resiliência — falha em cascata:</span>
 search-agent começa a responder lentamente
   └─► booking-agent aguarda → segura slot do bulkhead → segura conexão Redis
   └─► 50 requests simultâneos em booking-agent → todos travados
@@ -128,13 +98,13 @@ search-agent começa a responder lentamente
   └─► Slots do bulkhead são liberados — não ficam presos
   └─► Retry recebe CircuitOpenError → para imediatamente
   └─► search-agent tem chance de recuperar sem pressão adicional
-  └─► booking-agent e payment-agent continuam operando normalmente
+  └─► booking-agent e payment-agent continuam operando normalmente</pre>
     </div>
-  </div>
+  </section>
 
   <!-- ─── ORDEM ─── -->
-  <div class="section" id="ordem">
-    <div class="section-eyebrow">Arquitetura</div>
+  <section class="section" id="ordem">
+    <div class="section-label">Arquitetura</div>
     <h2>Ordem de aplicação — por que importa</h2>
 
     <p>As cinco camadas não são independentes — a ordem em que se encadeiam define o comportamento sob pressão. A lógica central é: falhar mais rápido e mais cedo, consumindo o mínimo de recursos possível.</p>
@@ -145,8 +115,7 @@ search-agent começa a responder lentamente
 
     <p>O Retry fica por último porque só faz sentido retentar dentro de um contexto já controlado — um slot já adquirido, um circuit já verificado. Retentar é caro: cada tentativa consome tempo de CPU, conexões de rede, e potencialmente slots de outros recursos.</p>
 
-    <div class="diagram">
-Request chega
+    <div class="diagram"><pre>Request chega
   │
   ▼
 <span class="d-green">Circuit Breaker</span> — verificação em microsegundos
@@ -168,32 +137,40 @@ Request chega
   └── non_retryable → <span class="d-red">propaga imediatamente</span>
         │
         ▼
-  <span class="d-green">@idempotent_node</span> — garante que retry não duplica efeito externo
+  <span class="d-green">@idempotent_node</span> — garante que retry não duplica efeito externo</pre>
     </div>
-  </div>
+  </section>
 
   <!-- ─── CIRCUIT BREAKER ─── -->
-  <div class="section" id="cb-estados">
-    <div class="section-eyebrow">Camada 1</div>
+  <section class="section" id="cb-estados">
+    <div class="section-label">Camada 1</div>
     <h2>Circuit Breaker</h2>
 
     <p>O nome vem de eletricidade: um disjuntor que interrompe o circuito quando detecta sobrecarga, protegendo o sistema. A analogia é precisa — quando um serviço downstream está com problema, continuar enviando requisições não ajuda a recuperação, piora. O Circuit Breaker "abre" o circuito e rejeita requisições imediatamente, dando ao serviço downstream tempo para se recuperar sem pressão adicional.</p>
 
     <p>O mecanismo funciona em três estados. Em <strong>CLOSED</strong> — o estado normal — todas as requisições passam e o circuit conta as falhas consecutivas. Quando o threshold é atingido, transita para <strong>OPEN</strong>: todas as requisições são rejeitadas imediatamente com <code>CircuitOpenError</code> sem nem tentar. Após um período de recuperação configurável, transita para <strong>HALF_OPEN</strong>: permite uma única requisição de teste passar. Se ela tiver sucesso, volta para CLOSED. Se falhar, volta para OPEN.</p>
 
-    <div class="callout why">
-      <div class="callout-title">Por que HALF_OPEN existe — e por que sem ele o sistema fica preso</div>
+    <div class="callout purple">
+      <div class="callout-label">Por que HALF_OPEN existe — e por que sem ele o sistema fica preso</div>
       <p>Sem o estado HALF_OPEN, você tem dois problemas. Se o circuit nunca fechar automaticamente, o operador precisa intervir manualmente para cada falha — inviável em produção. Se fechar automaticamente direto de OPEN para CLOSED após um timeout, você assume que o serviço recuperou sem verificar — e pode imediatamente abrir de novo se ainda estiver degradado, criando um ciclo de abrir-fechar-abrir que piora o serviço downstream.</p>
       <p><strong>HALF_OPEN resolve isso com uma única chamada de teste</strong>: barata para o sistema, suficiente para verificar se o serviço recuperou antes de liberar tráfego completo. O <code>success_threshold</code> de 2 no exemplo abaixo adiciona mais segurança — exige dois sucessos consecutivos antes de assumir que o serviço está estável.</p>
     </div>
+  </section>
 
-    <h3 id="cb-impl">Implementação</h3>
+  <section class="section" id="cb-impl">
+    <h3>Implementação</h3>
 
     <p>A implementação usa <code>asyncio.Lock</code> para proteger as transições de estado. O lock é adquirido apenas na verificação e transição — a execução da função acontece fora do lock para não bloquear outras corrotinas enquanto aguardam I/O. Esse detalhe é importante: um lock durante I/O transformaria o circuit breaker em um gargalo ele próprio.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">circuit_breaker.py</span></div>
-      <pre><span class="kw">import</span> asyncio, logging, time
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">circuit_breaker.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> asyncio, logging, time
 <span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
 <span class="kw">from</span> enum <span class="kw">import</span> Enum
 <span class="kw">from</span> typing <span class="kw">import</span> Callable, Any
@@ -201,27 +178,27 @@ Request chega
 logger = logging.getLogger(__name__)
 
 
-<span class="kw">class</span> <span class="cls">CircuitState</span>(Enum):
+<span class="kw">class</span> <span class="tp">CircuitState</span>(Enum):
     CLOSED    = <span class="st">"closed"</span>
     OPEN      = <span class="st">"open"</span>
     HALF_OPEN = <span class="st">"half_open"</span>
 
 
 <span class="dc">@dataclass</span>
-<span class="kw">class</span> <span class="cls">CircuitBreakerConfig</span>:
+<span class="kw">class</span> <span class="tp">CircuitBreakerConfig</span>:
     failure_threshold: int  = <span class="nb">5</span>
     success_threshold: int  = <span class="nb">2</span>
     recovery_timeout: float = <span class="nb">30.0</span>
     expected_exception: type = Exception
 
 
-<span class="kw">class</span> <span class="cls">CircuitOpenError</span>(Exception):
+<span class="kw">class</span> <span class="tp">CircuitOpenError</span>(Exception):
     <span class="st">"""Levantada quando o circuit está OPEN.
     Não deve ser retentada — retentativas não ajudam um serviço degradado."""</span>
 
 
-<span class="kw">class</span> <span class="cls">CircuitBreaker</span>:
-    <span class="kw">def</span> <span class="fn">__init__</span>(self, name: str, cfg: <span class="cls">CircuitBreakerConfig</span> | <span class="kw">None</span> = <span class="kw">None</span>):
+<span class="kw">class</span> <span class="tp">CircuitBreaker</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, name: str, cfg: <span class="tp">CircuitBreakerConfig</span> | <span class="kw">None</span> = <span class="kw">None</span>):
         self.name           = name
         self.cfg            = cfg <span class="kw">or</span> CircuitBreakerConfig()
         self._state         = CircuitState.CLOSED
@@ -233,7 +210,7 @@ logger = logging.getLogger(__name__)
         self._total_failures     = <span class="nb">0</span>
         self._total_short_circuits = <span class="nb">0</span>
 
-    <span class="kw">async def</span> <span class="fn">call</span>(self, fn: <span class="cls">Callable</span>, *args, **kwargs) -> Any:
+    <span class="kw">async def</span> <span class="fn">call</span>(self, fn: <span class="tp">Callable</span>, *args, **kwargs) -> Any:
         <span class="cm"># Lock apenas na verificação de estado — não durante I/O.
         # Se o lock cobrisse a execução, uma chamada lenta bloquearia
         # todas as outras corrotinas esperando para verificar o estado.</span>
@@ -285,7 +262,7 @@ logger = logging.getLogger(__name__)
         <span class="kw">if</span> self._last_failure <span class="kw">is None</span>: <span class="kw">return</span> <span class="nb">0.0</span>
         <span class="kw">return</span> max(<span class="nb">0.0</span>, self.cfg.recovery_timeout - (time.monotonic() - self._last_failure))
 
-    <span class="kw">def</span> <span class="fn">_transition_to</span>(self, new: <span class="cls">CircuitState</span>):
+    <span class="kw">def</span> <span class="fn">_transition_to</span>(self, new: <span class="tp">CircuitState</span>):
         logger.warning(<span class="st">"[CB:%s] %s → %s"</span>, self.name,
                        self._state.value.upper(), new.value.upper())
         self._state = new
@@ -296,27 +273,35 @@ logger = logging.getLogger(__name__)
                 <span class="st">"short_circuits"</span>: self._total_short_circuits}
 
 
-<span class="kw">class</span> <span class="cls">CircuitBreakerRegistry</span>:
-    <span class="kw">def</span> <span class="fn">__init__</span>(self): self._breakers: dict[str, <span class="cls">CircuitBreaker</span>] = {}
-    <span class="kw">def</span> <span class="fn">get</span>(self, name, cfg=<span class="kw">None</span>) -> <span class="cls">CircuitBreaker</span>:
+<span class="kw">class</span> <span class="tp">CircuitBreakerRegistry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self): self._breakers: dict[str, <span class="tp">CircuitBreaker</span>] = {}
+    <span class="kw">def</span> <span class="fn">get</span>(self, name, cfg=<span class="kw">None</span>) -> <span class="tp">CircuitBreaker</span>:
         <span class="kw">if</span> name <span class="kw">not in</span> self._breakers:
             self._breakers[name] = CircuitBreaker(name, cfg)
         <span class="kw">return</span> self._breakers[name]
     <span class="kw">def</span> <span class="fn">stats</span>(self) -> dict:
         <span class="kw">return</span> {n: cb.stats() <span class="kw">for</span> n, cb <span class="kw">in</span> self._breakers.items()}
 
-circuit_registry = CircuitBreakerRegistry()</pre>
+circuit_registry = CircuitBreakerRegistry()</code></pre>
     </div>
+  </section>
 
-    <h3 id="cb-config">Configuração por serviço — por que valores diferentes</h3>
+  <section class="section" id="cb-config">
+    <h3>Configuração por serviço — por que valores diferentes</h3>
 
     <p>Não existe uma configuração universal. Cada serviço downstream tem uma tolerância diferente a falhas baseada em dois fatores: o impacto de uma falha naquele serviço e a frequência esperada de falhas transitórias.</p>
 
     <p>O <code>payment_api</code> tem <code>failure_threshold=3</code> e <code>recovery_timeout=60s</code> porque uma falha de pagamento é crítica — preferimos abrir o circuit mais rápido e ser mais conservadores na reabertura. Já o <code>search_agent</code>, um serviço interno, tem <code>failure_threshold=10</code> porque flutuações ocasionais são esperadas e não queremos interromper o sistema por falhas transitórias normais.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">config.py</span></div>
-      <pre>CIRCUIT_CONFIGS: dict[str, <span class="cls">CircuitBreakerConfig</span>] = {
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">config.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code>CIRCUIT_CONFIGS: dict[str, <span class="tp">CircuitBreakerConfig</span>] = {
     <span class="st">"hotel_api"</span>: CircuitBreakerConfig(
         failure_threshold=<span class="nb">5</span>,    <span class="cm"># abre após 5 falhas consecutivas</span>
         success_threshold=<span class="nb">2</span>,    <span class="cm"># exige 2 sucessos no HALF_OPEN antes de fechar</span>
@@ -332,32 +317,40 @@ circuit_registry = CircuitBreakerRegistry()</pre>
         success_threshold=<span class="nb">1</span>,
         recovery_timeout=<span class="nb">15.0</span>,
     ),
-}</pre>
+}</code></pre>
     </div>
-  </div>
+  </section>
 
   <!-- ─── BULKHEAD ─── -->
-  <div class="section" id="bh-isolamento">
-    <div class="section-eyebrow">Camada 2</div>
+  <section class="section" id="bh-isolamento">
+    <div class="section-label">Camada 2</div>
     <h2>Bulkhead — isolamento de recursos</h2>
 
     <p>O nome vem de engenharia naval: os compartimentos estanques de um navio que garantem que um furo no casco não afunde o navio inteiro. A ideia é a mesma — se um agente fica lento ou travado, ele só pode consumir os recursos alocados para ele, não os recursos dos outros.</p>
 
     <p>Sem bulkhead, todos os agentes compartilham o mesmo pool de resources do processo Python — o event loop, as conexões Redis, a memória. Se o booking-agent começa a acumular requisições lentas, ele pode esgotar o pool de conexões Redis que o search-agent também usa. O search-agent, que estava saudável, começa a falhar por falta de conexão — não por problema próprio.</p>
 
-    <div class="callout why">
-      <div class="callout-title">Por que anyio.CapacityLimiter e não asyncio.Semaphore</div>
+    <div class="callout purple">
+      <div class="callout-label">Por que anyio.CapacityLimiter e não asyncio.Semaphore</div>
       <p>A primeira reação é usar <code>asyncio.Semaphore</code> — já está na stdlib, funciona com asyncio. O problema é que <code>Semaphore</code> não expõe métricas: não há como saber quantos slots estão em uso, quantos estão disponíveis, ou qual a capacidade máxima. Em produção, essas métricas são essenciais para alertas e debugging.</p>
       <p><code>anyio.CapacityLimiter</code> expõe <code>available_tokens</code> e <code>borrowed_tokens</code> diretamente — você pode criar um endpoint <code>/health/bulkheads</code> que retorna essas métricas em tempo real e configura alarmes no CloudWatch quando o uso passar de 80%. Além disso, o <code>move_on_after</code> do anyio tem um modelo de cancelamento mais robusto do que <code>asyncio.wait_for</code> para o padrão de timeout de slot.</p>
     </div>
+  </section>
 
-    <h3 id="bh-impl">Implementação</h3>
+  <section class="section" id="bh-impl">
+    <h3>Implementação</h3>
 
     <p>O bulkhead combina dois mecanismos: <code>CapacityLimiter</code> para limitar concorrência e <code>move_on_after</code> para timeout. O timeout de aquisição de slot (2s) é curto intencionalmente — se não há slot disponível em 2 segundos, o sistema está sob pressão e é melhor rejeitar rápido do que acumular requisições esperando.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">bulkhead.py</span></div>
-      <pre><span class="kw">import</span> anyio, logging
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">bulkhead.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> anyio, logging
 <span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
 <span class="kw">from</span> typing <span class="kw">import</span> Callable, Any
 
@@ -365,7 +358,7 @@ logger = logging.getLogger(__name__)
 
 
 <span class="dc">@dataclass</span>
-<span class="kw">class</span> <span class="cls">BulkheadConfig</span>:
+<span class="kw">class</span> <span class="tp">BulkheadConfig</span>:
     max_concurrent: int
     timeout: float
 
@@ -376,12 +369,12 @@ BULKHEAD_CONFIGS = {
     <span class="st">"recovery_worker"</span>: BulkheadConfig(max_concurrent=<span class="nb">3</span>, timeout=<span class="nb">120.0</span>),
 }
 
-<span class="kw">class</span> <span class="cls">BulkheadFullError</span>(Exception): <span class="kw">pass</span>
-<span class="kw">class</span> <span class="cls">BulkheadTimeoutError</span>(Exception): <span class="kw">pass</span>
+<span class="kw">class</span> <span class="tp">BulkheadFullError</span>(Exception): <span class="kw">pass</span>
+<span class="kw">class</span> <span class="tp">BulkheadTimeoutError</span>(Exception): <span class="kw">pass</span>
 
 
-<span class="kw">class</span> <span class="cls">Bulkhead</span>:
-    <span class="kw">def</span> <span class="fn">__init__</span>(self, name: str, cfg: <span class="cls">BulkheadConfig</span>):
+<span class="kw">class</span> <span class="tp">Bulkhead</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, name: str, cfg: <span class="tp">BulkheadConfig</span>):
         self.name     = name
         self.cfg      = cfg
         self._limiter = anyio.CapacityLimiter(cfg.max_concurrent)
@@ -392,7 +385,7 @@ BULKHEAD_CONFIGS = {
     <span class="dc">@property</span>
     <span class="kw">def</span> <span class="fn">in_use</span>(self) -> int: <span class="kw">return</span> int(self._limiter.borrowed_tokens)
 
-    <span class="kw">async def</span> <span class="fn">run</span>(self, fn: <span class="cls">Callable</span>, *args, **kwargs) -> Any:
+    <span class="kw">async def</span> <span class="fn">run</span>(self, fn: <span class="tp">Callable</span>, *args, **kwargs) -> Any:
         <span class="cm"># Tenta adquirir slot com timeout curto.
         # Se o sistema está com todos os slots ocupados por 2s, é sinal de
         # pressão — melhor rejeitar imediatamente do que enfileirar indefinidamente.</span>
@@ -409,9 +402,9 @@ BULKHEAD_CONFIGS = {
                 <span class="st">f"[{self.name}] Sem slots ({self.cfg.max_concurrent} em uso)"</span>)
 
 
-<span class="kw">class</span> <span class="cls">BulkheadRegistry</span>:
-    <span class="kw">def</span> <span class="fn">__init__</span>(self): self._bulkheads: dict[str, <span class="cls">Bulkhead</span>] = {}
-    <span class="kw">def</span> <span class="fn">get</span>(self, name: str) -> <span class="cls">Bulkhead</span>:
+<span class="kw">class</span> <span class="tp">BulkheadRegistry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self): self._bulkheads: dict[str, <span class="tp">Bulkhead</span>] = {}
+    <span class="kw">def</span> <span class="fn">get</span>(self, name: str) -> <span class="tp">Bulkhead</span>:
         <span class="kw">if</span> name <span class="kw">not in</span> self._bulkheads:
             cfg = BULKHEAD_CONFIGS.get(name, BulkheadConfig(<span class="nb">10</span>, <span class="nb">30.0</span>))
             self._bulkheads[name] = Bulkhead(name, cfg)
@@ -420,32 +413,40 @@ BULKHEAD_CONFIGS = {
         <span class="kw">return</span> {n: {<span class="st">"available"</span>: bh.available_slots, <span class="st">"in_use"</span>: bh.in_use,
                      <span class="st">"max"</span>: bh.cfg.max_concurrent} <span class="kw">for</span> n, bh <span class="kw">in</span> self._bulkheads.items()}
 
-bulkhead_registry = BulkheadRegistry()</pre>
+bulkhead_registry = BulkheadRegistry()</code></pre>
     </div>
-  </div>
+  </section>
 
   <!-- ─── RETRY ─── -->
-  <div class="section" id="retry-thundering">
-    <div class="section-eyebrow">Camada 3</div>
+  <section class="section" id="retry-thundering">
+    <div class="section-label">Camada 3</div>
     <h2>Retry com Exponential Backoff + Full Jitter</h2>
 
     <p>Retry sem estratégia pode ser pior do que não retentar. O problema clássico: um serviço começa a falhar às 14h00. Todos os clientes recebem erro e tentam novamente ao mesmo tempo. O serviço recebe uma rajada de tráfego no exato momento em que está mais frágil — e piora.</p>
 
     <p>O backoff exponencial resolve parcialmente isso: a cada falha, a espera dobra. Mas se todos os clientes começam com o mesmo delay base e têm o mesmo padrão de falha, eles ainda podem sincronizar — todos esperando 1s, depois 2s, depois 4s, juntos. O <strong>full jitter</strong> quebra essa sincronização: cada cliente escolhe um tempo aleatório dentro da janela exponencial. Com 100 clientes, a distribuição de retries fica uniforme ao longo do tempo em vez de em picos.</p>
 
-    <div class="callout why">
-      <div class="callout-title">Full jitter vs equal jitter — qual a diferença real</div>
+    <div class="callout purple">
+      <div class="callout-label">Full jitter vs equal jitter — qual a diferença real</div>
       <p>Equal jitter: <code>delay/2 + random(0, delay/2)</code>. Garante uma espera mínima de <code>delay/2</code>. Full jitter: <code>random(0, delay)</code>. Pode resultar em espera muito curta, mas tem variância maior — o que é o que queremos para dessincronizar clientes.</p>
       <p>A recomendação da AWS para sistemas distribuídos é full jitter. A intuição é: em um sistema com muitos clientes, quanto maior a variância individual, mais suave o agregado. Equal jitter garante uma espera mínima que parece mais "justa", mas concentra os retries num intervalo menor — o oposto do que você quer sob pressão.</p>
     </div>
+  </section>
 
-    <h3 id="retry-impl">Implementação</h3>
+  <section class="section" id="retry-impl">
+    <h3>Implementação</h3>
 
     <p>O detalhe mais importante da implementação é o tratamento de <code>CircuitOpenError</code>: quando o circuit breaker abre durante o processo de retry, o retry para imediatamente. Não faz sentido esperar e retentar se o circuit breaker já determinou que o serviço está degradado — seria ignorar a informação mais relevante disponível.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">retry.py</span></div>
-      <pre><span class="kw">import</span> asyncio, logging, random
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">retry.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> asyncio, logging, random
 <span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
 <span class="kw">from</span> typing <span class="kw">import</span> Callable, Any
 <span class="kw">from</span> circuit_breaker <span class="kw">import</span> CircuitBreaker, CircuitOpenError
@@ -454,7 +455,7 @@ logger = logging.getLogger(__name__)
 
 
 <span class="dc">@dataclass</span>
-<span class="kw">class</span> <span class="cls">RetryConfig</span>:
+<span class="kw">class</span> <span class="tp">RetryConfig</span>:
     max_attempts: int       = <span class="nb">3</span>
     base_delay: float       = <span class="nb">1.0</span>
     max_delay: float        = <span class="nb">30.0</span>
@@ -472,16 +473,16 @@ RETRY_CONFIGS = {
 }
 
 
-<span class="kw">def</span> <span class="fn">_calculate_delay</span>(attempt: int, cfg: <span class="cls">RetryConfig</span>) -> float:
+<span class="kw">def</span> <span class="fn">_calculate_delay</span>(attempt: int, cfg: <span class="tp">RetryConfig</span>) -> float:
     <span class="cm"># Exponential backoff com teto: min(base * 2^attempt, max_delay)
     # Full jitter: random(0, delay) — maximiza variância para dessincronizar clientes</span>
     delay = min(cfg.base_delay * (cfg.exponential_base ** attempt), cfg.max_delay)
     <span class="kw">return</span> random.uniform(<span class="nb">0</span>, delay) <span class="kw">if</span> cfg.jitter <span class="kw">else</span> delay
 
 
-<span class="kw">async def</span> <span class="fn">with_retry</span>(fn: <span class="cls">Callable</span>, *args,
-                      config: <span class="cls">RetryConfig</span> | <span class="kw">None</span> = <span class="kw">None</span>,
-                      circuit_breaker: <span class="cls">CircuitBreaker</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+<span class="kw">async def</span> <span class="fn">with_retry</span>(fn: <span class="tp">Callable</span>, *args,
+                      config: <span class="tp">RetryConfig</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+                      circuit_breaker: <span class="tp">CircuitBreaker</span> | <span class="kw">None</span> = <span class="kw">None</span>,
                       service_name: str = <span class="st">"unknown"</span>, **kwargs) -> Any:
     cfg = config <span class="kw">or</span> RetryConfig()
 
@@ -509,10 +510,12 @@ RETRY_CONFIGS = {
             delay = _calculate_delay(attempt, cfg)
             logger.warning(<span class="st">"[retry:%s] Tentativa %d/%d. Aguardando %.2fs."</span>,
                            service_name, attempt + <span class="nb">1</span>, cfg.max_attempts, delay)
-            <span class="kw">await</span> asyncio.sleep(delay)</pre>
+            <span class="kw">await</span> asyncio.sleep(delay)</code></pre>
     </div>
+  </section>
 
-    <h3 id="retry-integracao">Como circuit breaker, retry e idempotência interagem</h3>
+  <section class="section" id="retry-integracao">
+    <h3>Como circuit breaker, retry e idempotência interagem</h3>
 
     <p>Os três mecanismos operam em camadas diferentes e cobrem cenários diferentes. Entender a distinção evita tanto lacunas quanto redundâncias na proteção.</p>
 
@@ -520,16 +523,22 @@ RETRY_CONFIGS = {
 
     <p>Quando um nó do grafo chama uma API externa, as falhas do retry alimentam o circuit breaker automaticamente — cada falha que o retry registra também é contada pelo circuit breaker. Quando o circuit abre, o retry para imediatamente. E quando o LangGraph retoma o checkpoint depois de uma falha do ECS, o <code>@idempotent_node</code> impede que a reserva ou cobrança seja feita duas vezes.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">nodes.py — composição das três camadas</span></div>
-      <pre><span class="cm"># Ordem dos decorators: traced_node (mais externo) → idempotent_node → função real
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">nodes.py — composição das três camadas</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="cm"># Ordem dos decorators: traced_node (mais externo) → idempotent_node → função real
 # traced_node captura o tempo total incluindo o check de idempotência
 # idempotent_node verifica cache antes de executar
 # dentro do nó: circuit_breaker + retry protegem a chamada HTTP</span>
 
 <span class="dc">@traced_node</span>(<span class="st">"book_hotel"</span>)
 <span class="dc">@idempotent_node</span>(redis, <span class="st">"book_hotel"</span>, key_fields=[<span class="st">"hotel_id"</span>, <span class="st">"checkin"</span>, <span class="st">"checkout"</span>])
-<span class="kw">async def</span> <span class="fn">book_hotel_node</span>(state: <span class="cls">AgentState</span>, config: dict) -> dict:
+<span class="kw">async def</span> <span class="fn">book_hotel_node</span>(state: <span class="tp">AgentState</span>, config: dict) -> dict:
     cb = circuit_registry.get(<span class="st">"hotel_api"</span>, CIRCUIT_CONFIGS[<span class="st">"hotel_api"</span>])
     <span class="kw">try</span>:
         booking = <span class="kw">await</span> with_retry(
@@ -542,34 +551,42 @@ RETRY_CONFIGS = {
         )
         <span class="kw">return</span> {<span class="st">"booking_id"</span>: booking.id, <span class="st">"booking_status"</span>: <span class="st">"confirmed"</span>}
     <span class="kw">except</span> CircuitOpenError:
-        <span class="kw">return</span> {<span class="st">"booking_status"</span>: <span class="st">"unavailable"</span>, <span class="st">"error"</span>: <span class="st">"Hotel API indisponível."</span>}</pre>
+        <span class="kw">return</span> {<span class="st">"booking_status"</span>: <span class="st">"unavailable"</span>, <span class="st">"error"</span>: <span class="st">"Hotel API indisponível."</span>}</code></pre>
     </div>
-  </div>
+  </section>
 
   <!-- ─── CASCADING TIMEOUT ─── -->
-  <div class="section" id="timeout-problema">
-    <div class="section-eyebrow">Camada 4</div>
+  <section class="section" id="timeout-problema">
+    <div class="section-label">Camada 4</div>
     <h2>Cascading Timeout Budget</h2>
 
     <p>Timeouts independentes por serviço criam um problema sutil que só aparece sob pressão real. Imagine: o usuário tem 30 segundos de paciência. O agente de booking tem timeout de 25s. Ele chama o agente de busca com timeout de 20s. O agente de busca chama uma API externa com timeout de 15s.</p>
 
     <p>Se a API externa trava por 15s, o agente de busca espera 20s, o agente de booking espera 25s — e o usuário recebe a resposta em 25s, quase no limite da paciência. Agora imagine que o booking-agent tinha feito outra chamada antes da busca que levou 10s. Agora ele chama o agente de busca com timeout de 20s, mas só tem 15s restantes. O agente de busca não sabe disso — pode demorar até 20s. O resultado é que o usuário recebe timeout depois de 30s mesmo com o agente de busca respondendo dentro do seu próprio timeout.</p>
 
-    <div class="callout why">
-      <div class="callout-title">Por que ContextVar em vez de passar o budget como parâmetro</div>
+    <div class="callout purple">
+      <div class="callout-label">Por que ContextVar em vez de passar o budget como parâmetro</div>
       <p>A alternativa óbvia é passar o budget restante como parâmetro em cada chamada de função. O problema é que isso contamina a assinatura de todas as funções no caminho — nós do LangGraph, clients A2A, chamadas de API. Qualquer ponto que esqueça de passar o budget quebra a cadeia silenciosamente.</p>
       <p><code>ContextVar</code> é thread-safe, funciona nativamente com asyncio, e cada <code>asyncio.Task</code> herda o contexto da Task pai automaticamente. Você inicializa o budget uma vez no início do request e qualquer ponto na cadeia pode ler o budget restante sem precisar recebê-lo como parâmetro. É a solução que não exige disciplina de todos os pontos da cadeia para funcionar.</p>
     </div>
+  </section>
 
-    <h3 id="timeout-impl">Implementação</h3>
+  <section class="section" id="timeout-impl">
+    <h3>Implementação</h3>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">cascade_timeout.py</span></div>
-      <pre><span class="kw">import</span> time
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">cascade_timeout.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> time
 <span class="kw">from</span> contextvars <span class="kw">import</span> ContextVar
 
-_budget: <span class="cls">ContextVar</span>[float] = ContextVar(<span class="st">"timeout_budget"</span>, default=<span class="nb">30.0</span>)
-_start:  <span class="cls">ContextVar</span>[float] = ContextVar(<span class="st">"request_start"</span>,  default=<span class="nb">0.0</span>)
+_budget: <span class="tp">ContextVar</span>[float] = ContextVar(<span class="st">"timeout_budget"</span>, default=<span class="nb">30.0</span>)
+_start:  <span class="tp">ContextVar</span>[float] = ContextVar(<span class="st">"request_start"</span>,  default=<span class="nb">0.0</span>)
 
 <span class="kw">def</span> <span class="fn">init_budget</span>(total_seconds: float) -> <span class="kw">None</span>:
     <span class="st">"""Chama no início de cada request — antes de qualquer chamada downstream."""</span>
@@ -598,39 +615,47 @@ _start:  <span class="cls">ContextVar</span>[float] = ContextVar(<span class="st
 
 <span class="cm"># No Agente B: inicializa o budget com o valor recebido do chamador</span>
 <span class="dc">@app</span>.post(<span class="st">"/invoke"</span>)
-<span class="kw">async def</span> <span class="fn">invoke</span>(request: <span class="cls">Request</span>, body: <span class="cls">InvokeRequest</span>):
+<span class="kw">async def</span> <span class="fn">invoke</span>(request: <span class="tp">Request</span>, body: <span class="tp">InvokeRequest</span>):
     budget = float(request.headers.get(<span class="st">"X-Timeout-Budget"</span>, <span class="st">"10.0"</span>))
     init_budget(budget)  <span class="cm"># reseta o budget local para o valor herdado do chamador</span>
     bulkhead = bulkhead_registry.get(<span class="st">"search_agent"</span>)
     bulkhead.cfg.timeout = min(bulkhead.cfg.timeout, budget)
-    <span class="kw">return await</span> bulkhead.run(graph.ainvoke, body.input)</pre>
+    <span class="kw">return await</span> bulkhead.run(graph.ainvoke, body.input)</code></pre>
     </div>
-  </div>
+  </section>
 
   <!-- ─── BACKPRESSURE ─── -->
-  <div class="section" id="bp-fila">
-    <div class="section-eyebrow">Camada 5</div>
+  <section class="section" id="bp-fila">
+    <div class="section-label">Camada 5</div>
     <h2>Backpressure na Recovery Queue</h2>
 
     <p>Sem limite de tamanho, a fila de recovery é um vetor de degradação silenciosa. Imagine um evento de spot interruption que mata 10 ECS tasks simultaneamente — 10 threads são detectados como órfãos e enfileirados. O Recovery Consumer processa um por vez, cada um levando até 120s. A fila leva 20 minutos para esvaziar. Enquanto isso, novas falhas continuam enfileirando. O Redis vai crescendo indefinidamente.</p>
 
     <p>O backpressure resolve isso impondo um teto: quando a fila está cheia, novos itens vão direto para a DLQ em vez de esperar. Isso força uma decisão explícita — o operador precisa intervir, ver o que está na DLQ, entender por que o sistema está sob pressão, e agir. É melhor que a fila cresça sem limite e ninguém perceba até o Redis ficar sem memória.</p>
 
-    <div class="callout why">
-      <div class="callout-title">Por que Lua script e não LLEN + RPUSH em pipeline</div>
+    <div class="callout purple">
+      <div class="callout-label">Por que Lua script e não LLEN + RPUSH em pipeline</div>
       <p>A abordagem óbvia é fazer <code>LLEN</code> para verificar o tamanho e <code>RPUSH</code> para enfileirar. Isso parece correto, mas tem uma race condition: entre o <code>LLEN</code> e o <code>RPUSH</code>, outro processo pode inserir um item. Se dois OrphanScanners rodarem em paralelo — cenário comum com múltiplos ECS tasks — ambos podem verificar que a fila está em 99 itens, ambos inserem, e a fila vai a 101.</p>
       <p>O Lua script resolve isso porque o Redis executa Lua de forma <strong>atômica</strong>: nenhuma outra operação pode acontecer entre as instruções do script. É a única forma de garantir o teto sem locks externos. Pipelines Redis não são atômicos — apenas otimizam o round-trip enviando comandos em lote, mas cada comando ainda pode ser interleaved com comandos de outros clientes.</p>
     </div>
+  </section>
 
-    <h3 id="bp-lua">Implementação com Lua atômico</h3>
+  <section class="section" id="bp-lua">
+    <h3>Implementação com Lua atômico</h3>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">recovery_worker.py — QueueGuard</span></div>
-      <pre>QUEUE_MAX_SIZE       = int(os.getenv(<span class="st">"RECOVERY_QUEUE_MAX_SIZE"</span>, <span class="st">"100"</span>))
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">recovery_worker.py — QueueGuard</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code>QUEUE_MAX_SIZE       = int(os.getenv(<span class="st">"RECOVERY_QUEUE_MAX_SIZE"</span>, <span class="st">"100"</span>))
 QUEUE_WARN_THRESHOLD = float(os.getenv(<span class="st">"RECOVERY_QUEUE_WARN_THRESHOLD"</span>, <span class="st">"0.7"</span>))
 
 
-<span class="kw">class</span> <span class="cls">QueueGuard</span>:
+<span class="kw">class</span> <span class="tp">QueueGuard</span>:
     <span class="kw">def</span> <span class="fn">__init__</span>(self, redis, dlq):
         self.redis = redis
         self.dlq   = dlq
@@ -669,14 +694,36 @@ QUEUE_WARN_THRESHOLD = float(os.getenv(<span class="st">"RECOVERY_QUEUE_WARN_THR
         <span class="kw">if</span> current / QUEUE_MAX_SIZE >= QUEUE_WARN_THRESHOLD:
             logger.warning(<span class="st">"Fila em %.0f%% da capacidade (%d/%d)."</span>,
                            current / QUEUE_MAX_SIZE * <span class="nb">100</span>, current, QUEUE_MAX_SIZE)
-        <span class="kw">return True</span></pre>
+        <span class="kw">return True</span></code></pre>
     </div>
-  </div>
+  </section>
 
   <div class="doc-footer">
-    <span>DevDocs · Multi-Agent AWS</span>
-    <span>Resiliência · Jun 2026</span>
+    <a href="consistencia.html">← Consistência de Estado</a>
+    <span>Resiliência</span>
+    <a href="observabilidade.html">Próximo: Observabilidade →</a>
   </div>
-</main>
+
+</div>
+</div>
+
+<script>
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
 </body>
 </html>
