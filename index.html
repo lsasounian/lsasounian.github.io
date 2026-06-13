@@ -68,6 +68,42 @@
     .stat-num { font-size: 26px; font-weight: 700; color: var(--blue); font-family: var(--mono); }
     .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 
+    /* ── Hero provenance ── */
+    .hub-provenance {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 12px;
+      max-width: 580px;
+      line-height: 1.6;
+    }
+
+    /* ── Hub sections ── */
+    .hub-section { margin-bottom: 64px; }
+    .hub-section-head { margin-bottom: 28px; }
+    .hub-section-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .hub-section-title { font-size: 1.5rem; margin-bottom: 8px; }
+    .hub-section-desc { font-size: .92rem; color: var(--muted); max-width: 640px; line-height: 1.7; }
+    .hub-section-purple { --accent: var(--purple); --accent-dim: var(--purple-dim); }
+
+    /* ── Production trail ── */
+    .production-trail .flow-step {
+      text-decoration: none;
+      color: inherit;
+      border-radius: 8px;
+      transition: background .15s, padding-left .15s;
+    }
+    .production-trail .flow-step:hover { background: #ffffff05; padding-left: 8px; }
+    .production-trail .flow-title { color: #fff; }
+
     @media (max-width: 768px) {
       .top-bar { margin-bottom: 40px; }
       .hero-stats { gap: 20px; }
@@ -100,6 +136,9 @@
     <p class="hub-subtitle">
       Referências técnicas, guias e aprendizados das conversas do projeto — organizados, pesquisáveis e sempre atualizados.
     </p>
+    <p class="hub-provenance">
+      Estes documentos emergem de sessões de design e arquitetura — não são documentação retroativa, mas o registro vivo das decisões enquanto são tomadas.
+    </p>
 
     <div class="search-bar">
       <span class="search-icon">🔍</span>
@@ -109,11 +148,11 @@
 
     <div class="hero-stats">
       <div class="stat">
-        <div class="stat-num" id="docCount">12</div>
+        <div class="stat-num" id="docCount">20</div>
         <div class="stat-label">Documentos</div>
       </div>
       <div class="stat">
-        <div class="stat-num">7</div>
+        <div class="stat-num">8</div>
         <div class="stat-label">Categorias</div>
       </div>
       <div class="stat">
@@ -122,6 +161,13 @@
       </div>
     </div>
   </div>
+
+  <section class="hub-section">
+    <div class="hub-section-head">
+      <div class="hub-section-eyebrow">Referência</div>
+      <h2 class="hub-section-title">Protocolos &amp; Plataformas</h2>
+      <p class="hub-section-desc">Documentação independente de projeto — protocolos, runtimes e padrões de infraestrutura usados como referência geral, sem ordem de leitura.</p>
+    </div>
 
   <!-- TOOLS & ACTIONS -->
   <div class="section-label">Tools & Actions</div>
@@ -353,86 +399,143 @@
 
   </div>
 
-  <!-- RECENT -->
-  <div class="section-label">Adicionados recentemente</div>
+  </section>
+
+  <!-- MULTI-AGENT PRODUCTION SYSTEM -->
+  <section class="hub-section hub-section-purple">
+    <div class="hub-section-head">
+      <div class="hub-section-eyebrow">Trilha · 01 → 08</div>
+      <h2 class="hub-section-title">Multi-Agent Production System</h2>
+      <p class="hub-section-desc">Oito documentos com ordem e dependência explícitas — da infraestrutura base até a estratégia de deploy. Não são artigos soltos: cada um assume o anterior. Leia em sequência.</p>
+    </div>
+
+    <div class="production-trail">
+      <div class="flow">
+
+        <a href="docs/infraestrutura.html" class="flow-step" data-tags="ecs fargate redis iam terraform infraestrutura topologia">
+          <div class="flow-n">01</div>
+          <div class="flow-content">
+            <div class="flow-title">Infraestrutura</div>
+            <div class="flow-desc">Topologia ECS Fargate, Redis compartilhado, ECR, IAM e service discovery — a base sobre a qual o sistema roda.</div>
+          </div>
+        </a>
+
+        <a href="docs/lifecycle.html" class="flow-step" data-tags="langgraph heartbeat orphanscanner recovery dlq lifecycle">
+          <div class="flow-n">02</div>
+          <div class="flow-content">
+            <div class="flow-title">Lifecycle de Execução</div>
+            <div class="flow-desc">Heartbeat, OrphanScanner, RecoveryConsumer e Dead Letter Queue — do início ao recovery de cada execução.</div>
+          </div>
+        </a>
+
+        <a href="docs/consistencia.html" class="flow-step" data-tags="distributed lock idempotencia schema migration redis lua consistencia">
+          <div class="flow-n">03</div>
+          <div class="flow-content">
+            <div class="flow-title">Consistência de Estado</div>
+            <div class="flow-desc">Distributed lock, idempotência por chave e versionamento de schema do checkpoint.</div>
+          </div>
+        </a>
+
+        <a href="docs/resiliencia.html" class="flow-step" data-tags="circuit breaker bulkhead retry backoff timeout backpressure resiliencia">
+          <div class="flow-n">04</div>
+          <div class="flow-content">
+            <div class="flow-title">Resiliência</div>
+            <div class="flow-desc">Cinco camadas de proteção: circuit breaker, bulkhead, retry com backoff, cascading timeout e backpressure.</div>
+          </div>
+        </a>
+
+        <a href="docs/observabilidade.html" class="flow-step" data-tags="opentelemetry xray tracecontext otlp tracing observabilidade">
+          <div class="flow-n">05</div>
+          <div class="flow-content">
+            <div class="flow-title">Observabilidade Distribuída</div>
+            <div class="flow-desc">Tracing com OpenTelemetry e AWS X-Ray, propagado entre agentes via W3C TraceContext.</div>
+          </div>
+        </a>
+
+        <a href="docs/seguranca.html" class="flow-step" data-tags="jwt rs256 jwks token manager prompt injection seguranca">
+          <div class="flow-n">06</div>
+          <div class="flow-content">
+            <div class="flow-title">Segurança</div>
+            <div class="flow-desc">Autenticação M2M via JWT RS256 e defesa em camadas contra prompt injection.</div>
+          </div>
+        </a>
+
+        <a href="docs/testabilidade.html" class="flow-step" data-tags="pytest fakeredis memorysaver testes testabilidade">
+          <div class="flow-n">07</div>
+          <div class="flow-content">
+            <div class="flow-title">Testabilidade</div>
+            <div class="flow-desc">Pirâmide de testes para grafos LangGraph — unitários, integração e ponta a ponta.</div>
+          </div>
+        </a>
+
+        <a href="docs/operacao.html" class="flow-step" data-tags="blue green canary rolling codedeploy multi-cluster operacao deploy">
+          <div class="flow-n">08</div>
+          <div class="flow-content">
+            <div class="flow-title">Operação &amp; Deploy</div>
+            <div class="flow-desc">Blue/green, canary, rolling deploy e coordenação multi-cluster com versionamento de contrato.</div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- MAPA DO PROJETO -->
+  <div class="section-label">Mapa do Projeto</div>
   <div class="recent-list">
-    <a href="docs/container/containers-advanced.html" class="recent-item">
-      <div class="recent-dot" style="background:#22d3ee"></div>
-      <span class="recent-title">Containers Avançado — Internals, Build, Networking, ECS</span>
-      <span class="recent-category">Containers</span>
-      <span class="recent-date">Jun 2026</span>
-    </a>
-    <a href="docs/container/kubernetes-guide.html" class="recent-item">
-      <div class="recent-dot" style="background:#4f8ef7"></div>
-      <span class="recent-title">Kubernetes &amp; EKS — Do Zero ao Entendimento</span>
-      <span class="recent-category">Containers</span>
-      <span class="recent-date">Jun 2026</span>
-    </a>
-    <a href="docs/token-propagation-architecture.html" class="recent-item">
-      <div class="recent-dot" style="background:#ef4444"></div>
-      <span class="recent-title">Token Propagation Architecture</span>
-      <span class="recent-category">Gestão de Acessos</span>
-      <span class="recent-date">Jun 2026</span>
-    </a>
-    <a href="docs/llm-aws-guide.html" class="recent-item">
-      <div class="recent-dot" style="background:#f59e0b"></div>
-      <span class="recent-title">LLMs Open Source na AWS</span>
-      <span class="recent-category">LLM Self-Hosted</span>
-      <span class="recent-date">Jun 2026</span>
-    </a>
-    <a href="docs/04-memoria-redis-dynamo.html" class="recent-item">
-      <div class="recent-dot" style="background:#22d3ee"></div>
-      <span class="recent-title">Memória Redis &amp; DynamoDB</span>
-      <span class="recent-category">Memória</span>
-      <span class="recent-date">Jun 2026</span>
-    </a>
-    <a href="docs/langchain/index.html" class="recent-item">
+    <a href="docs/infraestrutura.html" class="recent-item">
       <div class="recent-dot" style="background:#8b5cf6"></div>
-      <span class="recent-title">Multi-Agent AI Systems — Visão geral da arquitetura</span>
-      <span class="recent-category">Multi-Agentes</span>
-      <span class="recent-date">Jun 2026</span>
+      <span class="recent-title">01 — Infraestrutura: Topologia do Sistema</span>
+      <span class="recent-category">Multi-Agent Production System</span>
+      <span class="pill green">✓ Completo</span>
     </a>
-    <a href="docs/langchain/03-arquitetura-tres-contas.html" class="recent-item">
-      <div class="recent-dot" style="background:#10b981"></div>
-      <span class="recent-title">03 — Arquitetura AWS Multi-Conta com MCP</span>
-      <span class="recent-category">Multi-Agentes</span>
-      <span class="recent-date">Jun 2026</span>
-    </a>
-    <a href="docs/langchain/02-memoria-distribuida.html" class="recent-item">
+    <a href="docs/lifecycle.html" class="recent-item">
       <div class="recent-dot" style="background:#8b5cf6"></div>
-      <span class="recent-title">02 — Camadas de Memória em Ambiente Distribuído</span>
-      <span class="recent-category">Multi-Agentes</span>
-      <span class="recent-date">Jun 2026</span>
+      <span class="recent-title">02 — Lifecycle de Execução</span>
+      <span class="recent-category">Multi-Agent Production System</span>
+      <span class="pill green">✓ Completo</span>
     </a>
-    <a href="docs/langchain/01-langchain-langgraph.html" class="recent-item">
-      <div class="recent-dot" style="background:#4f8ef7"></div>
-      <span class="recent-title">01 — LangChain vs LangGraph</span>
-      <span class="recent-category">Multi-Agentes</span>
-      <span class="recent-date">Jun 2026</span>
+    <a href="docs/consistencia.html" class="recent-item">
+      <div class="recent-dot" style="background:#8b5cf6"></div>
+      <span class="recent-title">03 — Consistência de Estado</span>
+      <span class="recent-category">Multi-Agent Production System</span>
+      <span class="pill green">✓ Completo</span>
     </a>
-    <a href="docs/a2a-aws-docs.html" class="recent-item">
-      <div class="recent-dot" style="background:#f59e0b"></div>
-      <span class="recent-title">A2A na AWS — SigV4 & Bearer JWT</span>
-      <span class="recent-category">A2A</span>
-      <span class="recent-date">Jun 2026</span>
+    <a href="docs/resiliencia.html" class="recent-item">
+      <div class="recent-dot" style="background:#8b5cf6"></div>
+      <span class="recent-title">04 — Resiliência: Cinco Camadas de Proteção</span>
+      <span class="recent-category">Multi-Agent Production System</span>
+      <span class="pill green">✓ Completo</span>
     </a>
-    <a href="docs/a2a-protocol.html" class="recent-item">
-      <div class="recent-dot" style="background:#4f8ef7"></div>
-      <span class="recent-title">A2A Protocol — Guia completo</span>
-      <span class="recent-category">A2A</span>
-      <span class="recent-date">Jun 2026</span>
+    <a href="docs/observabilidade.html" class="recent-item">
+      <div class="recent-dot" style="background:#8b5cf6"></div>
+      <span class="recent-title">05 — Observabilidade Distribuída</span>
+      <span class="recent-category">Multi-Agent Production System</span>
+      <span class="pill green">✓ Completo</span>
     </a>
-    <a href="docs/mcp-fastmcp-guide.html" class="recent-item">
-      <div class="recent-dot" style="background:#10b981"></div>
-      <span class="recent-title">MCP & FastMCP — Guia completo</span>
-      <span class="recent-category">Tools & Actions</span>
-      <span class="recent-date">Jun 2026</span>
+    <a href="docs/seguranca.html" class="recent-item">
+      <div class="recent-dot" style="background:#8b5cf6"></div>
+      <span class="recent-title">06 — Segurança: M2M Auth &amp; Prompt Injection</span>
+      <span class="recent-category">Multi-Agent Production System</span>
+      <span class="pill green">✓ Completo</span>
+    </a>
+    <a href="docs/testabilidade.html" class="recent-item">
+      <div class="recent-dot" style="background:#8b5cf6"></div>
+      <span class="recent-title">07 — Testabilidade: Pirâmide para LangGraph</span>
+      <span class="recent-category">Multi-Agent Production System</span>
+      <span class="pill green">✓ Completo</span>
+    </a>
+    <a href="docs/operacao.html" class="recent-item">
+      <div class="recent-dot" style="background:#8b5cf6"></div>
+      <span class="recent-title">08 — Operação &amp; Deploy: Estratégias para ECS</span>
+      <span class="recent-category">Multi-Agent Production System</span>
+      <span class="pill green">✓ Completo</span>
     </a>
   </div>
 
   <footer class="hub-footer">
     <span>DevDocs · Gerado a partir das conversas do projeto</span>
-    <span>Última atualização: Jun 12, 2026</span>
+    <span>Última atualização: Jun 13, 2026</span>
   </footer>
 
 </div>
@@ -440,7 +543,7 @@
 <script>
   // Search filter
   const searchInput = document.getElementById('searchInput');
-  const cards = document.querySelectorAll('.topic-card');
+  const cards = document.querySelectorAll('.topic-card, .production-trail .flow-step');
 
   searchInput.addEventListener('input', () => {
     const q = searchInput.value.toLowerCase();
