@@ -1,96 +1,73 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Testabilidade — Multi-Agent AWS</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
-  :root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--accent:#d29922;--accent2:#f0c060;--text:#c9d1d9;--muted:#6e7681;--green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--sidebar-w:240px;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;}
-  nav{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;overflow-y:auto;flex-shrink:0;}
-  .nav-back{display:block;padding:8px 20px 20px;color:var(--muted);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
-  .nav-back:hover{color:var(--text);}
-  .nav-group{margin-bottom:20px;padding:0 20px;}
-  .nav-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  .nav-group a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 0;}
-  .nav-group a:hover{color:var(--text);}
-  main{margin-left:var(--sidebar-w);max-width:860px;padding:64px 56px;width:100%;}
-  .doc-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-  .doc-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);}
-  h1{font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:#e6edf3;margin-bottom:12px;}
-  .doc-subtitle{font-size:17px;color:var(--muted);font-weight:300;max-width:600px;margin-bottom:40px;line-height:1.6;}
-  .doc-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
-  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
-  .section{margin-bottom:72px;}
-  .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  h2{font-size:24px;font-weight:600;color:#e6edf3;margin-bottom:16px;letter-spacing:-.01em;}
-  h3{font-size:18px;font-weight:600;color:#e6edf3;margin-bottom:12px;margin-top:36px;}
-  p{color:var(--text);margin-bottom:16px;max-width:700px;line-height:1.75;}
-  .code-block{margin-bottom:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
-  .code-header{background:#1c2128;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
-  .code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;}
-  .code-filename{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);}
-  pre{background:#161b22;padding:24px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;margin:0;}
-  .cm{color:#6e7681;font-style:italic;}.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.cls{color:#ffa657;}.st{color:#a5d6ff;}.nb{color:#79c0ff;}.dc{color:#3fb950;}
-  .callout{border-left:3px solid var(--border);padding:16px 20px;margin-bottom:24px;border-radius:0 6px 6px 0;background:var(--surface);font-size:14px;line-height:1.65;}
-  .callout.why{border-left-color:var(--accent);}.callout.warn{border-left-color:var(--yellow);}.callout.tip{border-left-color:var(--green);}
-  .callout-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
-  .callout.why .callout-title{color:var(--accent);}.callout.warn .callout-title{color:var(--yellow);}.callout.tip .callout-title{color:var(--green);}
-  .callout p{color:var(--muted);margin:0;max-width:none;font-size:14px;}.callout strong{color:var(--text);}
-  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin-bottom:24px;color:var(--text);overflow-x:auto;}
-  .diagram .d-green{color:var(--green);}.diagram .d-red{color:var(--red);}.diagram .d-yellow{color:var(--yellow);}.diagram .d-muted{color:var(--muted);}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;font-family:'IBM Plex Mono',monospace;}
-  th{text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
-  td{padding:10px 14px;border:1px solid var(--border);vertical-align:top;line-height:1.5;}
-  tr:hover td{background:#1c2128;}
-  code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;color:var(--accent2);}
-  .doc-footer{margin-top:80px;padding-top:32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
+:root { --accent: var(--purple); --accent-dim: var(--purple-dim); }
+
+.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.callout.purple .callout-label { color: var(--purple); }
+.callout.green .callout-label  { color: var(--green); }
+.callout.warn .callout-label   { color: var(--amber); }
+.callout.danger .callout-label { color: var(--red); }
+
+.code-filename { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
-<nav>
-  <a href="https://lsasounian.github.io/index.html" class="nav-back">← DevDocs</a>
-  <div class="nav-group">
-    <div class="nav-group-title">Estratégia</div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<aside class="sidebar">
+  <a href="../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">07</span>
+    <span class="doc-title">Testabilidade</span>
+  </a>
+  <nav>
+    <div class="nav-section">Estratégia</div>
     <a href="#piramide">Pirâmide de testes</a>
     <a href="#catalogo">Catálogo completo</a>
     <a href="#setup">Setup e CI</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Unitários</div>
+
+    <div class="nav-section">Unitários</div>
     <a href="#unit-nos">Nós LangGraph</a>
     <a href="#unit-cb">Circuit Breaker</a>
     <a href="#unit-retry">Retry e backoff</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Integração</div>
+
+    <div class="nav-section">Integração</div>
     <a href="#int-checkpoint">Checkpoint e retomada</a>
     <a href="#int-idempotencia">Idempotência</a>
     <a href="#int-recovery">Recovery Worker</a>
     <a href="#int-jwt">JWT e scopes</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">E2E</div>
-    <a href="#e2e">Testes E2E</a>
-  </div>
-</nav>
-<main>
-  <div class="doc-eyebrow">Multi-Agent AWS · Produção</div>
-  <h1>Testabilidade</h1>
-  <p class="doc-subtitle">Três camadas cobrindo nós isolados, checkpoint e recovery com fakeredis, e o sistema completo em E2E. Convenções e estrutura para sistemas LangGraph em produção.</p>
-  <div class="doc-tags">
-    <span class="tag">pytest-asyncio</span><span class="tag">fakeredis</span><span class="tag">MemorySaver</span>
-    <span class="tag">interrupt_before</span><span class="tag">AsyncMock</span><span class="tag">GitHub Actions</span>
-  </div>
 
-  <div class="section" id="piramide">
-    <div class="section-eyebrow">Estratégia</div>
-    <h2>Pirâmide de testes para LangGraph</h2>
-    <p>A camada de integração é maior do que o normal porque o comportamento crítico — retomada de checkpoint, idempotência, DLQ — só pode ser testado com armazenamento real (fakeredis). Mock do grafo inteiro perde o que importa: a mecânica de <code>state.next</code> e <code>ainvoke(None)</code>.</p>
-    <div class="diagram">
-                    ┌───────────────┐
+    <div class="nav-section">E2E</div>
+    <a href="#e2e">Testes E2E</a>
+  </nav>
+</aside>
+
+<div class="main">
+  <div class="wrapper">
+
+    <div class="doc-header">
+      <div class="doc-num">Multi-Agent Production System · Testabilidade</div>
+      <h1><em>Testabilidade</em><br>Pirâmide para LangGraph</h1>
+      <p class="doc-lead">Três camadas cobrindo nós isolados, checkpoint e recovery com fakeredis, e o sistema completo em E2E. Convenções e estrutura para sistemas LangGraph em produção.</p>
+      <div class="tags">
+        <span class="tag">pytest-asyncio</span><span class="tag">fakeredis</span><span class="tag">MemorySaver</span>
+        <span class="tag">interrupt_before</span><span class="tag">AsyncMock</span><span class="tag">GitHub Actions</span>
+      </div>
+    </div>
+
+    <section class="section" id="piramide">
+      <div class="section-label">Estratégia</div>
+      <h2>Pirâmide de testes para LangGraph</h2>
+      <p>A camada de integração é maior do que o normal porque o comportamento crítico — retomada de checkpoint, idempotência, DLQ — só pode ser testado com armazenamento real (fakeredis). Mock do grafo inteiro perde o que importa: a mecânica de <code>state.next</code> e <code>ainvoke(None)</code>.</p>
+      <div class="diagram">
+        <pre>                    ┌───────────────┐
                     │      E2E      │  docker-compose · Redis real
                     │  (pré-deploy) │  grafo completo end-to-end
                     └──────┬────────┘
@@ -102,63 +79,77 @@
           ┌─────────────────┴──────────────────────┐
           │               Unitários                 │  sem dependências externas
           │  nós · CB · retry · JWT · sanitização  │  roda em milissegundos
-          └────────────────────────────────────────┘
-    </div>
-    <div class="callout why">
-      <div class="callout-title">Por que a camada de integração é crítica em LangGraph</div>
-      <p>O comportamento de checkpoint não pode ser testado unitariamente. Precisa de um checkpointer real (MemorySaver ou RedisSaver via fakeredis). <strong>Mock do grafo inteiro perde a mecânica de state.next, ainvoke(None), e serialização/desserialização do estado</strong> — exatamente o que importa testar.</p>
-    </div>
-  </div>
+          └────────────────────────────────────────┘</pre>
+      </div>
+      <div class="callout purple">
+        <div class="callout-label">Por que a camada de integração é crítica em LangGraph</div>
+        <p>O comportamento de checkpoint não pode ser testado unitariamente. Precisa de um checkpointer real (MemorySaver ou RedisSaver via fakeredis). <strong>Mock do grafo inteiro perde a mecânica de state.next, ainvoke(None), e serialização/desserialização do estado</strong> — exatamente o que importa testar.</p>
+      </div>
+    </section>
 
-  <div class="section" id="catalogo">
-    <div class="section-eyebrow">Referência</div>
-    <h2>Catálogo completo</h2>
-    <table>
-      <thead><tr><th>Teste</th><th>Camada</th><th>Dependência</th></tr></thead>
-      <tbody>
-        <tr><td>Nó executa ação externa corretamente</td><td>Unit</td><td>AsyncMock</td></tr>
-        <tr><td>Nó falha com API down → estado de erro</td><td>Unit</td><td>side_effect=Exception</td></tr>
-        <tr><td>CB abre após failure_threshold</td><td>Unit</td><td>—</td></tr>
-        <tr><td>CB short-circuits quando OPEN</td><td>Unit</td><td>—</td></tr>
-        <tr><td>CB fecha após success_threshold (HALF_OPEN)</td><td>Unit</td><td>—</td></tr>
-        <tr><td>Retry para em non_retryable</td><td>Unit</td><td>—</td></tr>
-        <tr><td>Retry não retenta CircuitOpenError</td><td>Unit</td><td>CB fixture</td></tr>
-        <tr><td>Backoff cresce exponencialmente</td><td>Unit</td><td>—</td></tr>
-        <tr><td>Sanitização detecta padrões de injection</td><td>Unit</td><td>—</td></tr>
-        <tr><td>Migration chain v1→v4 preserva campos</td><td>Unit</td><td>—</td></tr>
-        <tr><td>Checkpoint salva estado intermediário</td><td>Integração</td><td>MemorySaver</td></tr>
-        <tr><td>Grafo retoma com interrupt_before</td><td>Integração</td><td>MemorySaver</td></tr>
-        <tr><td>ainvoke(None) continua de state.next</td><td>Integração</td><td>MemorySaver</td></tr>
-        <tr><td>Nó idempotente não duplica em retry</td><td>Integração</td><td>fakeredis</td></tr>
-        <tr><td>Scanner detecta órfão sem heartbeat</td><td>Integração</td><td>fakeredis</td></tr>
-        <tr><td>Scanner ignora thread com heartbeat ativo</td><td>Integração</td><td>fakeredis</td></tr>
-        <tr><td>DLQ após max_attempts</td><td>Integração</td><td>fakeredis</td></tr>
-        <tr><td>Backpressure rejeita fila cheia</td><td>Integração</td><td>fakeredis</td></tr>
-        <tr><td>Consumer limpa attempts em sucesso</td><td>Integração</td><td>fakeredis + MagicMock</td></tr>
-        <tr><td>JWT válido retorna claims corretos</td><td>Integração</td><td>cryptography</td></tr>
-        <tr><td>Token expirado → 401</td><td>Integração</td><td>cryptography</td></tr>
-        <tr><td>Scope insuficiente → 403</td><td>Integração</td><td>cryptography</td></tr>
-        <tr><td>Audience errado → 401</td><td>Integração</td><td>cryptography</td></tr>
-      </tbody>
-    </table>
-  </div>
+    <section class="section" id="catalogo">
+      <div class="section-label">Referência</div>
+      <h2>Catálogo completo</h2>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Teste</th><th>Camada</th><th>Dependência</th></tr></thead>
+        <tbody>
+          <tr><td>Nó executa ação externa corretamente</td><td>Unit</td><td>AsyncMock</td></tr>
+          <tr><td>Nó falha com API down → estado de erro</td><td>Unit</td><td>side_effect=Exception</td></tr>
+          <tr><td>CB abre após failure_threshold</td><td>Unit</td><td>—</td></tr>
+          <tr><td>CB short-circuits quando OPEN</td><td>Unit</td><td>—</td></tr>
+          <tr><td>CB fecha após success_threshold (HALF_OPEN)</td><td>Unit</td><td>—</td></tr>
+          <tr><td>Retry para em non_retryable</td><td>Unit</td><td>—</td></tr>
+          <tr><td>Retry não retenta CircuitOpenError</td><td>Unit</td><td>CB fixture</td></tr>
+          <tr><td>Backoff cresce exponencialmente</td><td>Unit</td><td>—</td></tr>
+          <tr><td>Sanitização detecta padrões de injection</td><td>Unit</td><td>—</td></tr>
+          <tr><td>Migration chain v1→v4 preserva campos</td><td>Unit</td><td>—</td></tr>
+          <tr><td>Checkpoint salva estado intermediário</td><td>Integração</td><td>MemorySaver</td></tr>
+          <tr><td>Grafo retoma com interrupt_before</td><td>Integração</td><td>MemorySaver</td></tr>
+          <tr><td>ainvoke(None) continua de state.next</td><td>Integração</td><td>MemorySaver</td></tr>
+          <tr><td>Nó idempotente não duplica em retry</td><td>Integração</td><td>fakeredis</td></tr>
+          <tr><td>Scanner detecta órfão sem heartbeat</td><td>Integração</td><td>fakeredis</td></tr>
+          <tr><td>Scanner ignora thread com heartbeat ativo</td><td>Integração</td><td>fakeredis</td></tr>
+          <tr><td>DLQ após max_attempts</td><td>Integração</td><td>fakeredis</td></tr>
+          <tr><td>Backpressure rejeita fila cheia</td><td>Integração</td><td>fakeredis</td></tr>
+          <tr><td>Consumer limpa attempts em sucesso</td><td>Integração</td><td>fakeredis + MagicMock</td></tr>
+          <tr><td>JWT válido retorna claims corretos</td><td>Integração</td><td>cryptography</td></tr>
+          <tr><td>Token expirado → 401</td><td>Integração</td><td>cryptography</td></tr>
+          <tr><td>Scope insuficiente → 403</td><td>Integração</td><td>cryptography</td></tr>
+          <tr><td>Audience errado → 401</td><td>Integração</td><td>cryptography</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
 
-  <div class="section" id="setup">
-    <h3>Setup — pyproject.toml e CI</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">toml</span><span class="code-filename">pyproject.toml</span></div>
-      <pre>[tool.pytest.ini_options]
+    <section class="section" id="setup">
+      <h3>Setup — pyproject.toml e CI</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">pyproject.toml</span>
+            <span class="code-lang">toml</span>
+          </div>
+        </div>
+        <pre><code>[tool.pytest.ini_options]
 asyncio_mode = <span class="st">"auto"</span>
 testpaths    = [<span class="st">"tests"</span>]
 
 [tool.pytest.ini_options.markers]
 unit        = <span class="st">"sem dependências externas — roda em ms"</span>
 integration = <span class="st">"com fakeredis ou MemorySaver"</span>
-e2e         = <span class="st">"Redis real via docker-compose — pré-deploy"</span></pre>
-    </div>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">yaml</span><span class="code-filename">.github/workflows/test.yml</span></div>
-      <pre>- name: Unit tests
+e2e         = <span class="st">"Redis real via docker-compose — pré-deploy"</span></code></pre>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">.github/workflows/test.yml</span>
+            <span class="code-lang">yaml</span>
+          </div>
+        </div>
+        <pre><code>- name: Unit tests
   run: pytest tests/unit -m unit
 
 - name: Integration tests
@@ -169,17 +160,23 @@ e2e         = <span class="st">"Redis real via docker-compose — pré-deploy"</
   if: github.ref == 'refs/heads/main'
   run: |
     docker-compose up -d redis
-    pytest tests/e2e -m e2e</pre>
-    </div>
-  </div>
+    pytest tests/e2e -m e2e</code></pre>
+      </div>
+    </section>
 
-  <div class="section" id="unit-nos">
-    <div class="section-eyebrow">Unitários</div>
-    <h2>Testes de nós LangGraph</h2>
-    <p>Nós são funções async — testam-se diretamente sem instanciar o grafo. A factory <code>make_state()</code> evita repetição e torna os testes legíveis.</p>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/unit/test_nodes.py</span></div>
-      <pre><span class="kw">import</span> pytest
+    <section class="section" id="unit-nos">
+      <div class="section-label">Unitários</div>
+      <h2>Testes de nós LangGraph</h2>
+      <p>Nós são funções async — testam-se diretamente sem instanciar o grafo. A factory <code>make_state()</code> evita repetição e torna os testes legíveis.</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">tests/unit/test_nodes.py</span>
+            <span class="code-lang">python</span>
+          </div>
+        </div>
+        <pre><code><span class="kw">import</span> pytest
 <span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, patch
 <span class="kw">from</span> nodes <span class="kw">import</span> book_hotel_node, process_hotels_node
 
@@ -236,15 +233,21 @@ e2e         = <span class="st">"Redis real via docker-compose — pré-deploy"</
         result = <span class="kw">await</span> process_hotels_node(state, make_config())
 
     <span class="kw">assert</span> result.get(<span class="st">"blocked"</span>) <span class="kw">is True</span>
-    <span class="kw">assert</span> <span class="st">"error"</span> <span class="kw">in</span> result</pre>
-    </div>
-  </div>
+    <span class="kw">assert</span> <span class="st">"error"</span> <span class="kw">in</span> result</code></pre>
+      </div>
+    </section>
 
-  <div class="section" id="unit-cb">
-    <h3>Circuit Breaker — transições de estado</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/unit/test_circuit_breaker.py</span></div>
-      <pre><span class="kw">import</span> pytest, asyncio
+    <section class="section" id="unit-cb">
+      <h3>Circuit Breaker — transições de estado</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">tests/unit/test_circuit_breaker.py</span>
+            <span class="code-lang">python</span>
+          </div>
+        </div>
+        <pre><code><span class="kw">import</span> pytest, asyncio
 <span class="kw">from</span> circuit_breaker <span class="kw">import</span> CircuitBreaker, CircuitBreakerConfig, CircuitOpenError
 <span class="kw">from</span> retry <span class="kw">import</span> with_retry, RetryConfig
 <span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock
@@ -306,15 +309,21 @@ e2e         = <span class="st">"Redis real via docker-compose — pré-deploy"</
     <span class="kw">with</span> pytest.raises(CircuitOpenError):
         <span class="kw">await</span> with_retry(ok, config=cfg, circuit_breaker=cb, service_name=<span class="st">"t"</span>)
 
-    <span class="kw">assert</span> ok.call_count == <span class="nb">0</span>  <span class="cm"># nem tentou — CB bloqueou antes</span></pre>
-    </div>
-  </div>
+    <span class="kw">assert</span> ok.call_count == <span class="nb">0</span>  <span class="cm"># nem tentou — CB bloqueou antes</span></code></pre>
+      </div>
+    </section>
 
-  <div class="section" id="unit-retry">
-    <h3>Retry e backoff</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/unit/test_retry.py</span></div>
-      <pre><span class="kw">import</span> pytest
+    <section class="section" id="unit-retry">
+      <h3>Retry e backoff</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">tests/unit/test_retry.py</span>
+            <span class="code-lang">python</span>
+          </div>
+        </div>
+        <pre><code><span class="kw">import</span> pytest
 <span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock
 <span class="kw">from</span> retry <span class="kw">import</span> with_retry, RetryConfig, _calculate_delay
 
@@ -353,17 +362,23 @@ e2e         = <span class="st">"Redis real via docker-compose — pré-deploy"</
     <span class="kw">assert</span> _calculate_delay(<span class="nb">0</span>, cfg) == <span class="nb">1.0</span>   <span class="cm"># 1 * 2^0</span>
     <span class="kw">assert</span> _calculate_delay(<span class="nb">1</span>, cfg) == <span class="nb">2.0</span>   <span class="cm"># 1 * 2^1</span>
     <span class="kw">assert</span> _calculate_delay(<span class="nb">2</span>, cfg) == <span class="nb">4.0</span>   <span class="cm"># 1 * 2^2</span>
-    <span class="kw">assert</span> _calculate_delay(<span class="nb">5</span>, cfg) == <span class="nb">30.0</span>  <span class="cm"># teto: max_delay</span></pre>
-    </div>
-  </div>
+    <span class="kw">assert</span> _calculate_delay(<span class="nb">5</span>, cfg) == <span class="nb">30.0</span>  <span class="cm"># teto: max_delay</span></code></pre>
+      </div>
+    </section>
 
-  <div class="section" id="int-checkpoint">
-    <div class="section-eyebrow">Integração</div>
-    <h2>Checkpoint e retomada com MemorySaver</h2>
-    <p>O <code>MemorySaver</code> é o checkpointer de testes — comportamento idêntico ao RedisSaver para fins de teste, sem precisar de Redis real. O <code>interrupt_before</code> permite simular uma parada no meio do grafo exatamente como o ECS task morreria.</p>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/integration/test_checkpoint.py</span></div>
-      <pre><span class="kw">import</span> pytest, asyncio
+    <section class="section" id="int-checkpoint">
+      <div class="section-label">Integração</div>
+      <h2>Checkpoint e retomada com MemorySaver</h2>
+      <p>O <code>MemorySaver</code> é o checkpointer de testes — comportamento idêntico ao RedisSaver para fins de teste, sem precisar de Redis real. O <code>interrupt_before</code> permite simular uma parada no meio do grafo exatamente como o ECS task morreria.</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">tests/integration/test_checkpoint.py</span>
+            <span class="code-lang">python</span>
+          </div>
+        </div>
+        <pre><code><span class="kw">import</span> pytest, asyncio
 <span class="kw">from</span> langgraph.checkpoint.memory <span class="kw">import</span> MemorySaver
 <span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, END
 
@@ -436,15 +451,21 @@ execution_log: list[str] = []
 
     <span class="kw">assert</span> <span class="st">"node_c"</span> <span class="kw">in</span> execution_log
     state_final = <span class="kw">await</span> graph.aget_state(config)
-    <span class="kw">assert not</span> state_final.next  <span class="cm"># estado terminal</span></pre>
-    </div>
-  </div>
+    <span class="kw">assert not</span> state_final.next  <span class="cm"># estado terminal</span></code></pre>
+      </div>
+    </section>
 
-  <div class="section" id="int-idempotencia">
-    <h3>Idempotência em retry</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/integration/test_idempotency.py</span></div>
-      <pre><span class="kw">import</span> pytest
+    <section class="section" id="int-idempotencia">
+      <h3>Idempotência em retry</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">tests/integration/test_idempotency.py</span>
+            <span class="code-lang">python</span>
+          </div>
+        </div>
+        <pre><code><span class="kw">import</span> pytest
 <span class="kw">import</span> fakeredis.aioredis <span class="kw">as</span> fakeredis
 <span class="kw">from</span> idempotency <span class="kw">import</span> idempotent_node
 
@@ -486,15 +507,21 @@ execution_log: list[str] = []
     <span class="kw">await</span> charge({<span class="st">"booking_id"</span>: <span class="st">"b-1"</span>}, config=config)
     <span class="kw">await</span> charge({<span class="st">"booking_id"</span>: <span class="st">"b-2"</span>}, config=config)
 
-    <span class="kw">assert</span> calls == [<span class="st">"b-1"</span>, <span class="st">"b-2"</span>]  <span class="cm"># ambos executaram — inputs diferentes</span></pre>
-    </div>
-  </div>
+    <span class="kw">assert</span> calls == [<span class="st">"b-1"</span>, <span class="st">"b-2"</span>]  <span class="cm"># ambos executaram — inputs diferentes</span></code></pre>
+      </div>
+    </section>
 
-  <div class="section" id="int-recovery">
-    <h3>Recovery Worker com fakeredis</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/integration/test_recovery.py</span></div>
-      <pre><span class="kw">import</span> pytest
+    <section class="section" id="int-recovery">
+      <h3>Recovery Worker com fakeredis</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">tests/integration/test_recovery.py</span>
+            <span class="code-lang">python</span>
+          </div>
+        </div>
+        <pre><code><span class="kw">import</span> pytest
 <span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock
 <span class="kw">import</span> fakeredis.aioredis <span class="kw">as</span> fakeredis
 <span class="kw">from</span> recovery_worker <span class="kw">import</span> OrphanScanner, RecoveryConsumer, DLQManager, QueueGuard
@@ -551,15 +578,21 @@ execution_log: list[str] = []
     <span class="kw">assert await</span> dlq.get_attempts(<span class="st">"t-004"</span>) == <span class="nb">0</span>  <span class="cm"># contador limpo</span>
     mock_graph.ainvoke.assert_called_once_with(
         <span class="kw">None</span>, config={<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"t-004"</span>}}
-    )</pre>
-    </div>
-  </div>
+    )</code></pre>
+      </div>
+    </section>
 
-  <div class="section" id="int-jwt">
-    <h3>JWT — expiração, scope, audience</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/integration/test_jwt.py</span></div>
-      <pre><span class="kw">import</span> pytest, time, jwt
+    <section class="section" id="int-jwt">
+      <h3>JWT — expiração, scope, audience</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">tests/integration/test_jwt.py</span>
+            <span class="code-lang">python</span>
+          </div>
+        </div>
+        <pre><code><span class="kw">import</span> pytest, time, jwt
 <span class="kw">from</span> cryptography.hazmat.primitives.asymmetric <span class="kw">import</span> rsa
 <span class="kw">from</span> cryptography.hazmat.primitives <span class="kw">import</span> serialization
 <span class="kw">from</span> unittest.mock <span class="kw">import</span> patch
@@ -609,21 +642,27 @@ PUB   = _priv.public_key().public_bytes(
     <span class="kw">with</span> patch(<span class="st">"jwt_validator._get_public_key"</span>, return_value=PUB):
         <span class="kw">with</span> pytest.raises(HTTPException) <span class="kw">as</span> exc:
             validate_token(make_token(aud=<span class="st">"outro-sistema"</span>))
-    <span class="kw">assert</span> exc.value.status_code == <span class="nb">401</span></pre>
-    </div>
-  </div>
+    <span class="kw">assert</span> exc.value.status_code == <span class="nb">401</span></code></pre>
+      </div>
+    </section>
 
-  <div class="section" id="e2e">
-    <div class="section-eyebrow">E2E</div>
-    <h2>Testes E2E — Redis real</h2>
-    <p>Os testes E2E rodam contra um Redis real via docker-compose. São reservados para o pipeline de merge na main — não bloqueiam PRs. O objetivo é validar o sistema completo: grafo → checkpoint → recovery, com o RedisSaver real.</p>
-    <div class="callout warn">
-      <div class="callout-title">O que os E2E cobrem que os de integração não cobrem</div>
-      <p>O <strong>MemorySaver</strong> tem comportamento idêntico ao RedisSaver para fins de teste, mas não testa a serialização real do Redis, o TTL das chaves, ou a compatibilidade com versões específicas do Redis. Os E2E cobrem esses casos — especialmente importante ao atualizar a versão do RedisSaver ou do ElastiCache.</p>
-    </div>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">yaml</span><span class="code-filename">docker-compose.test.yml</span></div>
-      <pre>services:
+    <section class="section" id="e2e">
+      <div class="section-label">E2E</div>
+      <h2>Testes E2E — Redis real</h2>
+      <p>Os testes E2E rodam contra um Redis real via docker-compose. São reservados para o pipeline de merge na main — não bloqueiam PRs. O objetivo é validar o sistema completo: grafo → checkpoint → recovery, com o RedisSaver real.</p>
+      <div class="callout warn">
+        <div class="callout-label">O que os E2E cobrem que os de integração não cobrem</div>
+        <p>O <strong>MemorySaver</strong> tem comportamento idêntico ao RedisSaver para fins de teste, mas não testa a serialização real do Redis, o TTL das chaves, ou a compatibilidade com versões específicas do Redis. Os E2E cobrem esses casos — especialmente importante ao atualizar a versão do RedisSaver ou do ElastiCache.</p>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">docker-compose.test.yml</span>
+            <span class="code-lang">yaml</span>
+          </div>
+        </div>
+        <pre><code>services:
   redis:
     image: redis:7-alpine
     ports:
@@ -632,11 +671,17 @@ PUB   = _priv.public_key().public_bytes(
       test: ["CMD", "redis-cli", "ping"]
       interval: 1s
       timeout: 3s
-      retries: 10</pre>
-    </div>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/e2e/test_full_recovery.py</span></div>
-      <pre><span class="kw">import</span> pytest, asyncio
+      retries: 10</code></pre>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-filename">tests/e2e/test_full_recovery.py</span>
+            <span class="code-lang">python</span>
+          </div>
+        </div>
+        <pre><code><span class="kw">import</span> pytest, asyncio
 <span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
 <span class="kw">from</span> langgraph.checkpoint.redis <span class="kw">import</span> RedisSaver
 <span class="kw">from</span> your_project.graph <span class="kw">import</span> build_graph
@@ -675,14 +720,36 @@ REDIS_URL = <span class="st">"redis://localhost:6379"</span>
 
     <span class="cm"># Checkpoint deve estar no Redis (não apenas na memória)</span>
     key_exists = <span class="kw">await</span> redis_client.exists(<span class="st">f"checkpoint:e2e-t-001"</span>)
-    <span class="kw">assert</span> key_exists</pre>
-    </div>
-  </div>
+    <span class="kw">assert</span> key_exists</code></pre>
+      </div>
+    </section>
 
-  <div class="doc-footer">
-    <span>DevDocs · Multi-Agent AWS</span>
-    <span>Testabilidade · Jun 2026</span>
+    <div class="doc-footer">
+      <a href="seguranca.html">← Segurança</a>
+      <span>Testabilidade</span>
+      <a href="operacao.html">Próximo: Operação e Deploy →</a>
+    </div>
+
   </div>
-</main>
+</div>
+
+<script>
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
 </body>
 </html>

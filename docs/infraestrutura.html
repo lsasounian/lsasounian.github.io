@@ -4,107 +4,81 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Infraestrutura — Multi-Agent AWS</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
-  :root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--accent:#e07840;--accent2:#f0a060;--text:#c9d1d9;--muted:#6e7681;--green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--purple:#a06af0;--sidebar-w:240px;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;}
-  nav{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;overflow-y:auto;flex-shrink:0;}
-  .nav-back{display:block;padding:8px 20px 20px;color:var(--muted);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
-  .nav-back:hover{color:var(--text);}
-  .nav-group{margin-bottom:20px;padding:0 20px;}
-  .nav-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  .nav-group a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 0;}
-  .nav-group a:hover{color:var(--text);}
-  main{margin-left:var(--sidebar-w);max-width:860px;padding:64px 56px;width:100%;}
-  .doc-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-  .doc-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);}
-  h1{font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:#e6edf3;margin-bottom:12px;}
-  .doc-subtitle{font-size:17px;color:var(--muted);font-weight:300;max-width:600px;margin-bottom:40px;line-height:1.6;}
-  .doc-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
-  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
-  .section{margin-bottom:72px;}
-  .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  h2{font-size:24px;font-weight:600;color:#e6edf3;margin-bottom:16px;letter-spacing:-.01em;}
-  h3{font-size:18px;font-weight:600;color:#e6edf3;margin-bottom:12px;margin-top:36px;}
-  p{color:var(--text);margin-bottom:16px;max-width:700px;line-height:1.75;}
-  .code-block{margin-bottom:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
-  .code-header{background:#1c2128;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
-  .code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;}
-  .code-filename{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);}
-  pre{background:#161b22;padding:24px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;margin:0;}
-  .cm{color:#6e7681;font-style:italic;}.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.cls{color:#ffa657;}.st{color:#a5d6ff;}.nb{color:#79c0ff;}.dc{color:#3fb950;}
-  .callout{border-left:3px solid var(--border);padding:16px 20px;margin-bottom:24px;border-radius:0 6px 6px 0;background:var(--surface);font-size:14px;line-height:1.65;}
-  .callout.why{border-left-color:var(--accent);}.callout.warn{border-left-color:var(--yellow);}.callout.tip{border-left-color:var(--green);}.callout.danger{border-left-color:var(--red);}
-  .callout-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
-  .callout.why .callout-title{color:var(--accent);}.callout.warn .callout-title{color:var(--yellow);}.callout.tip .callout-title{color:var(--green);}.callout.danger .callout-title{color:var(--red);}
-  .callout p{color:var(--muted);margin:0;max-width:none;font-size:14px;}.callout strong{color:var(--text);}
-  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin-bottom:24px;color:var(--text);overflow-x:auto;}
-  .diagram .d-green{color:var(--green);}.diagram .d-red{color:var(--red);}.diagram .d-yellow{color:var(--yellow);}.diagram .d-blue{color:var(--blue);}.diagram .d-muted{color:var(--muted);}.diagram .d-orange{color:var(--accent);}.diagram .d-purple{color:var(--purple);}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;font-family:'IBM Plex Mono',monospace;}
-  th{text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
-  td{padding:10px 14px;border:1px solid var(--border);vertical-align:top;line-height:1.5;}
-  tr:hover td{background:#1c2128;}
-  code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;color:var(--accent2);}
-  .doc-footer{margin-top:80px;padding-top:32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
+:root { --accent: var(--purple); --accent-dim: var(--purple-dim); }
+
+.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.callout.purple .callout-label { color: var(--purple); }
+.callout.green .callout-label  { color: var(--green); }
+.callout.warn .callout-label   { color: var(--amber); }
+.callout.danger .callout-label { color: var(--red); }
+
+.code-filename { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
-<nav>
-  <a href="https://lsasounian.github.io/index.html" class="nav-back">← DevDocs</a>
-  <div class="nav-group">
-    <div class="nav-group-title">Visão geral</div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<aside class="sidebar">
+  <a href="../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">01</span>
+    <span class="doc-title">Infraestrutura</span>
+  </a>
+  <nav>
+    <div class="nav-section">Visão geral</div>
     <a href="#topologia">Topologia completa</a>
     <a href="#principios">Princípios de design</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">ECS Services</div>
+
+    <div class="nav-section">ECS Services</div>
     <a href="#services-tabela">Tabela de serviços</a>
     <a href="#uma-imagem">Uma imagem, dois serviços</a>
     <a href="#dockerfile">Dockerfile</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Task Definitions</div>
+
+    <div class="nav-section">Task Definitions</div>
     <a href="#task-agent">Agent task</a>
     <a href="#task-recovery">Recovery Worker task</a>
     <a href="#task-auth">Auth Service task</a>
     <a href="#sidecar-xray">Sidecar X-Ray Daemon</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Redis</div>
+
+    <div class="nav-section">Redis</div>
     <a href="#redis-compartilhado">ElastiCache compartilhado</a>
     <a href="#redis-keys-infra">Ownership de chaves</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Rede</div>
+
+    <div class="nav-section">Rede</div>
     <a href="#security-groups">Security Groups</a>
     <a href="#service-discovery">Service Discovery</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">IAM</div>
+
+    <div class="nav-section">IAM</div>
     <a href="#iam-roles">Roles por serviço</a>
     <a href="#iam-least-privilege">Least privilege</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Alarmes</div>
+
+    <div class="nav-section">Alarmes</div>
     <a href="#alarmes">CloudWatch Alarms</a>
-  </div>
-</nav>
-<main>
-  <div class="doc-eyebrow">Multi-Agent AWS · Produção</div>
-  <h1>Arquitetura de Infraestrutura</h1>
-  <p class="doc-subtitle">Topologia completa do sistema no AWS: ECS Services, task definitions com sidecar X-Ray, ElastiCache Redis compartilhado, IAM roles, security groups e alarmes de operação.</p>
-  <div class="doc-tags">
-    <span class="tag">ECS Fargate</span><span class="tag">ElastiCache</span><span class="tag">ECR</span>
-    <span class="tag">X-Ray Daemon</span><span class="tag">IAM</span><span class="tag">CloudWatch</span>
-    <span class="tag">Terraform</span><span class="tag">Service Discovery</span>
+  </nav>
+</aside>
+
+<div class="main">
+  <div class="wrapper">
+
+  <div class="doc-header">
+    <div class="doc-num">Multi-Agent Production System · Infraestrutura</div>
+    <h1>Arquitetura de <em>Infraestrutura</em><br>Topologia do Sistema</h1>
+    <p class="doc-lead">Topologia completa do sistema no AWS: ECS Services, task definitions com sidecar X-Ray, ElastiCache Redis compartilhado, IAM roles, security groups e alarmes de operação.</p>
+    <div class="tags">
+      <span class="tag">ECS Fargate</span><span class="tag">ElastiCache</span><span class="tag">ECR</span>
+      <span class="tag">X-Ray Daemon</span><span class="tag">IAM</span><span class="tag">CloudWatch</span>
+      <span class="tag">Terraform</span><span class="tag">Service Discovery</span>
+    </div>
   </div>
 
-  <div class="section" id="topologia">
-    <div class="section-eyebrow">Visão geral</div>
+  <section class="section" id="topologia">
+    <div class="section-label">Visão geral</div>
     <h2>Topologia completa</h2>
     <div class="diagram">
-VPC
+<pre>VPC
 ├── Public Subnets
 │    └── ALB (externo) ── :443 → booking-agent
 │         └── ALB (interno) ── A2A entre agentes
@@ -133,17 +107,18 @@ VPC
      ├── ECR (pull de imagens)
      ├── Secrets Manager (CLIENT_SECRET, chave privada RSA)
      ├── CloudWatch Logs
-     └── X-Ray API
+     └── X-Ray API</pre>
     </div>
-    <div class="callout why">
-      <div class="callout-title">Por que um Redis compartilhado entre todos os serviços</div>
+    <div class="callout purple">
+      <div class="callout-label">Por que um Redis compartilhado entre todos os serviços</div>
       <p>O Recovery Worker precisa acessar os checkpoints criados pelo Agent — e o agente precisa acessar o lock criado pelo próprio processo. <strong>Redis separado por serviço quebraria o lifecycle inteiro</strong>: heartbeats, locks, recovery queue e checkpoints LangGraph precisam ser visíveis por todos os processos que participam do sistema. Um único ElastiCache com namespacing por chave é o design correto.</p>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="principios">
-    <div class="section-eyebrow">Design</div>
+  <section class="section" id="principios">
+    <div class="section-label">Design</div>
     <h2>Princípios de design da infraestrutura</h2>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Princípio</th><th>Aplicação</th></tr></thead>
       <tbody>
@@ -155,11 +130,13 @@ VPC
         <tr><td><strong>VPC Endpoints</strong></td><td>ECR, Secrets Manager, CloudWatch e X-Ray acessados via VPC Endpoints — sem tráfego saindo para a internet pública.</td></tr>
       </tbody>
     </table>
-  </div>
+    </div>
+  </section>
 
-  <div class="section" id="services-tabela">
-    <div class="section-eyebrow">ECS Services</div>
+  <section class="section" id="services-tabela">
+    <div class="section-label">ECS Services</div>
     <h2>Tabela de serviços</h2>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Service</th><th>Cluster</th><th>desired_count</th><th>command</th><th>Função</th></tr></thead>
       <tbody>
@@ -170,17 +147,18 @@ VPC
         <tr><td><code>auth-service</code></td><td>shared</td><td>2</td><td><code>python auth_service/main.py</code></td><td>JWKS endpoint + emissão de tokens RS256</td></tr>
       </tbody>
     </table>
-    <div class="callout why">
-      <div class="callout-title">Por que um Recovery Worker por cluster e não um global</div>
+    </div>
+    <div class="callout purple">
+      <div class="callout-label">Por que um Recovery Worker por cluster e não um global</div>
       <p>O Recovery Worker de um cluster precisa chamar <code>graph.ainvoke()</code> com o mesmo grafo compilado que os agentes daquele cluster usam. Um worker global precisaria conhecer todos os grafos — acoplamento indesejado. <strong>Um worker por cluster garante que ele usa exatamente o mesmo grafo, checkpointer e configuração dos agentes que monitora.</strong></p>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="uma-imagem">
+  <section class="section" id="uma-imagem">
     <h3>Uma imagem, comportamento diferente por command</h3>
     <p>O <code>command</code> no ECS task definition sobrescreve o CMD do Dockerfile. Isso permite usar a mesma imagem para o Agent e o Recovery Worker — mesmo código, entrypoint diferente.</p>
     <div class="diagram">
-ECR: 123456789.dkr.ecr.us-east-1.amazonaws.com/agent:v2.1.0
+<pre>ECR: 123456789.dkr.ecr.us-east-1.amazonaws.com/agent:v2.1.0
   │
   ├── booking-agent task definition
   │    command: ["python", "app.py"]
@@ -188,14 +166,20 @@ ECR: 123456789.dkr.ecr.us-east-1.amazonaws.com/agent:v2.1.0
   │
   └── recovery-worker task definition
        command: ["python", "recovery_worker.py"]
-       → OrphanScanner + RecoveryConsumer + QueueMonitor iniciam
+       → OrphanScanner + RecoveryConsumer + QueueMonitor iniciam</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="dockerfile">
+  <section class="section" id="dockerfile">
     <h3>Dockerfile — sem CMD fixo</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">dockerfile</span><span class="code-filename">Dockerfile</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">Dockerfile</span>
+          <span class="code-lang">dockerfile</span>
+        </div>
+      </div>
       <pre>FROM python:3.12-slim
 
 WORKDIR /app
@@ -216,13 +200,19 @@ COPY . .
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   CMD python -c "import httpx; httpx.get('http://localhost:8000/health')" || exit 1</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="task-agent">
-    <div class="section-eyebrow">Task Definitions</div>
+  <section class="section" id="task-agent">
+    <div class="section-label">Task Definitions</div>
     <h2>Agent Task Definition</h2>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/task_agent.tf</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/task_agent.tf</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
       <pre>resource <span class="st">"aws_ecs_task_definition"</span> <span class="st">"agent"</span> {
   family                   = <span class="st">"booking-agent"</span>
   requires_compatibilities = [<span class="st">"FARGATE"</span>]
@@ -307,12 +297,18 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   ])
 }</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="task-recovery">
+  <section class="section" id="task-recovery">
     <h3>Recovery Worker Task Definition</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/task_recovery.tf</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/task_recovery.tf</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
       <pre>resource <span class="st">"aws_ecs_task_definition"</span> <span class="st">"recovery_worker"</span> {
   family                   = <span class="st">"recovery-worker"</span>
   requires_compatibilities = [<span class="st">"FARGATE"</span>]
@@ -362,12 +358,18 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   ])
 }</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="task-auth">
+  <section class="section" id="task-auth">
     <h3>Auth Service Task Definition</h3>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/task_auth.tf</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/task_auth.tf</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
       <pre>resource <span class="st">"aws_ecs_task_definition"</span> <span class="st">"auth_service"</span> {
   family = <span class="st">"auth-service"</span>
   cpu    = <span class="st">"256"</span>
@@ -398,21 +400,27 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   }])
 }</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="sidecar-xray">
+  <section class="section" id="sidecar-xray">
     <h3>Por que sidecar e não daemon set</h3>
-    <div class="callout why">
-      <div class="callout-title">Sidecar por task vs daemon em cada EC2 host</div>
+    <div class="callout purple">
+      <div class="callout-label">Sidecar por task vs daemon em cada EC2 host</div>
       <p>Com ECS Fargate não há EC2 hosts para rodar um daemon set. O sidecar por task é o padrão correto: cada task tem seu próprio X-Ray Daemon acessível via <code>localhost:4317</code>. Containers no mesmo task compartilham o network namespace — sem configuração de rede adicional, sem security group entre eles. O <code>essential=false</code> garante que uma falha do sidecar não derruba o container principal.</p>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="redis-compartilhado">
-    <div class="section-eyebrow">Redis</div>
+  <section class="section" id="redis-compartilhado">
+    <div class="section-label">Redis</div>
     <h2>ElastiCache — configuração</h2>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/elasticache.tf</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/elasticache.tf</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
       <pre>resource <span class="st">"aws_elasticache_replication_group"</span> <span class="st">"main"</span> {
   replication_group_id = <span class="st">"agent-redis"</span>
   description          = <span class="st">"Redis compartilhado: checkpoints, lifecycle, locks"</span>
@@ -445,10 +453,11 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   }
 }</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="redis-keys-infra">
+  <section class="section" id="redis-keys-infra">
     <h3>Ownership de chaves por serviço</h3>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Prefixo de chave</th><th>Owner (escreve)</th><th>Readers (lê)</th></tr></thead>
       <tbody>
@@ -463,13 +472,20 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
         <tr><td><code>recovery:dlq:meta:*</code></td><td>DLQManager</td><td>QueueMonitor, operador</td></tr>
       </tbody>
     </table>
-  </div>
+    </div>
+  </section>
 
-  <div class="section" id="security-groups">
-    <div class="section-eyebrow">Rede</div>
+  <section class="section" id="security-groups">
+    <div class="section-label">Rede</div>
     <h2>Security Groups</h2>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/security_groups.tf</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/security_groups.tf</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
       <pre><span class="cm"># Security Group do Redis — aceita apenas de ECS tasks autorizadas</span>
 resource <span class="st">"aws_security_group"</span> <span class="st">"redis"</span> {
   name   = <span class="st">"redis-sg"</span>
@@ -510,13 +526,19 @@ resource <span class="st">"aws_security_group"</span> <span class="st">"booking_
   }
 }</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="service-discovery">
+  <section class="section" id="service-discovery">
     <h3>Service Discovery — resolução de endereços A2A</h3>
     <p>Agentes precisam se encontrar sem hardcode de IPs. O AWS Cloud Map (ECS Service Discovery) registra automaticamente cada task com um DNS entry privado.</p>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/service_discovery.tf</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/service_discovery.tf</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
       <pre>resource <span class="st">"aws_service_discovery_private_dns_namespace"</span> <span class="st">"agents"</span> {
   name = <span class="st">"agents.internal"</span>
   vpc  = var.vpc_id
@@ -543,17 +565,23 @@ resource <span class="st">"aws_service_discovery_service"</span> <span class="st
   }
 }</pre>
     </div>
-    <div class="callout tip">
-      <div class="callout-title">TTL curto para failover rápido</div>
+    <div class="callout green">
+      <div class="callout-label">TTL curto para failover rápido</div>
       <p>TTL de 10s garante que quando uma task é substituída (deploy, crash), o DNS converge para os novos IPs rapidamente. TTLs longos (60s+) causam janelas de erro durante deploys onde clientes ainda tentam conectar em IPs de tasks antigas já drenadas.</p>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="iam-roles">
-    <div class="section-eyebrow">IAM</div>
+  <section class="section" id="iam-roles">
+    <div class="section-label">IAM</div>
     <h2>IAM Roles por serviço</h2>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/iam.tf</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/iam.tf</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
       <pre><span class="cm"># Task Role do Agent — permissões mínimas para operar</span>
 resource <span class="st">"aws_iam_role"</span> <span class="st">"agent_task_role"</span> {
   name = <span class="st">"booking-agent-task-role"</span>
@@ -619,10 +647,11 @@ resource <span class="st">"aws_iam_role_policy"</span> <span class="st">"recover
   })
 }</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="iam-least-privilege">
+  <section class="section" id="iam-least-privilege">
     <h3>Princípio do least privilege na prática</h3>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Serviço</th><th>Permissões IAM</th><th>O que NÃO tem</th></tr></thead>
       <tbody>
@@ -631,13 +660,20 @@ resource <span class="st">"aws_iam_role_policy"</span> <span class="st">"recover
         <tr><td><code>auth-service</code></td><td>X-Ray write, Secrets Manager read (chave RSA), CloudWatch Logs write</td><td>Acesso a outros serviços — emite tokens apenas</td></tr>
       </tbody>
     </table>
-  </div>
+    </div>
+  </section>
 
-  <div class="section" id="alarmes">
-    <div class="section-eyebrow">Operação</div>
+  <section class="section" id="alarmes">
+    <div class="section-label">Operação</div>
     <h2>CloudWatch Alarms críticos</h2>
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/alarms.tf</span></div>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/alarms.tf</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
       <pre><span class="cm"># 1. Recovery Worker parou de rodar
 # desired_count=1 mas running_count=0 → worker morreu e não foi substituído</span>
 resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"recovery_worker_down"</span> {
@@ -707,12 +743,34 @@ resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">
   alarm_actions       = [aws_sns_topic.ops_alerts.arn]
 }</pre>
     </div>
-  </div>
+  </section>
 
   <div class="doc-footer">
-    <span>DevDocs · Multi-Agent AWS</span>
-    <span>Infraestrutura · Jun 2026</span>
+    <a href="../index.html">← Voltar para DevDocs</a>
+    <span>Infraestrutura</span>
+    <a href="lifecycle.html">Próximo: Lifecycle de Execução →</a>
   </div>
-</main>
+
+  </div>
+</div>
+
+<script>
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
 </body>
 </html>
