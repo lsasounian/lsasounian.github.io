@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infraestrutura — Multi-Agent AWS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+  :root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--accent:#e07840;--accent2:#f0a060;--text:#c9d1d9;--muted:#6e7681;--green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--purple:#a06af0;--sidebar-w:240px;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;}
+  nav{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;overflow-y:auto;flex-shrink:0;}
+  .nav-back{display:block;padding:8px 20px 20px;color:var(--muted);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+  .nav-back:hover{color:var(--text);}
+  .nav-group{margin-bottom:20px;padding:0 20px;}
+  .nav-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .nav-group a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 0;}
+  .nav-group a:hover{color:var(--text);}
+  main{margin-left:var(--sidebar-w);max-width:860px;padding:64px 56px;width:100%;}
+  .doc-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .doc-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  h1{font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:#e6edf3;margin-bottom:12px;}
+  .doc-subtitle{font-size:17px;color:var(--muted);font-weight:300;max-width:600px;margin-bottom:40px;line-height:1.6;}
+  .doc-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
+  .section{margin-bottom:72px;}
+  .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  h2{font-size:24px;font-weight:600;color:#e6edf3;margin-bottom:16px;letter-spacing:-.01em;}
+  h3{font-size:18px;font-weight:600;color:#e6edf3;margin-bottom:12px;margin-top:36px;}
+  p{color:var(--text);margin-bottom:16px;max-width:700px;line-height:1.75;}
+  .code-block{margin-bottom:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .code-header{background:#1c2128;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+  .code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;}
+  .code-filename{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);}
+  pre{background:#161b22;padding:24px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;margin:0;}
+  .cm{color:#6e7681;font-style:italic;}.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.cls{color:#ffa657;}.st{color:#a5d6ff;}.nb{color:#79c0ff;}.dc{color:#3fb950;}
+  .callout{border-left:3px solid var(--border);padding:16px 20px;margin-bottom:24px;border-radius:0 6px 6px 0;background:var(--surface);font-size:14px;line-height:1.65;}
+  .callout.why{border-left-color:var(--accent);}.callout.warn{border-left-color:var(--yellow);}.callout.tip{border-left-color:var(--green);}.callout.danger{border-left-color:var(--red);}
+  .callout-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+  .callout.why .callout-title{color:var(--accent);}.callout.warn .callout-title{color:var(--yellow);}.callout.tip .callout-title{color:var(--green);}.callout.danger .callout-title{color:var(--red);}
+  .callout p{color:var(--muted);margin:0;max-width:none;font-size:14px;}.callout strong{color:var(--text);}
+  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin-bottom:24px;color:var(--text);overflow-x:auto;}
+  .diagram .d-green{color:var(--green);}.diagram .d-red{color:var(--red);}.diagram .d-yellow{color:var(--yellow);}.diagram .d-blue{color:var(--blue);}.diagram .d-muted{color:var(--muted);}.diagram .d-orange{color:var(--accent);}.diagram .d-purple{color:var(--purple);}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;font-family:'IBM Plex Mono',monospace;}
+  th{text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+  td{padding:10px 14px;border:1px solid var(--border);vertical-align:top;line-height:1.5;}
+  tr:hover td{background:#1c2128;}
+  code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;color:var(--accent2);}
+  .doc-footer{margin-top:80px;padding-top:32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="https://lsasounian.github.io/index.html" class="nav-back">← DevDocs</a>
+  <div class="nav-group">
+    <div class="nav-group-title">Visão geral</div>
+    <a href="#topologia">Topologia completa</a>
+    <a href="#principios">Princípios de design</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">ECS Services</div>
+    <a href="#services-tabela">Tabela de serviços</a>
+    <a href="#uma-imagem">Uma imagem, dois serviços</a>
+    <a href="#dockerfile">Dockerfile</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Task Definitions</div>
+    <a href="#task-agent">Agent task</a>
+    <a href="#task-recovery">Recovery Worker task</a>
+    <a href="#task-auth">Auth Service task</a>
+    <a href="#sidecar-xray">Sidecar X-Ray Daemon</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Redis</div>
+    <a href="#redis-compartilhado">ElastiCache compartilhado</a>
+    <a href="#redis-keys-infra">Ownership de chaves</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Rede</div>
+    <a href="#security-groups">Security Groups</a>
+    <a href="#service-discovery">Service Discovery</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">IAM</div>
+    <a href="#iam-roles">Roles por serviço</a>
+    <a href="#iam-least-privilege">Least privilege</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Alarmes</div>
+    <a href="#alarmes">CloudWatch Alarms</a>
+  </div>
+</nav>
+<main>
+  <div class="doc-eyebrow">Multi-Agent AWS · Produção</div>
+  <h1>Arquitetura de Infraestrutura</h1>
+  <p class="doc-subtitle">Topologia completa do sistema no AWS: ECS Services, task definitions com sidecar X-Ray, ElastiCache Redis compartilhado, IAM roles, security groups e alarmes de operação.</p>
+  <div class="doc-tags">
+    <span class="tag">ECS Fargate</span><span class="tag">ElastiCache</span><span class="tag">ECR</span>
+    <span class="tag">X-Ray Daemon</span><span class="tag">IAM</span><span class="tag">CloudWatch</span>
+    <span class="tag">Terraform</span><span class="tag">Service Discovery</span>
+  </div>
+
+  <div class="section" id="topologia">
+    <div class="section-eyebrow">Visão geral</div>
+    <h2>Topologia completa</h2>
+    <div class="diagram">
+VPC
+├── Public Subnets
+│    └── ALB (externo) ── :443 → booking-agent
+│         └── ALB (interno) ── A2A entre agentes
+│
+├── Private Subnets
+│    ├── ECS Cluster: booking
+│    │    ├── booking-agent Service (desired: 3)
+│    │    │    └── Task: [agent container] + [xray-daemon sidecar]
+│    │    └── recovery-worker Service (desired: 1)
+│    │         └── Task: [recovery-worker container] + [xray-daemon sidecar]
+│    │
+│    ├── ECS Cluster: search
+│    │    ├── search-agent Service (desired: 5)
+│    │    │    └── Task: [agent container] + [xray-daemon sidecar]
+│    │    └── recovery-worker Service (desired: 1)
+│    │         └── Task: [recovery-worker container] + [xray-daemon sidecar]
+│    │
+│    ├── ECS Service: auth-service (desired: 2)
+│    │    └── Task: [auth-service container] + [xray-daemon sidecar]
+│    │
+│    └── ElastiCache Redis Cluster
+│         └── Compartilhado por: booking-agent, search-agent,
+│              recovery-worker (ambos clusters), auth-service
+│
+└── AWS Services (via VPC Endpoints)
+     ├── ECR (pull de imagens)
+     ├── Secrets Manager (CLIENT_SECRET, chave privada RSA)
+     ├── CloudWatch Logs
+     └── X-Ray API
+    </div>
+    <div class="callout why">
+      <div class="callout-title">Por que um Redis compartilhado entre todos os serviços</div>
+      <p>O Recovery Worker precisa acessar os checkpoints criados pelo Agent — e o agente precisa acessar o lock criado pelo próprio processo. <strong>Redis separado por serviço quebraria o lifecycle inteiro</strong>: heartbeats, locks, recovery queue e checkpoints LangGraph precisam ser visíveis por todos os processos que participam do sistema. Um único ElastiCache com namespacing por chave é o design correto.</p>
+    </div>
+  </div>
+
+  <div class="section" id="principios">
+    <div class="section-eyebrow">Design</div>
+    <h2>Princípios de design da infraestrutura</h2>
+    <table>
+      <thead><tr><th>Princípio</th><th>Aplicação</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Uma imagem, múltiplos serviços</strong></td><td>Agent e Recovery Worker usam a mesma imagem ECR. O comportamento é definido pelo <code>command</code> no task definition.</td></tr>
+        <tr><td><strong>Sem CMD no Dockerfile</strong></td><td>O entrypoint é definido no ECS task definition via <code>command</code>. Facilita override sem rebuild de imagem.</td></tr>
+        <tr><td><strong>Sidecar por task</strong></td><td>X-Ray Daemon roda como container sidecar no mesmo task — acessível via <code>localhost:4317</code> sem configuração de rede adicional.</td></tr>
+        <tr><td><strong>Secrets via Secrets Manager</strong></td><td><code>CLIENT_SECRET</code> e chave privada RSA nunca em variáveis de ambiente plaintext — referenciados via ARN no task definition.</td></tr>
+        <tr><td><strong>Least privilege por serviço</strong></td><td>Cada ECS Service tem seu próprio IAM Task Role com apenas as permissões que precisa.</td></tr>
+        <tr><td><strong>VPC Endpoints</strong></td><td>ECR, Secrets Manager, CloudWatch e X-Ray acessados via VPC Endpoints — sem tráfego saindo para a internet pública.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="services-tabela">
+    <div class="section-eyebrow">ECS Services</div>
+    <h2>Tabela de serviços</h2>
+    <table>
+      <thead><tr><th>Service</th><th>Cluster</th><th>desired_count</th><th>command</th><th>Função</th></tr></thead>
+      <tbody>
+        <tr><td><code>booking-agent</code></td><td>booking</td><td>3+</td><td><code>python app.py</code></td><td>FastAPI + LangGraph + heartbeat</td></tr>
+        <tr><td><code>recovery-worker</code></td><td>booking</td><td>1</td><td><code>python recovery_worker.py</code></td><td>OrphanScanner + RecoveryConsumer + QueueMonitor</td></tr>
+        <tr><td><code>search-agent</code></td><td>search</td><td>5+</td><td><code>python app.py</code></td><td>FastAPI + LangGraph + heartbeat</td></tr>
+        <tr><td><code>recovery-worker</code></td><td>search</td><td>1</td><td><code>python recovery_worker.py</code></td><td>OrphanScanner + RecoveryConsumer + QueueMonitor</td></tr>
+        <tr><td><code>auth-service</code></td><td>shared</td><td>2</td><td><code>python auth_service/main.py</code></td><td>JWKS endpoint + emissão de tokens RS256</td></tr>
+      </tbody>
+    </table>
+    <div class="callout why">
+      <div class="callout-title">Por que um Recovery Worker por cluster e não um global</div>
+      <p>O Recovery Worker de um cluster precisa chamar <code>graph.ainvoke()</code> com o mesmo grafo compilado que os agentes daquele cluster usam. Um worker global precisaria conhecer todos os grafos — acoplamento indesejado. <strong>Um worker por cluster garante que ele usa exatamente o mesmo grafo, checkpointer e configuração dos agentes que monitora.</strong></p>
+    </div>
+  </div>
+
+  <div class="section" id="uma-imagem">
+    <h3>Uma imagem, comportamento diferente por command</h3>
+    <p>O <code>command</code> no ECS task definition sobrescreve o CMD do Dockerfile. Isso permite usar a mesma imagem para o Agent e o Recovery Worker — mesmo código, entrypoint diferente.</p>
+    <div class="diagram">
+ECR: 123456789.dkr.ecr.us-east-1.amazonaws.com/agent:v2.1.0
+  │
+  ├── booking-agent task definition
+  │    command: ["python", "app.py"]
+  │    → FastAPI sobe, escuta :8000, processa requests
+  │
+  └── recovery-worker task definition
+       command: ["python", "recovery_worker.py"]
+       → OrphanScanner + RecoveryConsumer + QueueMonitor iniciam
+    </div>
+  </div>
+
+  <div class="section" id="dockerfile">
+    <h3>Dockerfile — sem CMD fixo</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">dockerfile</span><span class="code-filename">Dockerfile</span></div>
+      <pre>FROM python:3.12-slim
+
+WORKDIR /app
+
+<span class="cm"># Instala dependências primeiro — maximiza cache de layer</span>
+COPY requirements.txt .
+RUN pip install -r requirements.txt --no-cache-dir
+
+<span class="cm"># Copia código depois — layer invalidada só quando código muda</span>
+COPY . .
+
+<span class="cm"># Sem CMD: o command[] do ECS task definition define o entrypoint.
+# Permite usar a mesma imagem para app.py e recovery_worker.py
+# sem manter dois Dockerfiles sincronizados.</span>
+
+<span class="cm"># Health check no nível do container — ECS usa isso para substituição de tasks
+# Porta 8000 para agent; recovery_worker não expõe porta (script, não servidor)</span>
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
+  CMD python -c "import httpx; httpx.get('http://localhost:8000/health')" || exit 1</pre>
+    </div>
+  </div>
+
+  <div class="section" id="task-agent">
+    <div class="section-eyebrow">Task Definitions</div>
+    <h2>Agent Task Definition</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/task_agent.tf</span></div>
+      <pre>resource <span class="st">"aws_ecs_task_definition"</span> <span class="st">"agent"</span> {
+  family                   = <span class="st">"booking-agent"</span>
+  requires_compatibilities = [<span class="st">"FARGATE"</span>]
+  network_mode             = <span class="st">"awsvpc"</span>
+  cpu                      = <span class="st">"1024"</span>  <span class="cm"># 1 vCPU</span>
+  memory                   = <span class="st">"2048"</span>  <span class="cm"># 2 GB</span>
+  task_role_arn            = aws_iam_role.agent_task_role.arn
+  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+
+  container_definitions = jsonencode([
+    <span class="cm"># Container principal: o agente</span>
+    {
+      name      = <span class="st">"agent"</span>
+      image     = <span class="st">"${aws_ecr_repository.app.repository_url}:${var.image_tag}"</span>
+      command   = [<span class="st">"python"</span>, <span class="st">"app.py"</span>]
+      essential = <span class="kw">true</span>
+
+      <span class="cm"># stopTimeout: segundos entre SIGTERM e SIGKILL
+      # Deve ser >= tempo máximo de execução de um agente</span>
+      stopTimeout = <span class="nb">120</span>
+
+      portMappings = [{ containerPort = <span class="nb">8000</span>, protocol = <span class="st">"tcp"</span> }]
+
+      environment = [
+        { name = <span class="st">"REDIS_URL"</span>,         value = <span class="st">"redis://${aws_elasticache_cluster.main.cache_nodes[0].address}:6379"</span> },
+        { name = <span class="st">"SERVICE_NAME"</span>,      value = <span class="st">"booking-agent"</span> },
+        { name = <span class="st">"OTLP_ENDPOINT"</span>,     value = <span class="st">"http://localhost:4317"</span> },
+        { name = <span class="st">"ENVIRONMENT"</span>,       value = var.environment },
+        { name = <span class="st">"TRACE_SAMPLE_RATE"</span>, value = <span class="st">"0.1"</span> },
+      ]
+
+      <span class="cm"># Secrets via Secrets Manager — nunca plaintext em environment</span>
+      secrets = [
+        { name = <span class="st">"CLIENT_SECRET"</span>,   valueFrom = aws_secretsmanager_secret.client_secret.arn },
+        { name = <span class="st">"AUTH_SERVICE_URL"</span>, valueFrom = aws_secretsmanager_secret.auth_url.arn },
+      ]
+
+      logConfiguration = {
+        logDriver = <span class="st">"awslogs"</span>
+        options = {
+          <span class="st">"awslogs-group"</span>         = <span class="st">"/ecs/booking-agent"</span>
+          <span class="st">"awslogs-region"</span>        = var.aws_region
+          <span class="st">"awslogs-stream-prefix"</span> = <span class="st">"ecs"</span>
+        }
+      }
+
+      healthCheck = {
+        command     = [<span class="st">"CMD-SHELL"</span>, <span class="st">"curl -f http://localhost:8000/health || exit 1"</span>]
+        interval    = <span class="nb">10</span>
+        timeout     = <span class="nb">5</span>
+        retries     = <span class="nb">3</span>
+        startPeriod = <span class="nb">30</span>
+      }
+    },
+
+    <span class="cm"># Container sidecar: X-Ray Daemon
+    # Recebe spans OTLP gRPC do agente via localhost:4317
+    # Repassa para a API do X-Ray</span>
+    {
+      name      = <span class="st">"xray-daemon"</span>
+      image     = <span class="st">"amazon/aws-xray-daemon:latest"</span>
+      essential = <span class="kw">false</span>  <span class="cm"># falha do sidecar não derruba o container principal</span>
+
+      portMappings = [
+        { containerPort = <span class="nb">4317</span>, protocol = <span class="st">"tcp"</span> },  <span class="cm"># OTLP gRPC</span>
+        { containerPort = <span class="nb">2000</span>, protocol = <span class="st">"udp"</span> },  <span class="cm"># X-Ray nativo (SDK legado)</span>
+      ]
+
+      <span class="cm"># cpu/memory baixos — sidecar leve</span>
+      cpu    = <span class="nb">32</span>
+      memory = <span class="nb">256</span>
+
+      logConfiguration = {
+        logDriver = <span class="st">"awslogs"</span>
+        options = {
+          <span class="st">"awslogs-group"</span>         = <span class="st">"/ecs/booking-agent-xray"</span>
+          <span class="st">"awslogs-region"</span>        = var.aws_region
+          <span class="st">"awslogs-stream-prefix"</span> = <span class="st">"xray"</span>
+        }
+      }
+    }
+  ])
+}</pre>
+    </div>
+  </div>
+
+  <div class="section" id="task-recovery">
+    <h3>Recovery Worker Task Definition</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/task_recovery.tf</span></div>
+      <pre>resource <span class="st">"aws_ecs_task_definition"</span> <span class="st">"recovery_worker"</span> {
+  family                   = <span class="st">"recovery-worker"</span>
+  requires_compatibilities = [<span class="st">"FARGATE"</span>]
+  network_mode             = <span class="st">"awsvpc"</span>
+  cpu                      = <span class="st">"256"</span>   <span class="cm"># leve — só Redis I/O e invocações de grafo</span>
+  memory                   = <span class="st">"512"</span>
+  task_role_arn            = aws_iam_role.recovery_task_role.arn
+  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = <span class="st">"recovery-worker"</span>
+      image     = <span class="st">"${aws_ecr_repository.app.repository_url}:${var.image_tag}"</span>
+      command   = [<span class="st">"python"</span>, <span class="st">"recovery_worker.py"</span>]  <span class="cm"># mesma imagem, entrypoint diferente</span>
+      essential = <span class="kw">true</span>
+
+      environment = [
+        { name = <span class="st">"REDIS_URL"</span>,               value = <span class="st">"redis://${aws_elasticache_cluster.main.cache_nodes[0].address}:6379"</span> },
+        { name = <span class="st">"RECOVERY_MAX_ATTEMPTS"</span>,   value = <span class="st">"3"</span> },
+        { name = <span class="st">"RECOVERY_QUEUE_MAX_SIZE"</span>, value = <span class="st">"100"</span> },
+        { name = <span class="st">"SERVICE_NAME"</span>,            value = <span class="st">"recovery-worker"</span> },
+        { name = <span class="st">"OTLP_ENDPOINT"</span>,           value = <span class="st">"http://localhost:4317"</span> },
+      ]
+
+      <span class="cm"># Recovery Worker não expõe porta — não é um servidor HTTP
+      # Sem health check de porta; ECS usa o exit code do processo</span>
+
+      logConfiguration = {
+        logDriver = <span class="st">"awslogs"</span>
+        options = {
+          <span class="st">"awslogs-group"</span>         = <span class="st">"/ecs/recovery-worker"</span>
+          <span class="st">"awslogs-region"</span>        = var.aws_region
+          <span class="st">"awslogs-stream-prefix"</span> = <span class="st">"ecs"</span>
+        }
+      }
+    },
+    {
+      name      = <span class="st">"xray-daemon"</span>
+      image     = <span class="st">"amazon/aws-xray-daemon:latest"</span>
+      essential = <span class="kw">false</span>
+      portMappings = [
+        { containerPort = <span class="nb">4317</span>, protocol = <span class="st">"tcp"</span> },
+        { containerPort = <span class="nb">2000</span>, protocol = <span class="st">"udp"</span> },
+      ]
+      cpu = <span class="nb">32</span>; memory = <span class="nb">128</span>
+    }
+  ])
+}</pre>
+    </div>
+  </div>
+
+  <div class="section" id="task-auth">
+    <h3>Auth Service Task Definition</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/task_auth.tf</span></div>
+      <pre>resource <span class="st">"aws_ecs_task_definition"</span> <span class="st">"auth_service"</span> {
+  family = <span class="st">"auth-service"</span>
+  cpu    = <span class="st">"256"</span>
+  memory = <span class="st">"512"</span>
+
+  container_definitions = jsonencode([{
+    name    = <span class="st">"auth-service"</span>
+    image   = <span class="st">"${aws_ecr_repository.auth.repository_url}:${var.image_tag}"</span>
+    command = [<span class="st">"python"</span>, <span class="st">"auth_service/main.py"</span>]
+
+    portMappings = [{ containerPort = <span class="nb">8001</span>, protocol = <span class="st">"tcp"</span> }]
+
+    <span class="cm"># Chave privada RSA carregada do Secrets Manager — nunca em variável de ambiente
+    # O Auth Service lê via boto3 no startup</span>
+    secrets = [
+      { name = <span class="st">"RSA_PRIVATE_KEY_ARN"</span>, valueFrom = aws_secretsmanager_secret.rsa_private_key.arn },
+    ]
+
+    environment = [
+      { name = <span class="st">"TOKEN_TTL"</span>,    value = <span class="st">"900"</span> },
+      { name = <span class="st">"SERVICE_NAME"</span>, value = <span class="st">"auth-service"</span> },
+    ]
+
+    healthCheck = {
+      command  = [<span class="st">"CMD-SHELL"</span>, <span class="st">"curl -f http://localhost:8001/.well-known/jwks.json || exit 1"</span>]
+      interval = <span class="nb">10</span>; timeout = <span class="nb">3</span>; retries = <span class="nb">3</span>
+    }
+  }])
+}</pre>
+    </div>
+  </div>
+
+  <div class="section" id="sidecar-xray">
+    <h3>Por que sidecar e não daemon set</h3>
+    <div class="callout why">
+      <div class="callout-title">Sidecar por task vs daemon em cada EC2 host</div>
+      <p>Com ECS Fargate não há EC2 hosts para rodar um daemon set. O sidecar por task é o padrão correto: cada task tem seu próprio X-Ray Daemon acessível via <code>localhost:4317</code>. Containers no mesmo task compartilham o network namespace — sem configuração de rede adicional, sem security group entre eles. O <code>essential=false</code> garante que uma falha do sidecar não derruba o container principal.</p>
+    </div>
+  </div>
+
+  <div class="section" id="redis-compartilhado">
+    <div class="section-eyebrow">Redis</div>
+    <h2>ElastiCache — configuração</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/elasticache.tf</span></div>
+      <pre>resource <span class="st">"aws_elasticache_replication_group"</span> <span class="st">"main"</span> {
+  replication_group_id = <span class="st">"agent-redis"</span>
+  description          = <span class="st">"Redis compartilhado: checkpoints, lifecycle, locks"</span>
+
+  node_type            = <span class="st">"cache.r7g.large"</span>  <span class="cm"># memory-optimized — checkpoints podem ser grandes</span>
+  num_cache_clusters   = <span class="nb">2</span>                   <span class="cm"># primary + 1 replica para HA</span>
+  automatic_failover_enabled = <span class="kw">true</span>
+
+  engine         = <span class="st">"redis"</span>
+  engine_version = <span class="st">"7.1"</span>
+
+  <span class="cm"># at_rest_encryption: checkpoints podem conter dados sensíveis do usuário</span>
+  at_rest_encryption_enabled  = <span class="kw">true</span>
+  transit_encryption_enabled  = <span class="kw">true</span>
+
+  <span class="cm"># subnet_group: subnets privadas — Redis nunca exposto publicamente</span>
+  subnet_group_name  = aws_elasticache_subnet_group.main.name
+  security_group_ids = [aws_security_group.redis.id]
+
+  <span class="cm"># Snapshot para recovery de dados em caso de falha grave
+  # Checkpoints LangGraph são o dado mais crítico do sistema</span>
+  snapshot_retention_limit = <span class="nb">7</span>
+  snapshot_window          = <span class="st">"03:00-04:00"</span>
+
+  log_delivery_configuration {
+    destination      = aws_cloudwatch_log_group.redis.name
+    destination_type = <span class="st">"cloudwatch-logs"</span>
+    log_format       = <span class="st">"json"</span>
+    log_type         = <span class="st">"slow-log"</span>  <span class="cm"># loga queries lentas — útil para diagnosticar Lua scripts</span>
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div class="section" id="redis-keys-infra">
+    <h3>Ownership de chaves por serviço</h3>
+    <table>
+      <thead><tr><th>Prefixo de chave</th><th>Owner (escreve)</th><th>Readers (lê)</th></tr></thead>
+      <tbody>
+        <tr><td><code>checkpoint:*</code></td><td>LangGraph RedisSaver (agent)</td><td>RecoveryConsumer, OrphanScanner</td></tr>
+        <tr><td><code>threads:in_progress</code></td><td>Agent (sadd/srem)</td><td>OrphanScanner</td></tr>
+        <tr><td><code>heartbeat:*</code></td><td>AgentHeartbeat</td><td>OrphanScanner</td></tr>
+        <tr><td><code>lock:thread:*</code></td><td>RedisThreadLock (agent)</td><td>RedisThreadLock</td></tr>
+        <tr><td><code>idempotency:*</code></td><td>@idempotent_node decorator</td><td>@idempotent_node decorator</td></tr>
+        <tr><td><code>recovery:queue</code></td><td>OrphanScanner, QueueGuard</td><td>RecoveryConsumer (BLPOP)</td></tr>
+        <tr><td><code>recovery:attempts:*</code></td><td>DLQManager</td><td>DLQManager</td></tr>
+        <tr><td><code>recovery:dlq</code></td><td>DLQManager</td><td>QueueMonitor, operador</td></tr>
+        <tr><td><code>recovery:dlq:meta:*</code></td><td>DLQManager</td><td>QueueMonitor, operador</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="security-groups">
+    <div class="section-eyebrow">Rede</div>
+    <h2>Security Groups</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/security_groups.tf</span></div>
+      <pre><span class="cm"># Security Group do Redis — aceita apenas de ECS tasks autorizadas</span>
+resource <span class="st">"aws_security_group"</span> <span class="st">"redis"</span> {
+  name   = <span class="st">"redis-sg"</span>
+  vpc_id = var.vpc_id
+
+  ingress {
+    from_port       = <span class="nb">6379</span>
+    to_port         = <span class="nb">6379</span>
+    protocol        = <span class="st">"tcp"</span>
+    security_groups = [
+      aws_security_group.booking_agent.id,
+      aws_security_group.search_agent.id,
+      aws_security_group.recovery_worker.id,
+      aws_security_group.auth_service.id,
+    ]
+    description = <span class="st">"Redis: apenas de ECS tasks autorizadas"</span>
+  }
+}
+
+<span class="cm"># Security Group do booking-agent
+# Aceita: ALB (requests de usuário) + search-agent (A2A) + auth-service (token)</span>
+resource <span class="st">"aws_security_group"</span> <span class="st">"booking_agent"</span> {
+  name   = <span class="st">"booking-agent-sg"</span>
+  vpc_id = var.vpc_id
+
+  ingress {
+    from_port       = <span class="nb">8000</span>
+    to_port         = <span class="nb">8000</span>
+    protocol        = <span class="st">"tcp"</span>
+    security_groups = [aws_security_group.alb.id]
+    description     = <span class="st">"Requests do ALB externo"</span>
+  }
+
+  egress {
+    from_port   = <span class="nb">0</span>; to_port = <span class="nb">0</span>; protocol = <span class="st">"-1"</span>
+    cidr_blocks = [<span class="st">"0.0.0.0/0"</span>]
+    description = <span class="st">"Saída: Redis, auth-service, search-agent, APIs externas"</span>
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div class="section" id="service-discovery">
+    <h3>Service Discovery — resolução de endereços A2A</h3>
+    <p>Agentes precisam se encontrar sem hardcode de IPs. O AWS Cloud Map (ECS Service Discovery) registra automaticamente cada task com um DNS entry privado.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/service_discovery.tf</span></div>
+      <pre>resource <span class="st">"aws_service_discovery_private_dns_namespace"</span> <span class="st">"agents"</span> {
+  name = <span class="st">"agents.internal"</span>
+  vpc  = var.vpc_id
+}
+
+<span class="cm"># search-agent resolve como: search-agent.agents.internal:8000</span>
+resource <span class="st">"aws_service_discovery_service"</span> <span class="st">"search_agent"</span> {
+  name = <span class="st">"search-agent"</span>
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.agents.id
+    routing_policy = <span class="st">"MULTIVALUE"</span>  <span class="cm"># retorna múltiplos IPs — client-side load balancing</span>
+    dns_records { ttl = <span class="nb">10</span>; type = <span class="st">"A"</span> }
+  }
+  health_check_custom_config { failure_threshold = <span class="nb">1</span> }
+}
+
+<span class="cm"># auth-service resolve como: auth-service.agents.internal:8001</span>
+resource <span class="st">"aws_service_discovery_service"</span> <span class="st">"auth_service"</span> {
+  name = <span class="st">"auth-service"</span>
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.agents.id
+    routing_policy = <span class="st">"MULTIVALUE"</span>
+    dns_records { ttl = <span class="nb">10</span>; type = <span class="st">"A"</span> }
+  }
+}</pre>
+    </div>
+    <div class="callout tip">
+      <div class="callout-title">TTL curto para failover rápido</div>
+      <p>TTL de 10s garante que quando uma task é substituída (deploy, crash), o DNS converge para os novos IPs rapidamente. TTLs longos (60s+) causam janelas de erro durante deploys onde clientes ainda tentam conectar em IPs de tasks antigas já drenadas.</p>
+    </div>
+  </div>
+
+  <div class="section" id="iam-roles">
+    <div class="section-eyebrow">IAM</div>
+    <h2>IAM Roles por serviço</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/iam.tf</span></div>
+      <pre><span class="cm"># Task Role do Agent — permissões mínimas para operar</span>
+resource <span class="st">"aws_iam_role"</span> <span class="st">"agent_task_role"</span> {
+  name = <span class="st">"booking-agent-task-role"</span>
+  assume_role_policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="st">"Allow"</span>
+      Principal = { Service = <span class="st">"ecs-tasks.amazonaws.com"</span> }
+      Action    = <span class="st">"sts:AssumeRole"</span>
+    }]
+  })
+}
+
+resource <span class="st">"aws_iam_role_policy"</span> <span class="st">"agent_task_policy"</span> {
+  role = aws_iam_role.agent_task_role.id
+  policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [
+      <span class="cm"># X-Ray: envia traces</span>
+      {
+        Effect   = <span class="st">"Allow"</span>
+        Action   = [<span class="st">"xray:PutTraceSegments"</span>, <span class="st">"xray:PutTelemetryRecords"</span>]
+        Resource = <span class="st">"*"</span>
+      },
+      <span class="cm"># Secrets Manager: lê CLIENT_SECRET e AUTH_SERVICE_URL</span>
+      {
+        Effect   = <span class="st">"Allow"</span>
+        Action   = [<span class="st">"secretsmanager:GetSecretValue"</span>]
+        Resource = [
+          aws_secretsmanager_secret.client_secret.arn,
+          aws_secretsmanager_secret.auth_url.arn,
+        ]
+      },
+      <span class="cm"># CloudWatch Logs: escreve logs do container</span>
+      {
+        Effect   = <span class="st">"Allow"</span>
+        Action   = [<span class="st">"logs:CreateLogStream"</span>, <span class="st">"logs:PutLogEvents"</span>]
+        Resource = <span class="st">"arn:aws:logs:*:*:log-group:/ecs/booking-agent:*"</span>
+      }
+      <span class="cm"># Nota: Redis é acessado via TCP/TLS — sem permissão IAM necessária</span>
+    ]
+  })
+}
+
+<span class="cm"># Task Role do Recovery Worker — subconjunto das permissões do agent</span>
+resource <span class="st">"aws_iam_role_policy"</span> <span class="st">"recovery_task_policy"</span> {
+  role = aws_iam_role.recovery_task_role.id
+  policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [
+      {
+        Effect   = <span class="st">"Allow"</span>
+        Action   = [<span class="st">"xray:PutTraceSegments"</span>, <span class="st">"xray:PutTelemetryRecords"</span>]
+        Resource = <span class="st">"*"</span>
+      },
+      {
+        Effect   = <span class="st">"Allow"</span>
+        Action   = [<span class="st">"logs:CreateLogStream"</span>, <span class="st">"logs:PutLogEvents"</span>]
+        Resource = <span class="st">"arn:aws:logs:*:*:log-group:/ecs/recovery-worker:*"</span>
+      }
+      <span class="cm"># Recovery Worker não acessa Secrets Manager — não faz chamadas A2A autenticadas</span>
+    ]
+  })
+}</pre>
+    </div>
+  </div>
+
+  <div class="section" id="iam-least-privilege">
+    <h3>Princípio do least privilege na prática</h3>
+    <table>
+      <thead><tr><th>Serviço</th><th>Permissões IAM</th><th>O que NÃO tem</th></tr></thead>
+      <tbody>
+        <tr><td><code>booking-agent</code></td><td>X-Ray write, Secrets Manager read (2 secrets), CloudWatch Logs write</td><td>S3, DynamoDB, EC2, outros secrets</td></tr>
+        <tr><td><code>recovery-worker</code></td><td>X-Ray write, CloudWatch Logs write</td><td>Secrets Manager — não faz chamadas autenticadas</td></tr>
+        <tr><td><code>auth-service</code></td><td>X-Ray write, Secrets Manager read (chave RSA), CloudWatch Logs write</td><td>Acesso a outros serviços — emite tokens apenas</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="alarmes">
+    <div class="section-eyebrow">Operação</div>
+    <h2>CloudWatch Alarms críticos</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/alarms.tf</span></div>
+      <pre><span class="cm"># 1. Recovery Worker parou de rodar
+# desired_count=1 mas running_count=0 → worker morreu e não foi substituído</span>
+resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"recovery_worker_down"</span> {
+  alarm_name          = <span class="st">"recovery-worker-not-running"</span>
+  comparison_operator = <span class="st">"LessThanThreshold"</span>
+  evaluation_periods  = <span class="nb">2</span>
+  metric_name         = <span class="st">"RunningTaskCount"</span>
+  namespace           = <span class="st">"ECS/ContainerInsights"</span>
+  period              = <span class="nb">60</span>
+  statistic           = <span class="st">"Average"</span>
+  threshold           = <span class="nb">1</span>
+  alarm_description   = <span class="st">"Recovery Worker não está rodando — threads órfãos não serão recuperados"</span>
+  dimensions          = { ClusterName = <span class="st">"booking"</span>, ServiceName = <span class="st">"recovery-worker"</span> }
+  alarm_actions       = [aws_sns_topic.ops_alerts.arn]
+}
+
+<span class="cm"># 2. DLQ crescendo — threads irrecuperáveis acumulando</span>
+resource <span class="st">"aws_cloudwatch_log_metric_filter"</span> <span class="st">"dlq_size"</span> {
+  name           = <span class="st">"dlq-size-metric"</span>
+  log_group_name = <span class="st">"/ecs/recovery-worker"</span>
+  pattern        = <span class="st">"{ $.dlq_size > 0 }"</span>  <span class="cm"># JSON emitido pelo QueueMonitor</span>
+  metric_transformation {
+    name      = <span class="st">"DLQSize"</span>
+    namespace = <span class="st">"MultiAgent/Recovery"</span>
+    value     = <span class="st">"$.dlq_size"</span>
+  }
+}
+
+resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"dlq_not_empty"</span> {
+  alarm_name          = <span class="st">"recovery-dlq-not-empty"</span>
+  comparison_operator = <span class="st">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="nb">1</span>
+  metric_name         = <span class="st">"DLQSize"</span>
+  namespace           = <span class="st">"MultiAgent/Recovery"</span>
+  period              = <span class="nb">60</span>
+  statistic           = <span class="st">"Maximum"</span>
+  threshold           = <span class="nb">0</span>
+  alarm_description   = <span class="st">"DLQ contém itens — intervenção manual necessária"</span>
+  alarm_actions       = [aws_sns_topic.ops_alerts.arn]
+}
+
+<span class="cm"># 3. Recovery queue próxima do limite (backpressure iminente)</span>
+resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"recovery_queue_high"</span> {
+  alarm_name          = <span class="st">"recovery-queue-near-limit"</span>
+  comparison_operator = <span class="st">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="nb">2</span>
+  metric_name         = <span class="st">"RecoveryQueueSize"</span>
+  namespace           = <span class="st">"MultiAgent/Recovery"</span>
+  period              = <span class="nb">60</span>
+  statistic           = <span class="st">"Maximum"</span>
+  threshold           = <span class="nb">80</span>  <span class="cm"># 80% de 100 → warning antes de atingir o teto</span>
+  alarm_description   = <span class="st">"Recovery queue acima de 80% — risco de backpressure"</span>
+  alarm_actions       = [aws_sns_topic.ops_alerts.arn]
+}
+
+<span class="cm"># 4. ElastiCache: memória alta — checkpoints podem não caber</span>
+resource <span class="st">"aws_cloudwatch_metric_alarm"</span> <span class="st">"redis_memory_high"</span> {
+  alarm_name          = <span class="st">"redis-memory-high"</span>
+  comparison_operator = <span class="st">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="nb">3</span>
+  metric_name         = <span class="st">"DatabaseMemoryUsagePercentage"</span>
+  namespace           = <span class="st">"AWS/ElastiCache"</span>
+  period              = <span class="nb">300</span>
+  statistic           = <span class="st">"Average"</span>
+  threshold           = <span class="nb">80</span>
+  alarm_description   = <span class="st">"Redis com 80%+ de memória — risco de eviction de checkpoints"</span>
+  alarm_actions       = [aws_sns_topic.ops_alerts.arn]
+}</pre>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>DevDocs · Multi-Agent AWS</span>
+    <span>Infraestrutura · Jun 2026</span>
+  </div>
+</main>
+</body>
+</html>

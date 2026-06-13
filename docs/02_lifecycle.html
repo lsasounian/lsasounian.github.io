@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lifecycle de Execução — Multi-Agent AWS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+  :root {
+    --bg:#0d1117;--surface:#161b22;--border:#21262d;
+    --accent:#3ecf8e;--accent2:#60d8b0;
+    --text:#c9d1d9;--muted:#6e7681;
+    --green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;
+    --sidebar-w:240px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;}
+  nav{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;overflow-y:auto;flex-shrink:0;}
+  .nav-back{display:block;padding:8px 20px 20px;color:var(--muted);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+  .nav-back:hover{color:var(--text);}
+  .nav-group{margin-bottom:20px;padding:0 20px;}
+  .nav-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .nav-group a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 0;}
+  .nav-group a:hover{color:var(--text);}
+  main{margin-left:var(--sidebar-w);max-width:860px;padding:64px 56px;width:100%;}
+  .doc-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .doc-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  h1{font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:#e6edf3;margin-bottom:12px;}
+  .doc-subtitle{font-size:17px;color:var(--muted);font-weight:300;max-width:600px;margin-bottom:40px;line-height:1.6;}
+  .doc-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
+  .section{margin-bottom:72px;}
+  .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  h2{font-size:24px;font-weight:600;color:#e6edf3;margin-bottom:16px;letter-spacing:-.01em;}
+  h3{font-size:18px;font-weight:600;color:#e6edf3;margin-bottom:12px;margin-top:36px;}
+  h4{font-size:14px;font-weight:600;color:var(--accent2);font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;margin-top:28px;}
+  p{color:var(--text);margin-bottom:16px;max-width:700px;line-height:1.75;}
+  .code-block{margin-bottom:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .code-header{background:#1c2128;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+  .code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;}
+  .code-filename{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);}
+  pre{background:#161b22;padding:24px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;margin:0;}
+  .cm{color:#6e7681;font-style:italic;}.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.cls{color:#ffa657;}.st{color:#a5d6ff;}.nb{color:#79c0ff;}.dc{color:#3fb950;}
+  .callout{border-left:3px solid var(--border);padding:16px 20px;margin-bottom:24px;border-radius:0 6px 6px 0;background:var(--surface);font-size:14px;line-height:1.65;}
+  .callout.why{border-left-color:var(--accent);}.callout.warn{border-left-color:var(--yellow);}.callout.tip{border-left-color:var(--green);}.callout.danger{border-left-color:var(--red);}
+  .callout-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+  .callout.why .callout-title{color:var(--accent);}.callout.warn .callout-title{color:var(--yellow);}.callout.tip .callout-title{color:var(--green);}.callout.danger .callout-title{color:var(--red);}
+  .callout p{color:var(--muted);margin:0;max-width:none;font-size:14px;}.callout strong{color:var(--text);}
+  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin-bottom:24px;color:var(--text);overflow-x:auto;}
+  .diagram .d-green{color:var(--green);}.diagram .d-red{color:var(--red);}.diagram .d-yellow{color:var(--yellow);}.diagram .d-blue{color:var(--blue);}.diagram .d-muted{color:var(--muted);}.diagram .d-accent{color:var(--accent);}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;font-family:'IBM Plex Mono',monospace;}
+  th{text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+  td{padding:10px 14px;border:1px solid var(--border);vertical-align:top;line-height:1.5;}
+  tr:hover td{background:#1c2128;}
+  code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;color:var(--accent2);}
+  .doc-footer{margin-top:80px;padding-top:32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="https://lsasounian.github.io/index.html" class="nav-back">← DevDocs</a>
+  <div class="nav-group">
+    <div class="nav-group-title">Contexto</div>
+    <a href="#problema">O problema</a>
+    <a href="#arquitetura">Arquitetura geral</a>
+    <a href="#redis-keys">Estrutura Redis</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Heartbeat</div>
+    <a href="#hb-conceito">Conceito e TTL</a>
+    <a href="#hb-impl">Implementação</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">OrphanScanner</div>
+    <a href="#scanner-conceito">Detecção</a>
+    <a href="#scanner-impl">Implementação</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Recovery</div>
+    <a href="#recovery-como">Como ainvoke(None) funciona</a>
+    <a href="#recovery-impl">RecoveryConsumer</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">DLQ</div>
+    <a href="#dlq-conceito">Dead-letter queue</a>
+    <a href="#dlq-impl">DLQManager</a>
+    <a href="#dlq-requeue">Requeue manual</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Infra</div>
+    <a href="#ecs-services">ECS Services</a>
+    <a href="#graceful">Graceful shutdown</a>
+    <a href="#testes">Testes</a>
+  </div>
+</nav>
+<main>
+  <div class="doc-eyebrow">Multi-Agent AWS · Produção</div>
+  <h1>Lifecycle de Execução</h1>
+  <p class="doc-subtitle">Do início de um thread LangGraph até sua conclusão — incluindo detecção de falha, retomada automática do checkpoint e dead-letter queue para threads irrecuperáveis.</p>
+  <div class="doc-tags">
+    <span class="tag">LangGraph</span><span class="tag">RedisSaver</span><span class="tag">Heartbeat</span>
+    <span class="tag">OrphanScanner</span><span class="tag">RecoveryConsumer</span><span class="tag">DLQ</span>
+    <span class="tag">ECS</span><span class="tag">SIGTERM</span>
+  </div>
+
+  <div class="section" id="problema">
+    <div class="section-eyebrow">Contexto</div>
+    <h2>O problema que o lifecycle resolve</h2>
+    <p>O LangGraph com RedisSaver persiste o estado do grafo no Redis a cada checkpoint. Isso resolve a durabilidade do estado — mas não resolve o problema de <em>orquestração</em>: quem sabe que um thread estava em execução quando o ECS task morreu? E quem retoma?</p>
+    <p>O ECS é efêmero por natureza — spot interruptions, deploys, OOM kills. Sem um mecanismo explícito de lifecycle, threads ficam em estado "zumbi": o checkpoint existe no Redis, mas nenhum processo sabe que precisa continuar.</p>
+    <div class="diagram">
+<span class="d-muted">Sem lifecycle:</span>
+Thread thread-123 está em execução na Task v1
+  └─► ECS mata o task (spot interruption)
+  └─► Checkpoint do node_a está no Redis ✓
+  └─► node_b estava executando — checkpoint parcial ou ausente ✗
+  └─► Nenhum processo sabe que thread-123 precisa ser retomado
+  └─► Thread fica "zumbi" — nem rodando, nem com erro explícito
+
+<span class="d-green">Com lifecycle:</span>
+Task morre → heartbeat expira em 30s
+  └─► OrphanScanner detecta ausência do heartbeat → enfileira
+  └─► RecoveryConsumer retoma: ainvoke(None, thread_id)
+  └─► LangGraph lê checkpoint → continua do último nó salvo
+    </div>
+  </div>
+
+  <div class="section" id="arquitetura">
+    <div class="section-eyebrow">Visão geral</div>
+    <h2>Arquitetura dos componentes</h2>
+    <p>O sistema é composto por quatro componentes que se comunicam exclusivamente via Redis. Nenhum componente fala diretamente com outro processo — o estado é o intermediário.</p>
+    <table>
+      <thead><tr><th>Componente</th><th>Responsabilidade</th><th>Loop</th><th>Onde roda</th></tr></thead>
+      <tbody>
+        <tr><td><strong>AgentHeartbeat</strong></td><td>Anuncia que o thread está vivo</td><td>a cada 10s</td><td>Dentro do Agent Task</td></tr>
+        <tr><td><strong>OrphanScanner</strong></td><td>Detecta threads sem heartbeat</td><td>a cada 20s</td><td>Recovery Worker (ECS)</td></tr>
+        <tr><td><strong>RecoveryConsumer</strong></td><td>Retoma grafos do checkpoint</td><td>BLPOP contínuo</td><td>Recovery Worker (ECS)</td></tr>
+        <tr><td><strong>DLQManager</strong></td><td>Gerencia falhas de recovery</td><td>sob demanda</td><td>Recovery Worker (ECS)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout why">
+      <div class="callout-title">Por que o Recovery Worker não fala com o Agent Task</div>
+      <p>É um equívoco imaginar que o worker precisaria "avisar" o agente. O processo morreu — não há como comunicar. O estado vive no Redis, não no processo. O Recovery Worker apenas lê o checkpoint e reexecuta o grafo — sem comunicação inter-processo. <strong>O ECS task morto é irrelevante para a retomada.</strong></p>
+    </div>
+  </div>
+
+  <div class="section" id="redis-keys">
+    <div class="section-eyebrow">Estrutura de dados</div>
+    <h2>Chaves Redis do lifecycle</h2>
+    <table>
+      <thead><tr><th>Chave</th><th>Tipo</th><th>TTL</th><th>Propósito</th></tr></thead>
+      <tbody>
+        <tr><td><code>threads:in_progress</code></td><td>SET</td><td>—</td><td>thread_ids iniciados e não finalizados</td></tr>
+        <tr><td><code>heartbeat:{thread_id}</code></td><td>STRING</td><td>30s</td><td>ECS task ID ativo. Expira se o processo morre.</td></tr>
+        <tr><td><code>recovery:queue</code></td><td>LIST</td><td>—</td><td>Fila principal. Máx 100 itens (QueueGuard).</td></tr>
+        <tr><td><code>recovery:attempts:{thread_id}</code></td><td>STRING</td><td>24h</td><td>Contador de tentativas de recovery.</td></tr>
+        <tr><td><code>recovery:dlq</code></td><td>LIST</td><td>—</td><td>Dead-letter queue — intervenção manual.</td></tr>
+        <tr><td><code>recovery:dlq:meta:{thread_id}</code></td><td>HASH</td><td>—</td><td>reason, error, attempts, failed_at.</td></tr>
+        <tr><td><code>lock:thread:{thread_id}</code></td><td>STRING</td><td>120s</td><td>Distributed lock — uma execução por thread.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout tip">
+      <div class="callout-title">TTL de 24h no contador de tentativas</div>
+      <p>O contador <code>recovery:attempts:{thread_id}</code> tem TTL de 24h. Isso evita que uma falha passada impeça recovery futura se o problema foi corrigido — o contador reseta automaticamente, sem intervenção manual.</p>
+    </div>
+  </div>
+
+  <div class="section" id="hb-conceito">
+    <div class="section-eyebrow">Componente 1</div>
+    <h2>Heartbeat</h2>
+    <p>O heartbeat é um mecanismo de <em>presença passiva</em>: o processo não precisa fazer nada além de renovar uma chave Redis com TTL curto. Se o processo morre, simplesmente para de renovar. O TTL faz o trabalho de expirar a chave.</p>
+    <div class="callout why">
+      <div class="callout-title">Por que TTL 30s e renovação a cada 10s</div>
+      <p>A janela de 3x entre renovação (10s) e TTL (30s) garante que flutuações de latência ou GC pauses não causem falsos positivos. Se o processo está vivo mas lento, o heartbeat ainda vai expirar dentro de 30s sem renovação. Se o processo morreu, a chave expira em no máximo 30s — janela máxima de invisibilidade de um órfão.</p>
+    </div>
+  </div>
+
+  <div class="section" id="hb-impl">
+    <h3>Implementação</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">agent_runner.py</span></div>
+      <pre><span class="kw">import</span> asyncio
+<span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+
+HEARTBEAT_TTL      = <span class="nb">30</span>   <span class="cm"># segundos — TTL da chave no Redis</span>
+HEARTBEAT_INTERVAL = <span class="nb">10</span>   <span class="cm"># segundos — frequência de renovação</span>
+
+
+<span class="kw">class</span> <span class="cls">AgentHeartbeat</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis: <span class="cls">aioredis.Redis</span>, thread_id: str, task_id: str):
+        self.redis     = redis
+        self.thread_id = thread_id
+        self.task_id   = task_id
+        self._key      = <span class="st">f"heartbeat:{thread_id}"</span>
+
+    <span class="kw">async def</span> <span class="fn">_beat</span>(self):
+        <span class="cm"># SETEX: SET + EX atômico.
+        # Valor = task_id (identifica qual ECS task está rodando o thread).
+        # Útil para debug: saber qual task foi responsável por um thread.</span>
+        <span class="kw">await</span> self.redis.setex(self._key, HEARTBEAT_TTL, self.task_id)
+
+    <span class="dc">@asynccontextmanager</span>
+    <span class="kw">async def</span> <span class="fn">running</span>(self):
+        <span class="cm"># Loop de heartbeat em background — roda enquanto o grafo executa.
+        # asyncio.create_task cria uma corrotina independente no mesmo event loop.</span>
+        <span class="kw">async def</span> <span class="fn">loop</span>():
+            <span class="kw">while True</span>:
+                <span class="kw">await</span> self._beat()
+                <span class="kw">await</span> asyncio.sleep(HEARTBEAT_INTERVAL)
+
+        task = asyncio.create_task(loop())
+        <span class="kw">try</span>:
+            <span class="kw">await</span> self._beat()  <span class="cm"># bate imediatamente — não espera 10s</span>
+            <span class="kw">yield</span>
+        <span class="kw">finally</span>:
+            task.cancel()
+            <span class="cm"># Limpa ao terminar normalmente — OrphanScanner não vai ver este thread</span>
+            <span class="kw">await</span> self.redis.delete(self._key)
+
+
+<span class="kw">async def</span> <span class="fn">run_agent</span>(thread_id: str, input: dict, ecs_task_id: str):
+    <span class="cm"># Registra no set de threads em andamento</span>
+    <span class="kw">await</span> redis.sadd(<span class="st">"threads:in_progress"</span>, thread_id)
+
+    heartbeat = AgentHeartbeat(redis, thread_id, ecs_task_id)
+
+    <span class="kw">async with</span> heartbeat.running():
+        result = <span class="kw">await</span> graph.ainvoke(
+            input,
+            config={<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: thread_id}},
+        )
+
+    <span class="cm"># Remove do set ao terminar normalmente</span>
+    <span class="kw">await</span> redis.srem(<span class="st">"threads:in_progress"</span>, thread_id)
+    <span class="kw">return</span> result</pre>
+    </div>
+  </div>
+
+  <div class="section" id="scanner-conceito">
+    <div class="section-eyebrow">Componente 2</div>
+    <h2>OrphanScanner</h2>
+    <p>O scanner varre periodicamente o set <code>threads:in_progress</code> e verifica se a chave de heartbeat existe para cada thread_id. A ausência do heartbeat — combinada com a presença no set — é a definição de órfão.</p>
+    <div class="callout warn">
+      <div class="callout-title">Falso positivo: thread terminou normalmente mas scan aconteceu antes da limpeza</div>
+      <p>Existe uma janela de race condition: o grafo terminou, <code>srem</code> ainda não executou, o scanner roda. O <code>RecoveryConsumer</code> trata isso verificando <code>state.next</code> antes de retomar — se o grafo está em estado terminal, simplesmente ignora e limpa o registro.</p>
+    </div>
+  </div>
+
+  <div class="section" id="scanner-impl">
+    <h3>Implementação</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">recovery_worker.py — OrphanScanner</span></div>
+      <pre><span class="kw">class</span> <span class="cls">OrphanScanner</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis: <span class="cls">aioredis.Redis</span>):
+        self.redis = redis
+
+    <span class="kw">async def</span> <span class="fn">scan_once</span>(self) -> list[str]:
+        <span class="cm"># SMEMBERS: retorna todos os thread_ids em andamento.
+        # Para conjuntos grandes, considere SSCAN com cursor para não bloquear o Redis.</span>
+        thread_ids: set[str] = <span class="kw">await</span> self.redis.smembers(<span class="st">"threads:in_progress"</span>)
+
+        <span class="kw">if not</span> thread_ids:
+            <span class="kw">return</span> []
+
+        orphans = []
+        <span class="kw">for</span> thread_id <span class="kw">in</span> thread_ids:
+            heartbeat_key = <span class="st">f"heartbeat:{thread_id}"</span>
+            alive = <span class="kw">await</span> self.redis.exists(heartbeat_key)
+            <span class="kw">if not</span> alive:
+                orphans.append(thread_id)
+
+        <span class="kw">return</span> orphans
+
+    <span class="kw">async def</span> <span class="fn">enqueue_orphans</span>(self, orphans: list[str], guard: <span class="cls">QueueGuard</span>) -> <span class="kw">None</span>:
+        <span class="kw">for</span> thread_id <span class="kw">in</span> orphans:
+            <span class="cm"># Verifica se já está na fila — idempotência do enqueue</span>
+            already = <span class="kw">await</span> self.redis.lpos(<span class="st">"recovery:queue"</span>, thread_id)
+            <span class="kw">if</span> already <span class="kw">is not None</span>:
+                logger.info(<span class="st">"Thread %s já na fila, pulando."</span>, thread_id)
+                <span class="kw">continue</span>
+
+            <span class="cm"># Remove do in_progress antes de enfileirar</span>
+            <span class="kw">await</span> self.redis.srem(<span class="st">"threads:in_progress"</span>, thread_id)
+            enqueued = <span class="kw">await</span> guard.safe_enqueue(thread_id)
+
+            <span class="kw">if</span> enqueued:
+                logger.warning(<span class="st">"Órfão enfileirado: %s"</span>, thread_id)
+            <span class="cm"># se não enfileirado: QueueGuard mandou para DLQ (fila cheia)</span>
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self, guard: <span class="cls">QueueGuard</span>) -> <span class="kw">None</span>:
+        logger.info(<span class="st">"OrphanScanner iniciado (intervalo=20s)"</span>)
+        <span class="kw">while True</span>:
+            <span class="kw">try</span>:
+                orphans = <span class="kw">await</span> self.scan_once()
+                <span class="kw">if</span> orphans:
+                    logger.info(<span class="st">"%d órfão(s): %s"</span>, len(orphans), orphans)
+                    <span class="kw">await</span> self.enqueue_orphans(orphans, guard)
+            <span class="kw">except</span> Exception:
+                logger.exception(<span class="st">"Erro no OrphanScanner"</span>)
+            <span class="kw">await</span> asyncio.sleep(<span class="nb">20</span>)</pre>
+    </div>
+  </div>
+
+  <div class="section" id="recovery-como">
+    <div class="section-eyebrow">Componente 3</div>
+    <h2>Como ainvoke(None) retoma o grafo</h2>
+    <p>Este é o mecanismo central do recovery e vale entender em profundidade. Quando <code>ainvoke</code> é chamado com <code>None</code> como input e um <code>thread_id</code> existente no config, o LangGraph não começa um novo grafo — ele lê o último checkpoint do RedisSaver e continua a partir dos nós pendentes (<code>state.next</code>).</p>
+    <div class="diagram">
+graph.ainvoke(None, config={"configurable": {"thread_id": "thread-123"}})
+  │
+  ▼
+RedisSaver.get(thread_id="thread-123")
+  └─► lê último checkpoint do Redis
+  └─► deserializa: state.values + state.next + state.metadata
+  │
+  ▼
+state.next = ("booking_agent",)  ← nós pendentes
+  │
+  ▼
+LangGraph executa apenas os nós em state.next
+  └─► booking_agent_node(state, config)
+  └─► salva novo checkpoint após cada nó
+  └─► atualiza state.next com os próximos nós
+  │
+  ▼
+state.next = ()  ← estado terminal
+  └─► ainvoke retorna o estado final
+    </div>
+    <div class="callout why">
+      <div class="callout-title">Por que o input é None e não o estado anterior</div>
+      <p>O estado já está no checkpoint — passar o estado como input seria redundante e potencialmente conflitante. <code>None</code> significa "use o estado do checkpoint, não adicione novo input". Se você passar um input não-None, o LangGraph vai <strong>mesclar</strong> com o estado existente — útil para retomadas com novo input do usuário, mas não para recovery transparente.</p>
+    </div>
+  </div>
+
+  <div class="section" id="recovery-impl">
+    <h3>RecoveryConsumer — implementação completa</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">recovery_worker.py — RecoveryConsumer</span></div>
+      <pre><span class="kw">class</span> <span class="cls">RecoveryConsumer</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis, graph, dlq: <span class="st">"DLQManager"</span>):
+        self.redis = redis
+        self.graph = graph
+        self.dlq   = dlq
+
+    <span class="kw">async def</span> <span class="fn">consume_one</span>(self, thread_id: str) -> <span class="kw">None</span>:
+        langgraph_config = {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: thread_id}}
+        logger.info(<span class="st">"Iniciando retomada: %s"</span>, thread_id)
+
+        <span class="kw">try</span>:
+            <span class="cm"># Lê o estado atual antes de retomar.
+            # Isso permite verificar se vale a pena tentar — evita timeout desnecessário.</span>
+            state = <span class="kw">await</span> self.graph.aget_state(langgraph_config)
+
+            <span class="kw">if not</span> state:
+                <span class="cm"># Checkpoint não existe — reenfileirar não vai resolver.
+                # Vai direto para DLQ sem gastar tentativas.</span>
+                <span class="kw">await</span> self.dlq.send_to_dlq(
+                    thread_id, reason=<span class="st">"no_checkpoint"</span>,
+                    error=<span class="st">"aget_state() retornou vazio — checkpoint ausente ou expirado"</span>,
+                )
+                <span class="kw">return</span>
+
+            <span class="kw">if not</span> state.next:
+                <span class="cm"># Estado terminal — provavelmente falso positivo do scanner.
+                # Limpa o contador de tentativas se existir.</span>
+                logger.info(<span class="st">"Thread %s em estado terminal. Ignorando."</span>, thread_id)
+                <span class="kw">await</span> self.redis.delete(<span class="st">f"recovery:attempts:{thread_id}"</span>)
+                <span class="kw">return</span>
+
+            logger.info(<span class="st">"Retomando %s nos nós: %s"</span>, thread_id, list(state.next))
+
+            <span class="cm"># wait_for garante que não ficamos presos além do timeout.
+            # Se exceder, lança asyncio.TimeoutError — tratado abaixo.</span>
+            <span class="kw">await</span> asyncio.wait_for(
+                self.graph.ainvoke(<span class="kw">None</span>, config=langgraph_config),
+                timeout=<span class="nb">120</span>,
+            )
+
+            <span class="cm"># Sucesso — limpa o contador de tentativas</span>
+            <span class="kw">await</span> self.redis.delete(<span class="st">f"recovery:attempts:{thread_id}"</span>)
+            logger.info(<span class="st">"Thread %s retomado com sucesso."</span>, thread_id)
+
+        <span class="kw">except</span> asyncio.TimeoutError:
+            <span class="kw">await</span> self.dlq.handle_failure(
+                thread_id, reason=<span class="st">"timeout"</span>,
+                error=<span class="st">"Execução excedeu 120s"</span>,
+            )
+        <span class="kw">except</span> Exception <span class="kw">as</span> exc:
+            <span class="kw">await</span> self.dlq.handle_failure(
+                thread_id, reason=<span class="st">"exception"</span>, error=str(exc),
+            )
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self) -> <span class="kw">None</span>:
+        logger.info(<span class="st">"RecoveryConsumer iniciado."</span>)
+        <span class="kw">while True</span>:
+            <span class="kw">try</span>:
+                <span class="cm"># BLPOP: bloqueia até ter item na fila.
+                # timeout=5 evita que fique travado para sempre — retorna None se timeout.
+                # Preferível a polling com sleep porque não desperdiça CPU.</span>
+                result = <span class="kw">await</span> self.redis.blpop(<span class="st">"recovery:queue"</span>, timeout=<span class="nb">5</span>)
+                <span class="kw">if</span> result <span class="kw">is None</span>:
+                    <span class="kw">continue</span>  <span class="cm"># fila vazia — volta ao início do loop</span>
+
+                _, thread_id = result  <span class="cm"># result = ("recovery:queue", "thread-123")</span>
+                <span class="kw">await</span> self.consume_one(thread_id)
+
+            <span class="kw">except</span> Exception:
+                logger.exception(<span class="st">"Erro no RecoveryConsumer.run()"</span>)
+                <span class="kw">await</span> asyncio.sleep(<span class="nb">1</span>)</pre>
+    </div>
+  </div>
+
+  <div class="section" id="dlq-conceito">
+    <div class="section-eyebrow">Componente 4</div>
+    <h2>Dead-Letter Queue</h2>
+    <p>Sem DLQ, um thread que falha consistentemente — checkpoint corrompido, nó com bug, API permanentemente down — reentra na fila indefinidamente. O sistema gasta recursos em algo que nunca vai funcionar, e o operador não tem visibilidade do problema.</p>
+    <p>O DLQManager mantém um contador de tentativas por thread_id com TTL de 24h. Após <code>MAX_ATTEMPTS</code> falhas, o thread vai para a DLQ com metadados completos para diagnóstico.</p>
+    <div class="callout why">
+      <div class="callout-title">Dois caminhos distintos para a DLQ</div>
+      <p><strong>handle_failure()</strong>: para erros recuperáveis (timeout, exception). Conta tentativas e decide entre reenfileirar ou DLQ. <strong>send_to_dlq() direto</strong>: para erros irrecuperáveis como checkpoint ausente. Reenfileirar não vai resolver — vai direto para DLQ sem gastar o contador.</p>
+    </div>
+  </div>
+
+  <div class="section" id="dlq-impl">
+    <h3>DLQManager — implementação</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">recovery_worker.py — DLQManager</span></div>
+      <pre><span class="kw">import</span> json
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+MAX_ATTEMPTS  = int(os.getenv(<span class="st">"RECOVERY_MAX_ATTEMPTS"</span>, <span class="st">"3"</span>))
+ATTEMPTS_TTL  = <span class="nb">60</span> * <span class="nb">60</span> * <span class="nb">24</span>  <span class="cm"># 24h — reseta automaticamente</span>
+
+
+<span class="kw">class</span> <span class="cls">DLQManager</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis):
+        self.redis = redis
+
+    <span class="kw">async def</span> <span class="fn">get_attempts</span>(self, thread_id: str) -> int:
+        val = <span class="kw">await</span> self.redis.get(<span class="st">f"recovery:attempts:{thread_id}"</span>)
+        <span class="kw">return</span> int(val) <span class="kw">if</span> val <span class="kw">else</span> <span class="nb">0</span>
+
+    <span class="kw">async def</span> <span class="fn">increment_attempts</span>(self, thread_id: str) -> int:
+        key      = <span class="st">f"recovery:attempts:{thread_id}"</span>
+        attempts = <span class="kw">await</span> self.redis.incr(key)
+        <span class="kw">if</span> attempts == <span class="nb">1</span>:
+            <span class="cm"># Primeira falha — define TTL para o contador não acumular para sempre.
+            # INCR não aceita EX — precisa de EXPIRE separado.</span>
+            <span class="kw">await</span> self.redis.expire(key, ATTEMPTS_TTL)
+        <span class="kw">return</span> attempts
+
+    <span class="kw">async def</span> <span class="fn">send_to_dlq</span>(self, thread_id: str, reason: str, error: str = <span class="st">""</span>) -> <span class="kw">None</span>:
+        attempts = <span class="kw">await</span> self.get_attempts(thread_id)
+        meta = {
+            <span class="st">"thread_id"</span>: thread_id,
+            <span class="st">"reason"</span>:    reason,
+            <span class="st">"error"</span>:     error[:<span class="nb">500</span>],  <span class="cm"># trunca para não poluir o Redis</span>
+            <span class="st">"attempts"</span>:  str(attempts),
+            <span class="st">"failed_at"</span>: datetime.now(timezone.utc).isoformat(),
+        }
+        pipe = self.redis.pipeline()
+        pipe.rpush(<span class="st">"recovery:dlq"</span>, thread_id)
+        pipe.hset(<span class="st">f"recovery:dlq:meta:{thread_id}"</span>, mapping=meta)
+        pipe.delete(<span class="st">f"recovery:attempts:{thread_id}"</span>)
+        <span class="kw">await</span> pipe.execute()
+
+        logger.error(<span class="st">"Thread %s → DLQ após %d tentativas. reason=%s error=%s"</span>,
+                     thread_id, attempts, reason, error[:<span class="nb">200</span>])
+
+    <span class="kw">async def</span> <span class="fn">handle_failure</span>(self, thread_id: str, reason: str, error: str = <span class="st">""</span>) -> <span class="kw">None</span>:
+        <span class="st">"""Ponto central de decisão após falha de recovery."""</span>
+        attempts  = <span class="kw">await</span> self.increment_attempts(thread_id)
+        remaining = MAX_ATTEMPTS - attempts
+
+        <span class="kw">if</span> attempts >= MAX_ATTEMPTS:
+            <span class="kw">await</span> self.send_to_dlq(thread_id, reason=reason, error=error)
+        <span class="kw">else</span>:
+            logger.warning(<span class="st">"Thread %s falhou (tentativa %d/%d). %d restante(s)."</span>,
+                           thread_id, attempts, MAX_ATTEMPTS, remaining)
+            <span class="kw">await</span> self.redis.rpush(<span class="st">"recovery:queue"</span>, thread_id)
+
+    <span class="kw">async def</span> <span class="fn">list_dlq</span>(self) -> list[dict]:
+        <span class="st">"""Retorna todos os itens da DLQ com metadados. Para inspeção/dashboards."""</span>
+        thread_ids = <span class="kw">await</span> self.redis.lrange(<span class="st">"recovery:dlq"</span>, <span class="nb">0</span>, <span class="nb">-1</span>)
+        result = []
+        <span class="kw">for</span> tid <span class="kw">in</span> thread_ids:
+            meta = <span class="kw">await</span> self.redis.hgetall(<span class="st">f"recovery:dlq:meta:{tid}"</span>)
+            result.append(meta <span class="kw">or</span> {<span class="st">"thread_id"</span>: tid})
+        <span class="kw">return</span> result</pre>
+    </div>
+  </div>
+
+  <div class="section" id="dlq-requeue">
+    <h3>Requeue manual da DLQ</h3>
+    <p>Após identificar e corrigir o problema que causou as falhas — bug no nó, API externa down, schema incompatível — o operador pode mover threads de volta para a fila principal.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">recovery_worker.py — DLQManager.requeue_from_dlq</span></div>
+      <pre><span class="kw">async def</span> <span class="fn">requeue_from_dlq</span>(self, thread_id: str) -> bool:
+    <span class="st">"""Remove da DLQ e reenfileira para nova tentativa.
+    Use após corrigir o problema — o contador é resetado."""</span>
+    pos = <span class="kw">await</span> self.redis.lpos(<span class="st">"recovery:dlq"</span>, thread_id)
+    <span class="kw">if</span> pos <span class="kw">is None</span>:
+        logger.warning(<span class="st">"Thread %s não encontrado na DLQ."</span>, thread_id)
+        <span class="kw">return False</span>
+
+    <span class="cm"># Pipeline atômico: remove da DLQ, limpa meta, reseta contador, reenfileira</span>
+    pipe = self.redis.pipeline()
+    pipe.lrem(<span class="st">"recovery:dlq"</span>, <span class="nb">1</span>, thread_id)
+    pipe.delete(<span class="st">f"recovery:dlq:meta:{thread_id}"</span>)
+    pipe.delete(<span class="st">f"recovery:attempts:{thread_id}"</span>)
+    pipe.rpush(<span class="st">"recovery:queue"</span>, thread_id)
+    <span class="kw">await</span> pipe.execute()
+
+    logger.info(<span class="st">"Thread %s removido da DLQ e reenfileirado."</span>, thread_id)
+    <span class="kw">return True</span></pre>
+    </div>
+  </div>
+
+  <div class="section" id="ecs-services">
+    <div class="section-eyebrow">Infraestrutura</div>
+    <h2>ECS Services — dois serviços, uma imagem</h2>
+    <p>O Recovery Worker roda como um ECS Service separado com <code>desired_count=1</code>. Colocar o scanner e o consumer no mesmo container do agente não resolve — se o container morre, o worker morre junto e não pode recuperar a si mesmo.</p>
+    <p>Mesma imagem Docker, entrypoint diferente via <code>command</code> no task definition:</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/ecs.tf</span></div>
+      <pre><span class="cm"># Agent Service — escala horizontal conforme demanda</span>
+resource <span class="st">"aws_ecs_service"</span> <span class="st">"agent"</span> {
+  name          = <span class="st">"booking-agent"</span>
+  desired_count = <span class="nb">3</span>
+  <span class="cm"># task definition define: command = ["python", "app.py"]</span>
+}
+
+<span class="cm"># Recovery Worker — desired_count=1: um scanner, um consumer, um monitor</span>
+resource <span class="st">"aws_ecs_service"</span> <span class="st">"recovery"</span> {
+  name          = <span class="st">"recovery-worker"</span>
+  desired_count = <span class="nb">1</span>
+  <span class="cm"># task definition define: command = ["python", "recovery_worker.py"]
+  # Mesma imagem — comportamento diferente pelo entrypoint</span>
+}
+
+<span class="cm"># Task definition do recovery worker</span>
+container_definitions = jsonencode([{
+  name    = <span class="st">"recovery-worker"</span>
+  image   = <span class="st">"${aws_ecr_repository.app.repository_url}:latest"</span>
+  command = [<span class="st">"python"</span>, <span class="st">"recovery_worker.py"</span>]
+  environment = [
+    { name = <span class="st">"REDIS_URL"</span>,               value = var.redis_url },
+    { name = <span class="st">"RECOVERY_MAX_ATTEMPTS"</span>,   value = <span class="st">"3"</span> },
+    { name = <span class="st">"RECOVERY_QUEUE_MAX_SIZE"</span>, value = <span class="st">"100"</span> },
+  ]
+}])</pre>
+    </div>
+  </div>
+
+  <div class="section" id="graceful">
+    <h3>Graceful shutdown — respeitando o SIGTERM</h3>
+    <p>O ECS envia SIGTERM antes de matar o container. O agente precisa honrar esse sinal: parar de aceitar novos requests e aguardar os requests em andamento terminarem. Sem isso, threads são interrompidos no meio — exatamente o problema que o lifecycle resolve.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">app.py — lifespan</span></div>
+      <pre><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+
+_active_tasks: set[asyncio.Task] = set()
+_shutting_down = <span class="kw">False</span>
+
+
+<span class="dc">@asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: <span class="cls">FastAPI</span>):
+    <span class="kw">yield</span>
+    <span class="cm"># Shutdown: recusa novos requests e aguarda tasks ativas.
+    # ECS dá stop_timeout segundos antes do SIGKILL — configurado em 120s.</span>
+    <span class="kw">global</span> _shutting_down
+    _shutting_down = <span class="kw">True</span>
+
+    <span class="kw">if</span> _active_tasks:
+        logger.info(<span class="st">"Aguardando %d task(s) ativas..."</span>, len(_active_tasks))
+        <span class="cm"># timeout=25 deixa margem para overhead do shutdown</span>
+        <span class="kw">await</span> asyncio.wait(_active_tasks, timeout=<span class="nb">25.0</span>)
+
+    logger.info(<span class="st">"Shutdown completo."</span>)
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+<span class="dc">@app</span>.post(<span class="st">"/agents/invoke"</span>)
+<span class="kw">async def</span> <span class="fn">invoke</span>(body: <span class="cls">InvokeRequest</span>):
+    <span class="kw">if</span> _shutting_down:
+        <span class="kw">raise</span> HTTPException(status_code=<span class="nb">503</span>, detail=<span class="st">"Serviço em manutenção."</span>)
+
+    task = asyncio.current_task()
+    _active_tasks.add(task)
+    <span class="kw">try</span>:
+        <span class="kw">return await</span> run_agent(body.thread_id, body.input, ecs_task_id)
+    <span class="kw">finally</span>:
+        _active_tasks.discard(task)</pre>
+    </div>
+  </div>
+
+  <div class="section" id="testes">
+    <div class="section-eyebrow">Testabilidade</div>
+    <h2>Testes do Recovery Worker</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/integration/test_recovery.py</span></div>
+      <pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock
+<span class="kw">import</span> fakeredis.aioredis <span class="kw">as</span> fakeredis
+<span class="kw">from</span> recovery_worker <span class="kw">import</span> OrphanScanner, RecoveryConsumer, DLQManager, QueueGuard
+
+
+<span class="dc">@pytest</span>.fixture
+<span class="kw">def</span> <span class="fn">redis</span>():
+    <span class="kw">return</span> fakeredis.FakeRedis(decode_responses=<span class="kw">True</span>)
+
+<span class="dc">@pytest</span>.fixture
+<span class="kw">def</span> <span class="fn">dlq</span>(redis): <span class="kw">return</span> DLQManager(redis)
+
+<span class="dc">@pytest</span>.fixture
+<span class="kw">def</span> <span class="fn">guard</span>(redis, dlq): <span class="kw">return</span> QueueGuard(redis, dlq)
+
+
+<span class="dc">@pytest</span>.mark.asyncio
+<span class="kw">async def</span> <span class="fn">test_scanner_detects_orphan</span>(redis):
+    <span class="cm"># Thread em andamento sem heartbeat → órfão</span>
+    <span class="kw">await</span> redis.sadd(<span class="st">"threads:in_progress"</span>, <span class="st">"thread-001"</span>)
+    scanner = OrphanScanner(redis)
+    orphans = <span class="kw">await</span> scanner.scan_once()
+    <span class="kw">assert</span> <span class="st">"thread-001"</span> <span class="kw">in</span> orphans
+
+
+<span class="dc">@pytest</span>.mark.asyncio
+<span class="kw">async def</span> <span class="fn">test_scanner_ignores_alive_thread</span>(redis):
+    <span class="cm"># Thread com heartbeat ativo → não é órfão</span>
+    <span class="kw">await</span> redis.sadd(<span class="st">"threads:in_progress"</span>, <span class="st">"thread-002"</span>)
+    <span class="kw">await</span> redis.setex(<span class="st">"heartbeat:thread-002"</span>, <span class="nb">30</span>, <span class="st">"task-xyz"</span>)
+    scanner = OrphanScanner(redis)
+    orphans = <span class="kw">await</span> scanner.scan_once()
+    <span class="kw">assert</span> <span class="st">"thread-002"</span> <span class="kw">not in</span> orphans
+
+
+<span class="dc">@pytest</span>.mark.asyncio
+<span class="kw">async def</span> <span class="fn">test_dlq_after_max_attempts</span>(redis, dlq):
+    <span class="kw">for</span> i <span class="kw">in</span> range(<span class="nb">3</span>):  <span class="cm"># MAX_ATTEMPTS = 3</span>
+        <span class="kw">await</span> dlq.handle_failure(<span class="st">"thread-003"</span>, reason=<span class="st">"exception"</span>, error=<span class="st">f"erro {i}"</span>)
+
+    dlq_items = <span class="kw">await</span> redis.lrange(<span class="st">"recovery:dlq"</span>, <span class="nb">0</span>, <span class="nb">-1</span>)
+    <span class="kw">assert</span> <span class="st">"thread-003"</span> <span class="kw">in</span> dlq_items
+    meta = <span class="kw">await</span> redis.hgetall(<span class="st">"recovery:dlq:meta:thread-003"</span>)
+    <span class="kw">assert</span> meta[<span class="st">"reason"</span>] == <span class="st">"exception"</span>
+    <span class="kw">assert</span> meta[<span class="st">"attempts"</span>] == <span class="st">"3"</span>
+
+
+<span class="dc">@pytest</span>.mark.asyncio
+<span class="kw">async def</span> <span class="fn">test_consumer_clears_attempts_on_success</span>(redis, dlq):
+    <span class="kw">await</span> dlq.increment_attempts(<span class="st">"thread-004"</span>)  <span class="cm"># simula falha anterior</span>
+
+    mock_graph = MagicMock()
+    mock_graph.aget_state = AsyncMock(return_value=MagicMock(
+        next=(<span class="st">"node_b"</span>,),
+        values={<span class="st">"destination"</span>: <span class="st">"Lisboa"</span>},
+    ))
+    mock_graph.ainvoke = AsyncMock(return_value={<span class="st">"result"</span>: <span class="st">"ok"</span>})
+
+    consumer = RecoveryConsumer(redis, mock_graph, dlq)
+    <span class="kw">await</span> consumer.consume_one(<span class="st">"thread-004"</span>)
+
+    <span class="cm"># Após sucesso, contador de tentativas deve ser limpo</span>
+    attempts = <span class="kw">await</span> dlq.get_attempts(<span class="st">"thread-004"</span>)
+    <span class="kw">assert</span> attempts == <span class="nb">0</span>
+    mock_graph.ainvoke.assert_called_once_with(
+        <span class="kw">None</span>, config={<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"thread-004"</span>}}
+    )</pre>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>DevDocs · Multi-Agent AWS</span>
+    <span>Lifecycle de Execução · Jun 2026</span>
+  </div>
+</main>
+</body>
+</html>
