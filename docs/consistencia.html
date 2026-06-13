@@ -4,94 +4,71 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Consistência de Estado — Multi-Agent AWS</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
-  :root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--accent:#a06af0;--accent2:#c090f8;--text:#c9d1d9;--muted:#6e7681;--green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--sidebar-w:240px;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;}
-  nav{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;overflow-y:auto;flex-shrink:0;}
-  .nav-back{display:block;padding:8px 20px 20px;color:var(--muted);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
-  .nav-back:hover{color:var(--text);}
-  .nav-group{margin-bottom:20px;padding:0 20px;}
-  .nav-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  .nav-group a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 0;}
-  .nav-group a:hover{color:var(--text);}
-  main{margin-left:var(--sidebar-w);max-width:860px;padding:64px 56px;width:100%;}
-  .doc-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-  .doc-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);}
-  h1{font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:#e6edf3;margin-bottom:12px;}
-  .doc-subtitle{font-size:17px;color:var(--muted);font-weight:300;max-width:600px;margin-bottom:40px;line-height:1.6;}
-  .doc-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
-  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
-  .section{margin-bottom:72px;}
-  .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  h2{font-size:24px;font-weight:600;color:#e6edf3;margin-bottom:16px;letter-spacing:-.01em;}
-  h3{font-size:18px;font-weight:600;color:#e6edf3;margin-bottom:12px;margin-top:40px;}
-  p{color:var(--text);margin-bottom:16px;max-width:700px;line-height:1.75;}
-  .code-block{margin-bottom:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
-  .code-header{background:#1c2128;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
-  .code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;}
-  .code-filename{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);}
-  pre{background:#161b22;padding:24px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;margin:0;}
-  .cm{color:#6e7681;font-style:italic;}.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.cls{color:#ffa657;}.st{color:#a5d6ff;}.nb{color:#79c0ff;}.dc{color:#3fb950;}
-  .callout{border-left:3px solid var(--border);padding:20px 24px;margin:24px 0;border-radius:0 6px 6px 0;background:var(--surface);font-size:14px;line-height:1.7;}
-  .callout.why{border-left-color:var(--accent);}.callout.warn{border-left-color:var(--yellow);}.callout.tip{border-left-color:var(--green);}.callout.danger{border-left-color:var(--red);}
-  .callout-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
-  .callout.why .callout-title{color:var(--accent);}.callout.warn .callout-title{color:var(--yellow);}.callout.tip .callout-title{color:var(--green);}.callout.danger .callout-title{color:var(--red);}
-  .callout p{color:var(--muted);margin-bottom:10px;max-width:none;font-size:14px;}.callout p:last-child{margin-bottom:0;}.callout strong{color:var(--text);}
-  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin:24px 0;color:var(--text);overflow-x:auto;}
-  .d-green{color:var(--green);}.d-red{color:var(--red);}.d-yellow{color:var(--yellow);}.d-muted{color:var(--muted);}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin:24px 0;font-family:'IBM Plex Mono',monospace;}
-  th{text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
-  td{padding:10px 14px;border:1px solid var(--border);vertical-align:top;line-height:1.6;}
-  tr:hover td{background:#1c2128;}
-  code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;color:var(--accent2);}
-  .doc-footer{margin-top:80px;padding-top:32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
+:root { --accent: var(--purple); --accent-dim: var(--purple-dim); }
+
+.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.callout.purple .callout-label { color: var(--purple); }
+.callout.green .callout-label  { color: var(--green); }
+.callout.warn .callout-label   { color: var(--amber); }
+.callout.danger .callout-label { color: var(--red); }
+.callout.blue .callout-label   { color: var(--blue); }
+
+.code-filename { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
-<nav>
-  <a href="https://lsasounian.github.io/index.html" class="nav-back">← DevDocs</a>
-  <div class="nav-group">
-    <div class="nav-group-title">Contexto</div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<aside class="sidebar">
+  <a href="../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">03</span>
+    <span class="doc-title">Consistência de Estado</span>
+  </a>
+  <nav>
+    <div class="nav-section">Contexto</div>
     <a href="#tres-problemas">Três problemas distintos</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Distributed Lock</div>
+
+    <div class="nav-section">Distributed Lock</div>
     <a href="#lock-race">A race condition</a>
     <a href="#lock-impl">SET NX e Lua script</a>
     <a href="#lock-renovacao">Renovação para execuções longas</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Idempotência</div>
+
+    <div class="nav-section">Idempotência</div>
     <a href="#idem-checkpoint">O que o checkpoint não garante</a>
     <a href="#idem-key">Geração da chave</a>
     <a href="#idem-impl">Decorator</a>
     <a href="#idem-duas-camadas">Duas camadas</a>
     <a href="#idem-quais">Quais nós precisam</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Schema Versioning</div>
+
+    <div class="nav-section">Schema Versioning</div>
     <a href="#schema-problema">Checkpoint incompatível</a>
     <a href="#schema-estrategias">Estratégias</a>
     <a href="#schema-migration">Migration chain</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Referência</div>
+
+    <div class="nav-section">Referência</div>
     <a href="#testes">Testes</a>
-  </div>
-</nav>
-<main>
-  <div class="doc-eyebrow">Multi-Agent AWS · Produção</div>
-  <h1>Consistência de Estado</h1>
-  <p class="doc-subtitle">Três problemas distintos que surgem quando múltiplas instâncias competem pelo mesmo thread, quando o código evolui mas os checkpoints não, e quando efeitos externos precisam ser protegidos contra reexecução.</p>
-  <div class="doc-tags">
-    <span class="tag">Distributed Lock</span><span class="tag">Idempotência</span>
-    <span class="tag">Schema Migration</span><span class="tag">Redis SET NX</span><span class="tag">Lua Script</span>
+  </nav>
+</aside>
+
+<div class="main">
+<div class="wrapper">
+
+  <div class="doc-header">
+    <div class="doc-num">Multi-Agent Production System · Consistência</div>
+    <h1>Consistência de <em>Estado</em></h1>
+    <p class="doc-lead">Três problemas distintos que surgem quando múltiplas instâncias competem pelo mesmo thread, quando o código evolui mas os checkpoints não, e quando efeitos externos precisam ser protegidos contra reexecução.</p>
+    <div class="tags">
+      <span class="tag">Distributed Lock</span><span class="tag">Idempotência</span>
+      <span class="tag">Schema Migration</span><span class="tag">Redis SET NX</span><span class="tag">Lua Script</span>
+    </div>
   </div>
 
-  <div class="section" id="tres-problemas">
-    <div class="section-eyebrow">Contexto</div>
+  <section class="section" id="tres-problemas">
+    <div class="section-label">Contexto</div>
     <h2>Três problemas com naturezas diferentes</h2>
 
     <p>Consistência de estado em LangGraph não é um problema único — são três problemas distintos que surgem em momentos diferentes do ciclo de vida do sistema.</p>
@@ -104,6 +81,7 @@
 
     <p>Cada problema exige um mecanismo diferente:</p>
 
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Problema</th><th>Quando ocorre</th><th>Solução</th></tr></thead>
       <tbody>
@@ -112,40 +90,49 @@
         <tr><td>Schema incompatível</td><td>Deploy com AgentState evoluído</td><td>schema_version + migration chain</td></tr>
       </tbody>
     </table>
-  </div>
+    </div>
+  </section>
 
-  <div class="section" id="lock-race">
-    <div class="section-eyebrow">Pilar 1</div>
+  <section class="section" id="lock-race">
+    <div class="section-label">Pilar 1</div>
     <h2>Distributed Lock</h2>
 
     <p>O RedisSaver não tem locking nativo. Ele é um checkpointer — salva e lê estado, sem se preocupar com concorrência. Se dois requests chegam com o mesmo <code>thread_id</code> e ambos tentam executar ao mesmo tempo, os dois vão ler o mesmo checkpoint, os dois vão executar nós em paralelo partindo do mesmo estado, e o resultado final vai depender de qual termina por último e escreve o checkpoint. O trabalho do primeiro é silenciosamente descartado.</p>
 
     <p>O sintoma em produção é sutil: o grafo produz resultados incorretos sem erro explícito. Você vai ver no log que ambas as execuções terminaram com sucesso, mas o estado final não reflete os dois — apenas o último.</p>
 
-    <div class="callout why">
-      <div class="callout-title">Por que asyncio.Lock não resolve — e o erro seria completamente silencioso</div>
+    <div class="callout purple">
+      <div class="callout-label">Por que asyncio.Lock não resolve — e o erro seria completamente silencioso</div>
       <p><code>asyncio.Lock</code> existe apenas na memória do processo. Em produção com 3 ECS tasks do agente, cada task tem seu próprio <code>asyncio.Lock</code> — são locks completamente independentes que não se comunicam. Request A vai para Task 1, adquire o lock. Request B vai para Task 2, também adquire o lock — Task 2 não sabe que Task 1 tem o lock. Ambos executam em paralelo e corrompem o estado.</p>
       <p>O erro é silencioso porque ambas as tasks acreditam que têm exclusividade. Não há exceção, não há log de conflito — apenas um resultado incorreto difícil de reproduzir porque depende de timing. <strong>Redis SET NX é a única forma de ter um lock genuinamente distribuído</strong> entre múltiplos processos que compartilham o mesmo Redis.</p>
     </div>
+  </section>
 
-    <h3 id="lock-impl">SET NX e Lua script para check-and-delete atômico</h3>
+  <section class="section" id="lock-impl">
+    <h3>SET NX e Lua script para check-and-delete atômico</h3>
 
     <p>O lock usa dois mecanismos Redis. <strong>SET NX EX</strong> para aquisição: cria a chave apenas se não existir, com TTL para evitar locks eternos em caso de crash. <strong>Lua script</strong> para liberação: verifica se o valor ainda é o nosso token antes de deletar.</p>
 
     <p>O Lua script na liberação resolve um problema sutil: sem ele, um processo poderia deletar o lock de outro. Imagine que o TTL expira enquanto o processo A ainda está executando. O processo B adquire o lock. O processo A termina e chama <code>DEL</code> sem verificar — deleta o lock do processo B. Processo C adquire o lock. Agora B e C estão executando em paralelo. O check-and-delete atômico via Lua garante que só quem adquiriu o lock pode liberá-lo.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">distributed_lock.py</span></div>
-      <pre><span class="kw">import</span> asyncio, uuid
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">distributed_lock.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> asyncio, uuid
 <span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
 <span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
 
 
-<span class="kw">class</span> <span class="cls">LockTimeoutError</span>(Exception): <span class="kw">pass</span>
+<span class="kw">class</span> <span class="tp">LockTimeoutError</span>(Exception): <span class="kw">pass</span>
 
 
-<span class="kw">class</span> <span class="cls">RedisThreadLock</span>:
-    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis: <span class="cls">aioredis.Redis</span>, ttl: int = <span class="nb">120</span>):
+<span class="kw">class</span> <span class="tp">RedisThreadLock</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis: <span class="tp">aioredis.Redis</span>, ttl: int = <span class="nb">120</span>):
         self.redis = redis
         self.ttl   = ttl
 
@@ -189,13 +176,19 @@
             <span class="kw">await</span> self.redis.eval(script, <span class="nb">1</span>, lock_key, lock_value)
 
 
-thread_lock = RedisThreadLock(redis, ttl=<span class="nb">120</span>)</pre>
+thread_lock = RedisThreadLock(redis, ttl=<span class="nb">120</span>)</code></pre>
     </div>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">app.py — uso do lock por endpoint</span></div>
-      <pre><span class="dc">@app</span>.post(<span class="st">"/agents/invoke"</span>)
-<span class="kw">async def</span> <span class="fn">invoke</span>(body: <span class="cls">InvokeRequest</span>):
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">app.py — uso do lock por endpoint</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="dc">@app</span>.post(<span class="st">"/agents/invoke"</span>)
+<span class="kw">async def</span> <span class="fn">invoke</span>(body: <span class="tp">InvokeRequest</span>):
     <span class="kw">try</span>:
         <span class="kw">async with</span> thread_lock.acquire(body.thread_id, timeout=<span class="nb">5.0</span>):
             <span class="kw">return await</span> run_agent(body.thread_id, body.input)
@@ -206,18 +199,26 @@ thread_lock = RedisThreadLock(redis, ttl=<span class="nb">120</span>)</pre>
         <span class="kw">raise</span> HTTPException(
             status_code=<span class="nb">409</span>,
             detail=<span class="st">"Este thread já está sendo processado. Tente em instantes."</span>
-        )</pre>
+        )</code></pre>
     </div>
+  </section>
 
-    <h3 id="lock-renovacao">Renovação automática para execuções longas</h3>
+  <section class="section" id="lock-renovacao">
+    <h3>Renovação automática para execuções longas</h3>
 
     <p>O TTL de 120s funciona bem para a maioria dos agentes. Mas se um agente pode levar mais tempo — processamento de documentos longos, por exemplo — o TTL expira antes da execução terminar. Outro processo adquire o lock enquanto o primeiro ainda está executando. O resultado é o mesmo que não ter lock.</p>
 
     <p>A solução é renovar o TTL periodicamente enquanto a execução está em andamento. A renovação usa metade do TTL como intervalo — se o TTL é 120s, renova a cada 60s. Isso garante uma margem de 60s para detectar uma falha de renovação antes que o lock expire.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">distributed_lock.py — renovação</span></div>
-      <pre><span class="dc">@asynccontextmanager</span>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">distributed_lock.py — renovação</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="dc">@asynccontextmanager</span>
 <span class="kw">async def</span> <span class="fn">acquire_with_renewal</span>(self, thread_id: str, timeout: float = <span class="nb">5.0</span>):
     lock_key   = <span class="st">f"lock:thread:{thread_id}"</span>
     lock_value = str(uuid.uuid4())
@@ -236,12 +237,12 @@ thread_lock = RedisThreadLock(redis, ttl=<span class="nb">120</span>)</pre>
         <span class="kw">yield</span>
     <span class="kw">finally</span>:
         renew_task.cancel()
-        <span class="kw">await</span> self._safe_release(lock_key, lock_value)</pre>
+        <span class="kw">await</span> self._safe_release(lock_key, lock_value)</code></pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="idem-checkpoint">
-    <div class="section-eyebrow">Pilar 2</div>
+  <section class="section" id="idem-checkpoint">
+    <div class="section-label">Pilar 2</div>
     <h2>Idempotência — o que o checkpoint não garante</h2>
 
     <p>Existe uma confusão comum: achar que o checkpoint do LangGraph garante que efeitos externos não serão duplicados. Não garante. O checkpoint salva o <em>estado do grafo</em> — as variáveis em memória — mas não sabe o que aconteceu no mundo externo.</p>
@@ -250,17 +251,25 @@ thread_lock = RedisThreadLock(redis, ttl=<span class="nb">120</span>)</pre>
 
     <p>O <code>@idempotent_node</code> resolve isso na camada do nó: antes de executar qualquer ação externa, verifica se já existe um resultado cacheado no Redis para aquele input específico. Se existir, retorna o resultado cacheado sem executar nada. A reserva já existe no sistema externo, e o grafo continua com o <code>booking_id</code> correto — sem duplicar.</p>
 
-    <div class="callout why">
-      <div class="callout-title">Por que key_fields e não o estado inteiro no hash</div>
+    <div class="callout purple">
+      <div class="callout-label">Por que key_fields e não o estado inteiro no hash</div>
       <p>A chave de idempotência é um hash do input do nó. A questão é: hash de quê exatamente? O estado LangGraph completo inclui o histórico de mensagens, que cresce a cada turno. Se você usa o estado inteiro, a mesma ação de reserva com os mesmos parâmetros em turnos diferentes vai gerar chaves diferentes — a proteção não funciona.</p>
       <p><strong><code>key_fields</code> define exatamente quais campos determinam a unicidade da ação</strong> — geralmente os parâmetros da chamada externa. Para <code>book_hotel</code>, o que torna uma reserva única é <code>hotel_id</code>, <code>checkin</code> e <code>checkout</code> — não o histórico completo da conversa. Usar apenas esses campos garante que a mesma reserva em qualquer contexto de conversa seja reconhecida como idempotente.</p>
     </div>
+  </section>
 
-    <h3 id="idem-key">Geração da chave</h3>
+  <section class="section" id="idem-key">
+    <h3>Geração da chave</h3>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">idempotency.py</span></div>
-      <pre><span class="kw">import</span> hashlib, json, logging
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">idempotency.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> hashlib, json, logging
 <span class="kw">from</span> functools <span class="kw">import</span> wraps
 <span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
 
@@ -274,15 +283,23 @@ IDEMPOTENCY_TTL = <span class="nb">60</span> * <span class="nb">60</span> * <spa
     # default=str: converte datetime, UUID e outros tipos não-serializáveis.</span>
     state_bytes = json.dumps(state, sort_keys=<span class="kw">True</span>, default=str).encode()
     state_hash  = hashlib.sha256(state_bytes).hexdigest()[:<span class="nb">16</span>]
-    <span class="kw">return</span> <span class="st">f"idempotency:{thread_id}:{node_name}:{state_hash}"</span></pre>
+    <span class="kw">return</span> <span class="st">f"idempotency:{thread_id}:{node_name}:{state_hash}"</span></code></pre>
     </div>
+  </section>
 
-    <h3 id="idem-impl">Decorator completo</h3>
+  <section class="section" id="idem-impl">
+    <h3>Decorator completo</h3>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">idempotency.py — decorator</span></div>
-      <pre><span class="kw">def</span> <span class="fn">idempotent_node</span>(
-    redis: <span class="cls">aioredis.Redis</span>,
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">idempotency.py — decorator</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">def</span> <span class="fn">idempotent_node</span>(
+    redis: <span class="tp">aioredis.Redis</span>,
     node_name: str,
     key_fields: list[str] | <span class="kw">None</span> = <span class="kw">None</span>,
     ttl: int = IDEMPOTENCY_TTL,
@@ -310,21 +327,29 @@ IDEMPOTENCY_TTL = <span class="nb">60</span> * <span class="nb">60</span> * <spa
             <span class="kw">await</span> redis.setex(key, ttl, json.dumps(result, default=str))
             <span class="kw">return</span> result
         <span class="kw">return</span> wrapper
-    <span class="kw">return</span> decorator</pre>
+    <span class="kw">return</span> decorator</code></pre>
     </div>
+  </section>
 
-    <h3 id="idem-duas-camadas">Duas camadas de proteção</h3>
+  <section class="section" id="idem-duas-camadas">
+    <h3>Duas camadas de proteção</h3>
 
     <p>O decorator protege o LangGraph — evita reexecutar a ação. Mas existe uma janela de race condition que o decorator não cobre: o request chega à API externa, ela processa, mas a resposta se perde antes de voltar. O decorator não salvou o resultado (nunca recebeu), mas a ação já aconteceu no sistema externo. Na próxima tentativa, o decorator tenta de novo — e a API processa de novo.</p>
 
     <p>A solução completa usa duas camadas: o decorator no LangGraph e um <code>idempotency_key</code> na chamada à API externa. Stripe, Adyen, Braintree e a maioria das APIs de pagamento modernas suportam esse padrão. Com as duas camadas, mesmo que a resposta se perca, a API externa reconhece o <code>idempotency_key</code> na próxima tentativa e retorna o resultado já processado sem duplicar.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">nodes.py — duas camadas de idempotência</span></div>
-      <pre><span class="dc">@traced_node</span>(<span class="st">"charge_card"</span>)
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">nodes.py — duas camadas de idempotência</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="dc">@traced_node</span>(<span class="st">"charge_card"</span>)
 <span class="dc">@idempotent_node</span>(redis, <span class="st">"charge_card"</span>,
     key_fields=[<span class="st">"booking_id"</span>, <span class="st">"amount"</span>, <span class="st">"currency"</span>])
-<span class="kw">async def</span> <span class="fn">charge_card_node</span>(state: <span class="cls">AgentState</span>, config: dict) -> dict:
+<span class="kw">async def</span> <span class="fn">charge_card_node</span>(state: <span class="tp">AgentState</span>, config: dict) -> dict:
     <span class="cm"># Camada 1: @idempotent_node verifica o cache Redis.
     # Se o resultado já foi salvo (execução anterior bem-sucedida),
     # retorna sem chamar a API — sem chance de duplicar.
@@ -338,11 +363,14 @@ IDEMPOTENCY_TTL = <span class="nb">60</span> * <span class="nb">60</span> * <spa
         currency=state[<span class="st">"currency"</span>],
         idempotency_key=<span class="st">f"{state['booking_id']}:{state['amount']}"</span>,
     )
-    <span class="kw">return</span> {<span class="st">"charge_id"</span>: charge.id, <span class="st">"payment_status"</span>: <span class="st">"paid"</span>}</pre>
+    <span class="kw">return</span> {<span class="st">"charge_id"</span>: charge.id, <span class="st">"payment_status"</span>: <span class="st">"paid"</span>}</code></pre>
     </div>
+  </section>
 
-    <h3 id="idem-quais">Quais nós precisam de idempotência</h3>
+  <section class="section" id="idem-quais">
+    <h3>Quais nós precisam de idempotência</h3>
 
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Tipo de nó</th><th>Precisa?</th><th>Motivo</th></tr></thead>
       <tbody>
@@ -355,10 +383,11 @@ IDEMPOTENCY_TTL = <span class="nb">60</span> * <span class="nb">60</span> * <spa
         <tr><td>Email / notificação push</td><td>Sim</td><td>Mensagem duplicada é visível ao usuário e prejudica confiança</td></tr>
       </tbody>
     </table>
-  </div>
+    </div>
+  </section>
 
-  <div class="section" id="schema-problema">
-    <div class="section-eyebrow">Pilar 3</div>
+  <section class="section" id="schema-problema">
+    <div class="section-label">Pilar 3</div>
     <h2>Versionamento de Schema</h2>
 
     <p>O LangGraph não tem migração nativa de checkpoints. Quando você evolui o <code>AgentState</code> — adiciona um campo, muda um tipo, renomeia uma chave — os checkpoints salvos no Redis continuam com o schema antigo. Quando o código novo tenta carregar um checkpoint antigo, o comportamento depende de como você acessa o campo ausente.</p>
@@ -366,11 +395,13 @@ IDEMPOTENCY_TTL = <span class="nb">60</span> * <span class="nb">60</span> * <spa
     <p>O pior cenário não é uma exceção visível — é um <code>None</code> silencioso. Se você adiciona o campo <code>budget: float</code> e um nó faz <code>state.get("budget", 0.0)</code>, o código vai funcionar com valor default em checkpoints antigos — mas o comportamento do agente vai ser diferente do esperado sem nenhum log de aviso. O bug só aparece quando você percebe que os agentes estão ignorando o orçamento do usuário.</p>
 
     <div class="callout danger">
-      <div class="callout-title">O sintoma mais insidioso: comportamento silenciosamente incorreto</div>
+      <div class="callout-label">O sintoma mais insidioso: comportamento silenciosamente incorreto</div>
       <p>Um campo ausente com <code>.get()</code> retorna <code>None</code> ou o default. O agente continua funcionando — só que com o comportamento errado. Não há exception, não há log de erro, não há alerta. Você só descobre quando o usuário reclama que o agente ignorou uma instrução ou o teste de negócio falha. Em produção com milhares de checkpoints antigos, isso pode afetar uma fração significativa das sessões ativas após um deploy.</p>
     </div>
+  </section>
 
-    <h3 id="schema-estrategias">Estratégias de migração</h3>
+  <section class="section" id="schema-estrategias">
+    <h3>Estratégias de migração</h3>
 
     <p>Existem três abordagens, cada uma com trade-offs diferentes:</p>
 
@@ -379,14 +410,22 @@ IDEMPOTENCY_TTL = <span class="nb">60</span> * <span class="nb">60</span> * <spa
     <p><strong>Campos opcionais</strong> (<code>budget: Optional[float] = None</code>): funciona para adições simples sem lógica de migração. O problema é que o código novo precisa lidar com <code>None</code> em todos os lugares que usam o campo — e é fácil esquecer um lugar. Não funciona para renomeações ou mudanças de tipo.</p>
 
     <p><strong>Migration chain com nó <code>__coerce__</code></strong>: é a abordagem mais robusta. Adiciona um campo <code>schema_version</code> ao estado e um nó de entrada que migra o estado progressivamente até a versão atual. Um checkpoint v1 passa por v1→v2→v3→v4 antes de qualquer nó de negócio executar.</p>
+  </section>
 
-    <h3 id="schema-migration">Migration chain — implementação</h3>
+  <section class="section" id="schema-migration">
+    <h3>Migration chain — implementação</h3>
 
     <p>O nó <code>__coerce__</code> é configurado como entry point do grafo. Cada vez que o grafo é invocado — novo request ou recovery — ele roda primeiro. Se o estado já está na versão atual, retorna sem modificação. Se está em uma versão anterior, aplica as migrations em sequência.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">migrations.py</span></div>
-      <pre><span class="kw">from</span> typing <span class="kw">import</span> Callable
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">migrations.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">from</span> typing <span class="kw">import</span> Callable
 
 <span class="cm"># Cada entrada: versão atual → função que produz a próxima versão.
 # Funções puras: recebem o estado antigo, retornam o novo com schema_version atualizado.</span>
@@ -409,12 +448,18 @@ CURRENT_VERSION = <span class="nb">4</span>
         state   = migration(state)
         version = state[<span class="st">"schema_version"</span>]
 
-    <span class="kw">return</span> state</pre>
+    <span class="kw">return</span> state</code></pre>
     </div>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">graph.py — __coerce__ como entry point</span></div>
-      <pre><span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, END
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">graph.py — __coerce__ como entry point</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, END
 <span class="kw">from</span> migrations <span class="kw">import</span> coerce_state
 
 <span class="kw">def</span> <span class="fn">build_graph</span>(checkpointer):
@@ -431,22 +476,28 @@ CURRENT_VERSION = <span class="nb">4</span>
     graph.set_entry_point(<span class="st">"__coerce__"</span>)
     graph.add_edge(<span class="st">"__coerce__"</span>, <span class="st">"router"</span>)
 
-    <span class="kw">return</span> graph.compile(checkpointer=checkpointer)</pre>
+    <span class="kw">return</span> graph.compile(checkpointer=checkpointer)</code></pre>
     </div>
 
-    <div class="callout tip">
-      <div class="callout-title">Quando é seguro remover código de migration antigo</div>
+    <div class="callout green">
+      <div class="callout-label">Quando é seguro remover código de migration antigo</div>
       <p>Remover uma entrada de MIGRATIONS significa que qualquer checkpoint com aquela versão vai lançar <code>ValueError</code>. Antes de remover, você precisa de garantia de que não existem mais checkpoints naquela versão no Redis. Na prática: configure o TTL dos checkpoints no RedisSaver para um período razoável (7-30 dias), aguarde esse período após o deploy da versão nova, e então remova as migrations obsoletas em um deploy subsequente. Se você usa o RedisSaver sem TTL configurado, faça um scan manual antes de remover.</p>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="testes">
-    <div class="section-eyebrow">Testabilidade</div>
+  <section class="section" id="testes">
+    <div class="section-label">Testabilidade</div>
     <h2>Testes de consistência</h2>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">tests/unit/test_consistencia.py</span></div>
-      <pre><span class="kw">import</span> pytest, asyncio
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">tests/unit/test_consistencia.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> pytest, asyncio
 <span class="kw">import</span> fakeredis.aioredis <span class="kw">as</span> fakeredis
 <span class="kw">from</span> idempotency <span class="kw">import</span> idempotent_node
 <span class="kw">from</span> migrations <span class="kw">import</span> coerce_state, CURRENT_VERSION
@@ -503,14 +554,44 @@ CURRENT_VERSION = <span class="nb">4</span>
     start_a = executed.index((<span class="st">"start"</span>, <span class="st">"A"</span>))
     end_a   = executed.index((<span class="st">"end"</span>,   <span class="st">"A"</span>))
     start_b = executed.index((<span class="st">"start"</span>, <span class="st">"B"</span>))
-    <span class="kw">assert</span> end_a < start_b <span class="kw">or</span> executed.index((<span class="st">"end"</span>, <span class="st">"B"</span>)) < start_a</pre>
+    <span class="kw">assert</span> end_a < start_b <span class="kw">or</span> executed.index((<span class="st">"end"</span>, <span class="st">"B"</span>)) < start_a</code></pre>
     </div>
-  </div>
+  </section>
+
+  <section class="section">
+    <div class="section-label">Leitura Complementar</div>
+    <div class="callout blue">
+      <div class="callout-label">Ver também</div>
+      <p>O lock distribuído via Redis SET NX, as chaves de idempotência cacheadas no Redis e os checkpoints versionados que sustentam o <code>__coerce__</code> dependem diretamente de como o RedisSaver está configurado em produção — para os detalhes de clustering, TTLs e tabelas DynamoDB que armazenam esse estado, veja <a href="04-memoria-redis-dynamo.html">Memória Redis &amp; DynamoDB</a>.</p>
+    </div>
+  </section>
 
   <div class="doc-footer">
-    <span>DevDocs · Multi-Agent AWS</span>
-    <span>Consistência de Estado · Jun 2026</span>
+    <a href="lifecycle.html">← Lifecycle de Execução</a>
+    <span>Consistência de Estado</span>
+    <a href="resiliencia.html">Próximo: Resiliência →</a>
   </div>
-</main>
+
+</div>
+</div>
+
+<script>
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
 </body>
 </html>

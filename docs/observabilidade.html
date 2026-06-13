@@ -4,98 +4,76 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Observabilidade — Multi-Agent AWS</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
-  :root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--accent:#58a6ff;--accent2:#90c8f8;--text:#c9d1d9;--muted:#6e7681;--green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--sidebar-w:240px;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;}
-  nav{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;overflow-y:auto;flex-shrink:0;}
-  .nav-back{display:block;padding:8px 20px 20px;color:var(--muted);text-decoration:none;font-family:'IBM Plex Mono',monospace;font-size:12px;border-bottom:1px solid var(--border);margin-bottom:16px;}
-  .nav-back:hover{color:var(--text);}
-  .nav-group{margin-bottom:20px;padding:0 20px;}
-  .nav-group-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  .nav-group a{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:4px 0;}
-  .nav-group a:hover{color:var(--text);}
-  main{margin-left:var(--sidebar-w);max-width:860px;padding:64px 56px;width:100%;}
-  .doc-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-  .doc-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);}
-  h1{font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:#e6edf3;margin-bottom:12px;}
-  .doc-subtitle{font-size:17px;color:var(--muted);font-weight:300;max-width:600px;margin-bottom:40px;line-height:1.6;}
-  .doc-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
-  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
-  .section{margin-bottom:72px;}
-  .section-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  h2{font-size:24px;font-weight:600;color:#e6edf3;margin-bottom:16px;letter-spacing:-.01em;}
-  h3{font-size:18px;font-weight:600;color:#e6edf3;margin-bottom:12px;margin-top:40px;}
-  p{color:var(--text);margin-bottom:16px;max-width:700px;line-height:1.75;}
-  .code-block{margin-bottom:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
-  .code-header{background:#1c2128;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
-  .code-lang{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;}
-  .code-filename{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);}
-  pre{background:#161b22;padding:24px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;margin:0;}
-  .cm{color:#6e7681;font-style:italic;}.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.cls{color:#ffa657;}.st{color:#a5d6ff;}.nb{color:#79c0ff;}.dc{color:#3fb950;}
-  .callout{border-left:3px solid var(--border);padding:20px 24px;margin:24px 0;border-radius:0 6px 6px 0;background:var(--surface);font-size:14px;line-height:1.7;}
-  .callout.why{border-left-color:var(--accent);}.callout.warn{border-left-color:var(--yellow);}.callout.tip{border-left-color:var(--green);}
-  .callout-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
-  .callout.why .callout-title{color:var(--accent);}.callout.warn .callout-title{color:var(--yellow);}.callout.tip .callout-title{color:var(--green);}
-  .callout p{color:var(--muted);margin-bottom:10px;max-width:none;font-size:14px;}.callout p:last-child{margin-bottom:0;}.callout strong{color:var(--text);}
-  .diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin:24px 0;color:var(--text);overflow-x:auto;}
-  .d-green{color:var(--green);}.d-red{color:var(--red);}.d-yellow{color:var(--yellow);}.d-muted{color:var(--muted);}.d-blue{color:var(--blue);}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin:24px 0;font-family:'IBM Plex Mono',monospace;}
-  th{text-align:left;padding:10px 14px;background:var(--surface);border:1px solid var(--border);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
-  td{padding:10px 14px;border:1px solid var(--border);vertical-align:top;line-height:1.6;}
-  tr:hover td{background:#1c2128;}
-  code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;color:var(--accent2);}
-  .doc-footer{margin-top:80px;padding-top:32px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
+:root { --accent: var(--purple); --accent-dim: var(--purple-dim); }
+
+.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.callout.purple .callout-label { color: var(--purple); }
+.callout.green .callout-label  { color: var(--green); }
+.callout.warn .callout-label   { color: var(--amber); }
+.callout.danger .callout-label { color: var(--red); }
+
+.code-filename { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+.d-green  { color: var(--green); }
+.d-red    { color: var(--red); }
 </style>
 </head>
 <body>
-<nav>
-  <a href="https://lsasounian.github.io/index.html" class="nav-back">← DevDocs</a>
-  <div class="nav-group">
-    <div class="nav-group-title">Contexto</div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<aside class="sidebar">
+  <a href="../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">05</span>
+    <span class="doc-title">Observabilidade Distribuída</span>
+  </a>
+  <nav>
+    <div class="nav-section">Contexto</div>
     <a href="#problema">O problema de visibilidade</a>
     <a href="#stack">Stack e como se conecta</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Setup</div>
+
+    <div class="nav-section">Setup</div>
     <a href="#tracer-provider">TracerProvider global</a>
     <a href="#instrumentacao-auto">Instrumentação automática</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Spans LangGraph</div>
+
+    <div class="nav-section">Spans LangGraph</div>
     <a href="#traced-node">Por que manual</a>
     <a href="#traced-node-impl">@traced_node</a>
     <a href="#composicao">Ordem dos decorators</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Propagação A2A</div>
+
+    <div class="nav-section">Propagação A2A</div>
     <a href="#w3c-conceito">W3C TraceContext</a>
     <a href="#inject-extract">inject e extract</a>
     <a href="#agente-b">Recebimento no Agente B</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Sampling</div>
+
+    <div class="nav-section">Sampling</div>
     <a href="#parent-based">ParentBased em multi-agent</a>
     <a href="#error-sampler">ErrorAwareSampler</a>
-  </div>
-  <div class="nav-group">
-    <div class="nav-group-title">Infra e métricas</div>
+
+    <div class="nav-section">Infra e métricas</div>
     <a href="#xray-sidecar">Sidecar X-Ray</a>
     <a href="#metricas">Logging estruturado</a>
-  </div>
-</nav>
-<main>
-  <div class="doc-eyebrow">Multi-Agent AWS · Produção</div>
-  <h1>Observabilidade Distribuída</h1>
-  <p class="doc-subtitle">Um trace_id único atravessando múltiplos agentes ECS — do request inicial até a última chamada A2A. OpenTelemetry com W3C TraceContext, spans por nó LangGraph, e X-Ray para visualização unificada.</p>
-  <div class="doc-tags">
-    <span class="tag">OpenTelemetry</span><span class="tag">AWS X-Ray</span><span class="tag">W3C TraceContext</span>
-    <span class="tag">OTLP gRPC</span><span class="tag">ParentBased</span><span class="tag">LangGraph spans</span>
+  </nav>
+</aside>
+
+<div class="main">
+<div class="wrapper">
+
+  <div class="doc-header">
+    <div class="doc-num">Multi-Agent Production System · Observabilidade</div>
+    <h1>Observabilidade <em>Distribuída</em></h1>
+    <p class="doc-lead">Um trace_id único atravessando múltiplos agentes ECS — do request inicial até a última chamada A2A. OpenTelemetry com W3C TraceContext, spans por nó LangGraph, e X-Ray para visualização unificada.</p>
+    <div class="tags">
+      <span class="tag">OpenTelemetry</span><span class="tag">AWS X-Ray</span><span class="tag">W3C TraceContext</span>
+      <span class="tag">OTLP gRPC</span><span class="tag">ParentBased</span><span class="tag">LangGraph spans</span>
+    </div>
   </div>
 
-  <div class="section" id="problema">
-    <div class="section-eyebrow">Contexto</div>
+  <section class="section" id="problema">
+    <div class="section-label">Contexto</div>
     <h2>O problema de visibilidade em multi-agent</h2>
 
     <p>Em um sistema single-agent, quando algo dá errado você vai nos logs do processo, encontra o erro, corrige. Em multi-agent com quatro agentes em ECS tasks diferentes, um request do usuário gera logs em quatro lugares distintos. Sem correlação entre eles, você sabe que algo deu errado mas não sabe onde na cadeia aconteceu, qual agente foi, ou qual nó específico do grafo LangGraph estava executando.</p>
@@ -103,7 +81,7 @@
     <p>O problema se torna ainda mais sutil com falhas intermitentes. Se o agente de busca às vezes demora mais do que o esperado, você precisa saber: é o nó de busca em si? É a chamada HTTP para a API de hotéis? É a latência de rede entre os agentes? Sem spans hierárquicos, você vê o tempo total mas não a distribuição interna.</p>
 
     <div class="diagram">
-<span class="d-red">Sem observabilidade distribuída:</span>
+<pre><span class="d-red">Sem observabilidade distribuída:</span>
 Usuário reclama: "minha reserva está demorando"
   └─► Log booking-agent: "request recebido às 14:00:00"
   └─► Log booking-agent: "request concluído às 14:00:28"
@@ -117,16 +95,17 @@ Trace: 1-abc123 (28.3s total)
        │    └─► HTTP GET api.hotels.com      12.1s  ← API externa lenta
        └─► [search-agent] A2A               15.8s  ← mesmo trace_id!
             └─► node.search_flights          15.5s
-                 └─► HTTP GET flights-api     15.2s
+                 └─► HTTP GET flights-api     15.2s</pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="stack">
-    <div class="section-eyebrow">Arquitetura</div>
+  <section class="section" id="stack">
+    <div class="section-label">Arquitetura</div>
     <h2>Stack e como as peças se conectam</h2>
 
     <p>O fluxo de dados é: código Python cria spans → OpenTelemetry SDK exporta via gRPC → X-Ray Daemon (sidecar) recebe e repassa → AWS X-Ray armazena e visualiza. A vantagem de ter o daemon como sidecar no mesmo ECS task é que não há configuração de rede — containers no mesmo task compartilham o namespace de rede e acessam <code>localhost:4317</code> diretamente.</p>
 
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Camada</th><th>Componente</th><th>Função</th></tr></thead>
       <tbody>
@@ -138,17 +117,24 @@ Trace: 1-abc123 (28.3s total)
         <tr><td>Propagação HTTP</td><td>HTTPXClientInstrumentor</td><td>Injeta traceparent em saídas httpx automaticamente</td></tr>
       </tbody>
     </table>
-  </div>
+    </div>
+  </section>
 
-  <div class="section" id="tracer-provider">
-    <div class="section-eyebrow">Setup</div>
+  <section class="section" id="tracer-provider">
+    <div class="section-label">Setup</div>
     <h2>TracerProvider — configuração global</h2>
 
     <p>O <code>TracerProvider</code> é configurado uma vez no startup e registrado globalmente. Todos os módulos importam o <code>tracer</code> global — nenhum instancia seu próprio provider. Isso garante que todos os spans do processo compartilham o mesmo exporter, o mesmo sampler e os mesmos atributos de resource.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">observability.py</span></div>
-      <pre><span class="kw">import</span> os
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">observability.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> os
 <span class="kw">from</span> opentelemetry <span class="kw">import</span> trace
 <span class="kw">from</span> opentelemetry.sdk.trace <span class="kw">import</span> TracerProvider
 <span class="kw">from</span> opentelemetry.sdk.trace.export <span class="kw">import</span> BatchSpanProcessor
@@ -180,16 +166,24 @@ SAMPLE_RATE   = float(os.getenv(<span class="st">"TRACE_SAMPLE_RATE"</span>, <sp
     <span class="kw">return</span> trace.get_tracer(SERVICE_NAME)
 
 
-tracer = setup_tracing()  <span class="cm"># tracer global — importado pelos outros módulos</span></pre>
+tracer = setup_tracing()  <span class="cm"># tracer global — importado pelos outros módulos</span></code></pre>
     </div>
+  </section>
 
-    <h3 id="instrumentacao-auto">Instrumentação automática do FastAPI e HTTPX</h3>
+  <section class="section" id="instrumentacao-auto">
+    <h3>Instrumentação automática do FastAPI e HTTPX</h3>
 
     <p>Com duas linhas no startup, todos os requests HTTP recebidos e todas as chamadas HTTP enviadas via httpx passam a ter spans automáticos com o contexto de trace correto. Isso significa que chamadas A2A via httpx já propagam o <code>traceparent</code> sem nenhum código adicional por request.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">app.py</span></div>
-      <pre><span class="kw">from</span> opentelemetry.instrumentation.fastapi <span class="kw">import</span> FastAPIInstrumentor
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">app.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">from</span> opentelemetry.instrumentation.fastapi <span class="kw">import</span> FastAPIInstrumentor
 <span class="kw">from</span> opentelemetry.instrumentation.httpx   <span class="kw">import</span> HTTPXClientInstrumentor
 
 app = FastAPI()
@@ -201,23 +195,31 @@ FastAPIInstrumentor.instrument_app(app)
 
 <span class="cm"># HTTPXClientInstrumentor: injeta traceparent em todas as saídas httpx.
 # Isso cobre automaticamente chamadas A2A — sem código adicional por endpoint.</span>
-HTTPXClientInstrumentor().instrument()</pre>
+HTTPXClientInstrumentor().instrument()</code></pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="traced-node">
-    <div class="section-eyebrow">Spans LangGraph</div>
+  <section class="section" id="traced-node">
+    <div class="section-label">Spans LangGraph</div>
     <h2>Por que a instrumentação de nós é manual</h2>
 
     <p>O LangGraph não tem instrumentação nativa de OpenTelemetry. Não existe hook de "antes/depois de cada nó" que você possa usar sem modificar a biblioteca. A solução é um decorator que envolve cada função de nó — criando um span filho no contexto do span pai do request HTTP.</p>
 
     <p>O contexto de span é herdado automaticamente em asyncio: quando o FastAPIInstrumentor cria um root span para o request, e dentro desse request o grafo LangGraph chama os nós, cada nó que usa <code>tracer.start_as_current_span()</code> herda o root span como pai. A hierarquia emerge do fluxo natural do código, sem precisar passar o contexto explicitamente entre funções.</p>
+  </section>
 
-    <h3 id="traced-node-impl">@traced_node</h3>
+  <section class="section" id="traced-node-impl">
+    <h3>@traced_node</h3>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">observability.py — traced_node</span></div>
-      <pre><span class="kw">from</span> functools <span class="kw">import</span> wraps
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">observability.py — traced_node</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">from</span> functools <span class="kw">import</span> wraps
 <span class="kw">from</span> opentelemetry.trace <span class="kw">import</span> SpanKind, Status, StatusCode
 
 
@@ -258,54 +260,70 @@ HTTPXClientInstrumentor().instrument()</pre>
                     span.set_status(Status(StatusCode.ERROR, str(exc)))
                     <span class="kw">raise</span>
         <span class="kw">return</span> wrapper
-    <span class="kw">return</span> decorator</pre>
+    <span class="kw">return</span> decorator</code></pre>
     </div>
+  </section>
 
-    <h3 id="composicao">Ordem dos decorators importa</h3>
+  <section class="section" id="composicao">
+    <h3>Ordem dos decorators importa</h3>
 
     <p>Quando você empilha <code>@traced_node</code>, <code>@idempotent_node</code> e outros decorators em um nó, a ordem define qual envolve qual. O decorator mais externo na declaração é o mais externo na execução — é ele que mede o tempo total.</p>
 
     <p><code>@traced_node</code> deve ficar por fora: assim o span captura o tempo total incluindo o check de idempotência. Se houver cache hit (o nó já executou antes), o span vai aparecer com duração próxima de zero — sinal visual imediato de que o resultado veio do cache.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">nodes.py</span></div>
-      <pre><span class="cm"># Ordem de execução (de fora para dentro na declaração):
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">nodes.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="cm"># Ordem de execução (de fora para dentro na declaração):
 # traced_node → idempotent_node → função real
 # O span cobre tudo — incluindo o check de cache do idempotent_node.</span>
 
 <span class="dc">@traced_node</span>(<span class="st">"book_hotel"</span>, attributes={<span class="st">"agent.capability"</span>: <span class="st">"booking"</span>})
 <span class="dc">@idempotent_node</span>(redis, <span class="st">"book_hotel"</span>, key_fields=[<span class="st">"hotel_id"</span>, <span class="st">"checkin"</span>])
-<span class="kw">async def</span> <span class="fn">book_hotel_node</span>(state: <span class="cls">AgentState</span>, config: dict) -> dict:
+<span class="kw">async def</span> <span class="fn">book_hotel_node</span>(state: <span class="tp">AgentState</span>, config: dict) -> dict:
     <span class="kw">return await</span> with_retry(
         hotel_api.create_booking, hotel_id=state[<span class="st">"hotel_id"</span>],
         config=RETRY_CONFIGS[<span class="st">"hotel_api"</span>],
         circuit_breaker=circuit_registry.get(<span class="st">"hotel_api"</span>),
         service_name=<span class="st">"hotel_api"</span>,
-    )</pre>
+    )</code></pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="w3c-conceito">
-    <div class="section-eyebrow">Propagação A2A</div>
+  <section class="section" id="w3c-conceito">
+    <div class="section-label">Propagação A2A</div>
     <h2>W3C TraceContext — um trace_id para toda a cadeia</h2>
 
     <p>O W3C TraceContext é um padrão que define o formato do header <code>traceparent</code> para propagar contexto de trace entre serviços. O formato é <code>00-{trace_id}-{span_id}-{flags}</code> onde <code>trace_id</code> é um identificador de 128 bits único para toda a cadeia de chamadas.</p>
 
     <p>Quando o Agente A chama o Agente B com esse header, o Agente B cria seus spans como filhos do span do Agente A — mesmo <code>trace_id</code>, <code>span_id</code> diferente. No X-Ray, isso aparece como uma árvore unificada: você vê todos os spans de todos os agentes em uma única visualização hierárquica, como se fosse um único processo.</p>
 
-    <div class="callout why">
-      <div class="callout-title">Por que W3C TraceContext e não o header nativo do X-Ray</div>
+    <div class="callout purple">
+      <div class="callout-label">Por que W3C TraceContext e não o header nativo do X-Ray</div>
       <p>O X-Ray tem seu próprio formato de header: <code>X-Amzn-Trace-Id</code>. O problema de usá-lo diretamente é o lock-in: se você quiser migrar de X-Ray para Grafana Tempo, Jaeger ou Zipkin no futuro, precisa mudar o código de propagação em todos os serviços. O W3C TraceContext é um padrão aberto suportado por todos esses sistemas.</p>
       <p>O OpenTelemetry SDK com OTLPSpanExporter faz a tradução automaticamente: você escreve código W3C, e o X-Ray Daemon recebe o formato que o X-Ray entende. A migração de backend de observabilidade vira uma mudança de configuração, não de código.</p>
     </div>
+  </section>
 
-    <h3 id="inject-extract">inject() e extract() — a mecânica da propagação</h3>
+  <section class="section" id="inject-extract">
+    <h3>inject() e extract() — a mecânica da propagação</h3>
 
     <p>O <code>HTTPXClientInstrumentor</code> faz o <code>inject()</code> automaticamente em saídas httpx. Mas em chamadas A2A onde você também precisa adicionar o JWT de autenticação e o budget de timeout, é útil entender o mecanismo para garantir que os headers não se sobrescrevam.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">a2a_client.py</span></div>
-      <pre><span class="kw">import</span> httpx
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">a2a_client.py</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">import</span> httpx
 <span class="kw">from</span> opentelemetry.propagate <span class="kw">import</span> inject
 <span class="kw">from</span> cascade_timeout <span class="kw">import</span> remaining_budget
 <span class="kw">from</span> token_manager <span class="kw">import</span> token_manager
@@ -328,22 +346,30 @@ HTTPXClientInstrumentor().instrument()</pre>
     <span class="kw">async with</span> httpx.AsyncClient(timeout=budget) <span class="kw">as</span> client:
         resp = <span class="kw">await</span> client.post(endpoint, json=payload, headers=headers)
         resp.raise_for_status()
-        <span class="kw">return</span> resp.json()</pre>
+        <span class="kw">return</span> resp.json()</code></pre>
     </div>
+  </section>
 
-    <h3 id="agente-b">Recebimento no Agente B</h3>
+  <section class="section" id="agente-b">
+    <h3>Recebimento no Agente B</h3>
 
     <p>O <code>FastAPIInstrumentor</code> faz o <code>extract()</code> automaticamente — o span raiz do Agente B já herda o <code>trace_id</code> do Agente A sem código adicional. Para visualizar explicitamente o que acontece:</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">app.py — Agente B</span></div>
-      <pre><span class="kw">from</span> opentelemetry.propagate <span class="kw">import</span> extract
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">app.py — Agente B</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">from</span> opentelemetry.propagate <span class="kw">import</span> extract
 <span class="kw">from</span> opentelemetry.trace <span class="kw">import</span> SpanKind
 
 <span class="cm"># FastAPIInstrumentor faz isso automaticamente.
 # Mostrado aqui para clareza sobre o mecanismo interno:</span>
 <span class="dc">@app</span>.post(<span class="st">"/search/invoke"</span>)
-<span class="kw">async def</span> <span class="fn">search_invoke</span>(request: <span class="cls">Request</span>, body: <span class="cls">SearchRequest</span>,
+<span class="kw">async def</span> <span class="fn">search_invoke</span>(request: <span class="tp">Request</span>, body: <span class="tp">SearchRequest</span>,
                          claims=Depends(require_scope(<span class="st">"search:invoke"</span>))):
     <span class="cm"># extract() lê o traceparent do header e cria um SpanContext com o
     # trace_id do Agente A. O span criado aqui é filho daquele span.</span>
@@ -353,18 +379,19 @@ HTTPXClientInstrumentor().instrument()</pre>
                                        context=ctx, kind=SpanKind.SERVER) <span class="kw">as</span> span:
         span.set_attribute(<span class="st">"agent.name"</span>,         <span class="st">"search-agent"</span>)
         span.set_attribute(<span class="st">"langgraph.thread_id"</span>, body.thread_id)
-        <span class="kw">return await</span> run_search_graph(body)</pre>
+        <span class="kw">return await</span> run_search_graph(body)</code></pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="parent-based">
-    <div class="section-eyebrow">Sampling</div>
+  <section class="section" id="parent-based">
+    <div class="section-label">Sampling</div>
     <h2>ParentBased — a decisão de sampling na cadeia A2A</h2>
 
     <p>Sampling em multi-agent tem um requisito que não existe em single-agent: consistência na cadeia. Se o Agente A decide samplear um trace (10% do tráfego), o Agente B também precisa samplear aquele trace — caso contrário você tem metade de um trace no X-Ray, o que é inútil para debugging.</p>
 
     <p>O <code>ParentBased</code> resolve exatamente isso. Quando o Agente B recebe uma chamada com <code>traceparent</code> e o flag de sampling ativo, ele sempre samplea — independente do seu ratio local configurado. Se o pai decidiu samplear, todos os filhos na cadeia seguem. Se o pai decidiu não samplear, os filhos também não amostram.</p>
 
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Ambiente</th><th>Sampler</th><th>Ratio</th><th>Comportamento</th></tr></thead>
       <tbody>
@@ -374,19 +401,28 @@ HTTPXClientInstrumentor().instrument()</pre>
         <tr><td>prod alto volume</td><td>ErrorAwareSampler</td><td>0.01</td><td>1% normal + 100% quando há erro</td></tr>
       </tbody>
     </table>
+    </div>
+  </section>
 
-    <h3 id="error-sampler">ErrorAwareSampler — sempre captura erros</h3>
+  <section class="section" id="error-sampler">
+    <h3>ErrorAwareSampler — sempre captura erros</h3>
 
     <p>Em produção de alto volume, samplear 1% é necessário para controlar custo de armazenamento. Mas você nunca quer perder traces de erros — são exatamente os que você precisa para debugging. O <code>ErrorAwareSampler</code> combina os dois: ratio baixo para o tráfego normal, 100% para traces com erro.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">observability.py — ErrorAwareSampler</span></div>
-      <pre><span class="kw">from</span> opentelemetry.sdk.trace.sampling <span class="kw">import</span> (
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">observability.py — ErrorAwareSampler</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">from</span> opentelemetry.sdk.trace.sampling <span class="kw">import</span> (
     Sampler, SamplingResult, Decision, TraceIdRatioBased
 )
 
 
-<span class="kw">class</span> <span class="cls">ErrorAwareSampler</span>(Sampler):
+<span class="kw">class</span> <span class="tp">ErrorAwareSampler</span>(Sampler):
     <span class="kw">def</span> <span class="fn">__init__</span>(self, ratio: float):
         self._ratio = TraceIdRatioBased(ratio)
 
@@ -405,21 +441,27 @@ HTTPXClientInstrumentor().instrument()</pre>
             parent_context, trace_id, name, kind, attributes, links)
 
     <span class="kw">def</span> <span class="fn">get_description</span>(self) -> str:
-        <span class="kw">return</span> <span class="st">"ErrorAwareSampler"</span></pre>
+        <span class="kw">return</span> <span class="st">"ErrorAwareSampler"</span></code></pre>
     </div>
-  </div>
+  </section>
 
-  <div class="section" id="xray-sidecar">
-    <div class="section-eyebrow">Infraestrutura</div>
+  <section class="section" id="xray-sidecar">
+    <div class="section-label">Infraestrutura</div>
     <h2>X-Ray Daemon como sidecar</h2>
 
     <p>O X-Ray Daemon roda como container sidecar no mesmo ECS task. Containers no mesmo task compartilham o namespace de rede — o agente acessa o daemon via <code>localhost:4317</code> sem configuração de security group ou service discovery.</p>
 
     <p>O sidecar é marcado como <code>essential=false</code>: se o daemon travar ou reiniciar, o container principal do agente não é afetado. Você perde alguns spans enquanto o daemon reinicia, mas o agente continua processando requests normalmente.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">hcl</span><span class="code-filename">terraform/task_definition.tf — sidecar</span></div>
-      <pre>{
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">terraform/task_definition.tf — sidecar</span>
+          <span class="code-lang">hcl</span>
+        </div>
+      </div>
+      <pre><code>{
   name      = <span class="st">"xray-daemon"</span>
   image     = <span class="st">"amazon/aws-xray-daemon:latest"</span>
   essential = <span class="kw">false</span>  <span class="cm"># falha do sidecar não derruba o agente</span>
@@ -431,16 +473,24 @@ HTTPXClientInstrumentor().instrument()</pre>
     { containerPort = <span class="nb">2000</span>, protocol = <span class="st">"udp"</span> },  <span class="cm"># X-Ray nativo — SDKs legados</span>
   ]
   <span class="cm"># Sem hostPort: só acessível via localhost dentro do task</span>
-}</pre>
+}</code></pre>
     </div>
+  </section>
 
-    <h3 id="metricas">Logging estruturado para CloudWatch Logs Insights</h3>
+  <section class="section" id="metricas">
+    <h3>Logging estruturado para CloudWatch Logs Insights</h3>
 
     <p>Além de traces, o QueueMonitor emite métricas operacionais como JSON. O CloudWatch Logs Insights indexa campos JSON automaticamente — você cria filtros, dashboards e alarmes sem instrumentação adicional. O padrão é emitir uma linha de log por ciclo com todos os campos relevantes.</p>
 
-    <div class="code-block">
-      <div class="code-header"><span class="code-lang">python</span><span class="code-filename">recovery_worker.py — QueueMonitor</span></div>
-      <pre><span class="kw">class</span> <span class="cls">QueueMonitor</span>:
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="code-filename">recovery_worker.py — QueueMonitor</span>
+          <span class="code-lang">python</span>
+        </div>
+      </div>
+      <pre><code><span class="kw">class</span> <span class="tp">QueueMonitor</span>:
     <span class="kw">async def</span> <span class="fn">run</span>(self):
         <span class="kw">while True</span>:
             <span class="kw">try</span>:
@@ -461,14 +511,36 @@ HTTPXClientInstrumentor().instrument()</pre>
                                  metrics[<span class="st">"dlq_size"</span>])
             <span class="kw">except</span> Exception:
                 logger.exception(<span class="st">"Erro no QueueMonitor"</span>)
-            <span class="kw">await</span> asyncio.sleep(<span class="nb">30</span>)</pre>
+            <span class="kw">await</span> asyncio.sleep(<span class="nb">30</span>)</code></pre>
     </div>
-  </div>
+  </section>
 
   <div class="doc-footer">
-    <span>DevDocs · Multi-Agent AWS</span>
-    <span>Observabilidade · Jun 2026</span>
+    <a href="resiliencia.html">← Resiliência</a>
+    <span>Observabilidade Distribuída</span>
+    <a href="seguranca.html">Próximo: Segurança →</a>
   </div>
-</main>
+
+</div>
+</div>
+
+<script>
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
 </body>
 </html>
