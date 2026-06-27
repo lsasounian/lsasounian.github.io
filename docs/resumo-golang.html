@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curso Completo de Go (Golang) — para devs Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<style>
+:root {
+  --bg: #0d1117;
+  --bg-sidebar: #010409;
+  --bg-elevated: #161b22;
+  --border: #21262d;
+  --text: #c9d1d9;
+  --text-dim: #8b949e;
+  --text-bright: #f0f6fc;
+  --accent: #58a6ff;
+  --accent-dim: #1f6feb;
+  --go-cyan: #79c0ff;
+  --warn: #d29922;
+  --warn-bg: rgba(210, 153, 34, 0.08);
+  --danger: #f85149;
+  --danger-bg: rgba(248, 81, 73, 0.08);
+  --info: #58a6ff;
+  --info-bg: rgba(56, 139, 253, 0.08);
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* ---------- Layout ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100vh;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 28px 0 40px;
+  z-index: 10;
+}
+
+.sidebar-brand {
+  padding: 0 24px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.sidebar-brand .tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--go-cyan);
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1px solid rgba(121, 192, 255, 0.3);
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.sidebar-brand h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px;
+}
+
+.sidebar nav li { margin: 1px 0; }
+
+.sidebar nav a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-family: var(--mono);
+  line-height: 1.4;
+  border-left: 2px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar nav a:hover {
+  background: var(--bg-elevated);
+  color: var(--text-bright);
+}
+
+.sidebar nav a.active {
+  background: rgba(56, 139, 253, 0.12);
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+
+.main {
+  grid-column: 2;
+  margin-left: 300px;
+  max-width: 880px;
+  padding: 56px 48px 100px;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero .eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--go-cyan);
+  margin-bottom: 14px;
+}
+
+.hero h1 {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.25;
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+}
+
+.hero .subtitle {
+  font-size: 17px;
+  color: var(--text-dim);
+  font-weight: 500;
+  margin: 0 0 18px;
+}
+
+.hero .lede {
+  font-size: 15.5px;
+  color: var(--text);
+  max-width: 70ch;
+}
+
+/* ---------- Typography ---------- */
+
+.md h2 {
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin: 56px 0 18px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  letter-spacing: -0.005em;
+}
+
+.md > h2:first-of-type { border-top: none; margin-top: 0; }
+
+.md h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 34px 0 12px;
+}
+
+.md p {
+  color: var(--text);
+  margin: 14px 0;
+}
+
+.md ul, .md ol {
+  margin: 14px 0;
+  padding-left: 22px;
+}
+
+.md li { margin: 6px 0; }
+
+.md strong { color: var(--text-bright); font-weight: 600; }
+.md em { color: var(--text-dim); font-style: italic; }
+
+.md a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(88,166,255,0.3); }
+.md a:hover { border-bottom-color: var(--accent); }
+
+.md > p > code, .md li > code, .md td > code, .md th > code {
+  font-family: var(--mono);
+  background: var(--bg-elevated);
+  color: var(--go-cyan);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+.md hr { display: none; }
+
+/* ---------- Code blocks ---------- */
+
+.md pre {
+  background: #0a0e14 !important;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  margin: 18px 0 22px;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.md pre code {
+  font-family: var(--mono);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.md pre code.language-bash::before {
+  content: "$ shell";
+  display: block;
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+}
+
+.md pre code.language-go::before {
+  content: "go";
+  display: block;
+  color: var(--go-cyan);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  opacity: 0.7;
+}
+
+/* ---------- Tables ---------- */
+
+.md table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 26px;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.md thead th {
+  background: var(--bg-elevated);
+  color: var(--text-bright);
+  text-align: left;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.md tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: top;
+}
+
+.md tbody tr:last-child td { border-bottom: none; }
+.md tbody tr:nth-child(odd) { background: rgba(255,255,255,0.015); }
+
+.md table code {
+  font-family: var(--mono);
+  color: var(--go-cyan);
+  font-size: 0.85em;
+}
+
+/* ---------- Callouts ---------- */
+
+.callout {
+  display: flex;
+  gap: 14px;
+  margin: 4px 0 26px;
+  padding: 16px 18px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+.callout-label {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.callout-body { color: var(--text); }
+.callout-body code {
+  font-family: var(--mono);
+  background: rgba(255,255,255,0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.88em;
+}
+
+.callout-warning { background: var(--warn-bg); border-color: rgba(210,153,34,0.35); }
+.callout-warning .callout-label { color: var(--warn); }
+
+.callout-danger { background: var(--danger-bg); border-color: rgba(248,81,73,0.35); }
+.callout-danger .callout-label { color: var(--danger); }
+
+.callout-info { background: var(--info-bg); border-color: rgba(88,166,255,0.35); }
+.callout-info .callout-label { color: var(--info); }
+
+@media (max-width: 768px) {
+  .callout { flex-direction: column; gap: 4px; }
+}
+
+/* ---------- Footer nav (próximos passos) ---------- */
+
+#proximos-passos-sugeridos {
+  margin-top: 64px;
+}
+
+.md > ol:last-of-type {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 24px 22px 44px;
+}
+
+/* ---------- Mobile ---------- */
+
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 20;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+@media (max-width: 980px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding: 80px 24px 80px; }
+  .menu-toggle { display: block; }
+  .hero h1 { font-size: 26px; }
+}
+
+/* ---------- Scrollbar ---------- */
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" id="menuToggle" aria-label="Abrir navegação">☰</button>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="tag">Go / Golang</span>
+      <h2>Curso Completo<br>para devs Python</h2>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="#1-anatomia-de-um-projeto-go" class="nav-link" data-id="1-anatomia-de-um-projeto-go">1. Anatomia de um projeto Go</a></li>
+        <li><a href="#2-tipos-variaveis-e-sintaxe-basica" class="nav-link" data-id="2-tipos-variaveis-e-sintaxe-basica">2. Tipos, variáveis e sintaxe básica</a></li>
+        <li><a href="#3-condicionais" class="nav-link" data-id="3-condicionais">3. Condicionais</a></li>
+        <li><a href="#4-loops" class="nav-link" data-id="4-loops">4. Loops</a></li>
+        <li><a href="#5-funcoes-e-metodos" class="nav-link" data-id="5-funcoes-e-metodos">5. Funções e métodos</a></li>
+        <li><a href="#6-orientacao-a-objetos-em-go-structs-interfaces-composicao-e-polimorfismo" class="nav-link" data-id="6-orientacao-a-objetos-em-go-structs-interfaces-composicao-e-polimorfismo">6. Orientação a objetos em Go: structs, interfaces, composição e polimorfismo</a></li>
+        <li><a href="#7-validacoes-e-tratamento-de-erros" class="nav-link" data-id="7-validacoes-e-tratamento-de-erros">7. Validações e tratamento de erros</a></li>
+        <li><a href="#8-crud-com-banco-relacional-mysql" class="nav-link" data-id="8-crud-com-banco-relacional-mysql">8. CRUD com banco relacional (MySQL)</a></li>
+        <li><a href="#9-crud-com-banco-nao-relacional-dynamodb" class="nav-link" data-id="9-crud-com-banco-nao-relacional-dynamodb">9. CRUD com banco não relacional (DynamoDB)</a></li>
+        <li><a href="#10-concorrencia-goroutines-e-channels" class="nav-link" data-id="10-concorrencia-goroutines-e-channels">10. Concorrência: goroutines e channels</a></li>
+        <li><a href="#11-paralelismo-throttling-e-padroes-multi-task" class="nav-link" data-id="11-paralelismo-throttling-e-padroes-multi-task">11. Paralelismo, throttling e padrões multi-task</a></li>
+        <li><a href="#12-escalabilidade-horizontal-e-arquitetura" class="nav-link" data-id="12-escalabilidade-horizontal-e-arquitetura">12. Escalabilidade horizontal e arquitetura</a></li>
+        <li><a href="#13-logs-e-monitoramento" class="nav-link" data-id="13-logs-e-monitoramento">13. Logs e monitoramento</a></li>
+        <li><a href="#14-cheat-sheet-final-go-vs-python" class="nav-link" data-id="14-cheat-sheet-final-go-vs-python">14. Cheat sheet final — Go vs Python</a></li>
+        <li><a href="#proximos-passos-sugeridos" class="nav-link" data-id="proximos-passos-sugeridos">Próximos passos</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="hero">
+      <div class="eyebrow">Curso Completo — Go (Golang)</div>
+      <h1>Curso Completo de Go (Golang) — do projeto ao código de produção</h1>
+      <p class="subtitle">Para quem já domina Python</p>
+      <p class="lede">Este material assume que você programa em Python em nível avançado (FastAPI, OOP, async, AWS). Cada seção segue o mesmo formato: <strong>conceito → por que existe → comparação com Python → código</strong>. Os exemplos de banco usam MySQL (relacional) e DynamoDB (não relacional), como pedido.</p>
+    </div>
+
+    <article class="md">
+<h2 id="1-anatomia-de-um-projeto-go">1. Anatomia de um projeto Go</h2>
+<h3 id="11-versoes-e-instalacao">1.1 Versões e instalação</h3>
+<p>Go segue versionamento semântico simples: <code>go1.21</code>, <code>go1.22</code>, <code>go1.23</code>... Não existe o conceito de "Python 2 vs 3"; a linguagem é extremamente estável — código de 10 anos atrás ainda compila. Você verifica a versão instalada com:</p>
+<pre><code class="language-bash">go version
+</code></pre>
+<p>O arquivo <code>go.mod</code> (explicado abaixo) fixa a versão mínima de Go que o projeto exige, de forma parecida com o <code>python_requires</code> do <code>setup.py</code>, mas é o próprio toolchain do Go que respeita isso — não existe <code>pyenv</code>/<code>venv</code> separado: o binário <code>go</code> já gerencia tudo.</p>
+<h3 id="12-go-modules-o-equivalente-a-requirementstxt-venv">1.2 Go Modules: o equivalente a <code>requirements.txt</code> + <code>venv</code></h3>
+<p>Antes de 2019, Go usava <code>GOPATH</code> (uma pasta global única para todo código Go — doloroso). Hoje, <strong>Go Modules</strong> é o padrão e resolve dependências por projeto, como um <code>pyproject.toml</code> + <code>poetry.lock</code> combinados.</p>
+<pre><code class="language-bash">go mod init github.com/seuusuario/seuprojeto   # cria o go.mod
+go get github.com/go-sql-driver/mysql@v1.8.1   # adiciona uma dependência
+go mod tidy                                     # remove o que não é usado, resolve versões
+</code></pre>
+<p>Isso gera dois arquivos na raiz do projeto:</p>
+<ul>
+<li><strong><code>go.mod</code></strong> — declara o nome do módulo, a versão de Go e as dependências diretas. É o seu <code>requirements.txt</code>.</li>
+<li><strong><code>go.sum</code></strong> — hashes criptográficos de cada dependência (transitiva também), garantindo build reprodutível. É o seu <code>poetry.lock</code>/<code>Pipfile.lock</code>.</li>
+</ul>
+<pre><code class="language-go">// go.mod
+module github.com/seuusuario/seuprojeto
+
+go 1.23
+
+require (
+    github.com/go-sql-driver/mysql v1.8.1
+    github.com/aws/aws-sdk-go-v2 v1.30.0
+)
+</code></pre>
+<p>Diferente do Python, <strong>não existe ambiente virtual</strong>: as dependências ficam num cache global (<code>$GOPATH/pkg/mod</code>), mas cada módulo referencia versões exatas via <code>go.sum</code>, então não há conflito entre projetos — o equivalente a cada projeto ter seu próprio "venv" é automático e embutido na linguagem.</p>
+<h3 id="13-estrutura-de-pastas-padrao-de-mercado">1.3 Estrutura de pastas (padrão de mercado)</h3>
+<p>Não existe um framework "Django-like" que impõe estrutura. A comunidade convergiu para o <a href="https://github.com/golang-standards/project-layout"><code>golang-standards/project-layout</code></a>. Para uma API (equivalente a um projeto FastAPI):</p>
+<pre><code>seuprojeto/
+├── go.mod
+├── go.sum
+├── cmd/
+│   └── api/
+│       └── main.go          # ponto de entrada — equivalente a main.py / app.py
+├── internal/                 # código privado, não importável por outros módulos
+│   ├── handler/               # equivalente a routers/ no FastAPI
+│   │   └── user_handler.go
+│   ├── service/                # regra de negócio — equivalente a services/
+│   │   └── user_service.go
+│   ├── repository/             # acesso a dados — equivalente a repositories/ ou models/
+│   │   ├── mysql/
+│   │   └── dynamo/
+│   └── domain/                  # structs de domínio — equivalente a schemas.py / models.py
+│       └── user.go
+├── pkg/                        # código público, reutilizável por outros projetos
+├── config/
+│   └── config.go
+└── Makefile
+</code></pre>
+<p>Pontos-chave que não existem em Python:</p>
+<ul>
+<li><strong><code>internal/</code></strong> é uma convenção <em>reforçada pelo compilador</em>: qualquer pacote dentro de uma pasta <code>internal/</code> só pode ser importado por código que esteja na mesma árvore acima dela. Python não tem equivalente — o mais próximo é o <code>_</code> prefixado por convenção (sem garantia real).</li>
+<li>Não existe <code>__init__.py</code>. Cada pasta é um <strong>pacote</strong> (<code>package nomedapasta</code>), e todo arquivo <code>.go</code> dentro dela declara isso na primeira linha. A importação é pelo caminho do módulo + pasta, nunca pelo nome do arquivo.</li>
+</ul>
+<h3 id="14-comandos-do-dia-a-dia">1.4 Comandos do dia a dia</h3>
+<table>
+<thead>
+<tr>
+<th>Comando</th>
+<th>Equivalente Python</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>go run main.go</code></td>
+<td><code>python main.py</code> (compila em memória e executa)</td>
+</tr>
+<tr>
+<td><code>go build -o app ./cmd/api</code></td>
+<td><code>pyinstaller</code> (mas gera <strong>binário nativo estático</strong>, sem runtime necessário)</td>
+</tr>
+<tr>
+<td><code>go test ./...</code></td>
+<td><code>pytest</code></td>
+</tr>
+<tr>
+<td><code>go fmt ./...</code></td>
+<td><code>black .</code> (mas é parte da toolchain oficial, sem debate de estilo)</td>
+</tr>
+<tr>
+<td><code>go vet ./...</code></td>
+<td><code>pylint</code>/<code>mypy</code> (análise estática básica)</td>
+</tr>
+<tr>
+<td><code>go mod tidy</code></td>
+<td><code>pip-compile</code> / <code>poetry lock</code></td>
+</tr>
+</tbody>
+</table>
+<p>A diferença mais impactante no dia a dia: <strong><code>go build</code> gera um único binário executável, sem dependência de runtime instalado no servidor de destino</strong>. Você não precisa de Python instalado, nem <code>pip install -r requirements.txt</code> no Dockerfile final — copia o binário e roda. Isso muda drasticamente a imagem Docker final (de ~150MB com Python+libs para poucos MB com <code>scratch</code>/<code>alpine</code>).</p>
+<h3 id="15-anatomia-de-um-arquivo-go">1.5 Anatomia de um arquivo <code>.go</code></h3>
+<pre><code class="language-go">package main // toda pasta declara seu pacote. &quot;main&quot; é especial: marca um executável
+
+import (
+    &quot;fmt&quot;
+    &quot;net/http&quot;
+
+    &quot;github.com/seuusuario/seuprojeto/internal/handler&quot;
+)
+
+func main() { // ponto de entrada obrigatório se package == main
+    fmt.Println(&quot;servidor iniciando&quot;)
+    http.ListenAndServe(&quot;:8080&quot;, handler.Router())
+}
+</code></pre>
+<p>Regras que não têm paralelo direto em Python:</p>
+<ul>
+<li>Se o pacote é <code>main</code>, <strong>precisa</strong> existir uma função <code>main()</code> sem parâmetros e sem retorno — é o entrypoint, equivalente ao <code>if __name__ == "__main__":</code>, mas obrigatório e único.</li>
+<li><strong>Import não usado = erro de compilação.</strong> Não é warning, o build quebra. Isso elimina uma classe inteira de "lint debt" que se acumula em projetos Python.</li>
+<li><strong>Variável declarada e não usada = erro de compilação</strong>, também. Go é radicalmente mais estrito que Python nesse ponto.</li>
+<li>Identificadores que começam com <strong>letra maiúscula são exportados</strong> (públicos, equivalente a não ter underscore em Python); minúscula = privado ao pacote. Não existe <code>_nome</code> por convenção fraca — é regra de visibilidade real, garantida pelo compilador.</li>
+</ul>
+<hr />
+<h2 id="2-tipos-variaveis-e-sintaxe-basica">2. Tipos, variáveis e sintaxe básica</h2>
+<p>Go é <strong>estaticamente tipado e compilado</strong> — a maior mudança mental vindo de Python. Não existe "duck typing" em tempo de execução para tipos primitivos: o compilador verifica tudo antes de gerar o binário.</p>
+<pre><code class="language-go">var nome string = &quot;Leo&quot;      // declaração explícita
+var idade int = 30
+idade2 := 30                  // inferência de tipo — Go deduz &quot;int&quot;
+const Pi = 3.14159             // constante, resolvida em tempo de compilação
+
+var ativo bool                // zero value: false
+var contador int               // zero value: 0
+var rotulo string              // zero value: &quot;&quot; (string vazia, nunca nil)
+var ponteiro *int               // zero value: nil
+</code></pre>
+<p><strong>Zero values</strong> são o conceito sem equivalente direto em Python: toda variável declarada sem valor inicial já nasce com um valor padrão definido pelo tipo (não existe <code>None</code>/<code>undefined</code> implícito para tipos primitivos). Isso elimina a classe de bugs <code>NameError</code>/<code>AttributeError: NoneType</code> para tipos básicos — mas exige atenção redobrada com ponteiros e interfaces, que <em>podem</em> ser <code>nil</code>.</p><div class="callout callout-danger"><div class="callout-label">⚠ Cenário de falha</div><div class="callout-body">Se você tratar um ponteiro como trataria uma variável Python qualquer e pular o check, desreferenciar um ponteiro <code>nil</code> não levanta uma exceção capturável como o <code>AttributeError</code> de acessar atributo em <code>None</code> — gera um <strong>panic em runtime</strong> que derruba a goroutine inteira (e o processo, se não houver <code>recover</code> no lugar certo).</div></div>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tipagem dinâmica, checada em runtime</td>
+<td>Tipagem estática, checada em compilação</td>
+</tr>
+<tr>
+<td><code>type hints</code> são opcionais e não impedem execução</td>
+<td>Tipos são obrigatórios e impedem o build</td>
+</tr>
+<tr>
+<td><code>int</code> é arbitrariamente grande</td>
+<td><code>int</code>, <code>int32</code>, <code>int64</code> têm tamanho fixo — overflow é possível</td>
+</tr>
+<tr>
+<td><code>None</code> é universal</td>
+<td><code>nil</code> só existe para ponteiros, slices, maps, channels, funcs, interfaces</td>
+</tr>
+<tr>
+<td><code>str</code> é imutável</td>
+<td><code>string</code> também é imutável em Go</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-condicionais">3. Condicionais</h2>
+<pre><code class="language-go">idade := 25
+
+if idade &gt;= 18 {
+    fmt.Println(&quot;maior de idade&quot;)
+} else if idade &gt;= 13 {
+    fmt.Println(&quot;adolescente&quot;)
+} else {
+    fmt.Println(&quot;criança&quot;)
+}
+
+// forma idiomática: declarar uma variável escopada só para o if
+if valor, ok := buscarValor(&quot;x&quot;); ok {
+    fmt.Println(valor)
+} // 'valor' não existe fora deste bloco
+</code></pre>
+<pre><code class="language-go">switch diaSemana {
+case &quot;segunda&quot;, &quot;terca&quot;: // múltiplos valores no mesmo case
+    fmt.Println(&quot;começo de semana&quot;)
+case &quot;sabado&quot;, &quot;domingo&quot;:
+    fmt.Println(&quot;fim de semana&quot;)
+default:
+    fmt.Println(&quot;meio de semana&quot;)
+}
+</code></pre>
+<p>Diferenças relevantes vindo de Python:</p>
+<ul>
+<li>Go <strong>não tem operador ternário</strong> (<code>x if cond else y</code>). É decisão de design deliberada dos criadores da linguagem para forçar legibilidade — você sempre escreve <code>if/else</code> completo.</li>
+<li><code>switch</code> em Go <strong>não tem fallthrough automático</strong> (diferente de C, e diferente do <code>match</code> do Python que não tem fallthrough nenhum). Cada <code>case</code> já é um "break" implícito; se você <em>quiser</em> continuar para o próximo case, usa a palavra-chave <code>fallthrough</code> explicitamente.</li>
+<li>Parênteses em <code>if</code>/<code>switch</code> são opcionais e geralmente omitidos; <strong>chaves <code>{}</code> são obrigatórias</strong>, mesmo para um único comando — elimina o bug clássico de C de "if sem chaves pegando só a próxima linha".</li>
+</ul>
+<hr />
+<h2 id="4-loops">4. Loops</h2>
+<p>Go tem <strong>uma única palavra-chave de loop</strong>: <code>for</code>. Ela assume 4 formas:</p>
+<pre><code class="language-go">// 1) &quot;for&quot; clássico, como o for(;;) do C
+for i := 0; i &lt; 10; i++ {
+    fmt.Println(i)
+}
+
+// 2) &quot;for&quot; como while do Python
+contador := 0
+for contador &lt; 5 {
+    contador++
+}
+
+// 3) &quot;for&quot; infinito, equivalente a &quot;while True&quot;
+for {
+    if condicaoDeParada() {
+        break
+    }
+}
+
+// 4) &quot;for range&quot; — equivalente ao for-each / for x in lista
+numeros := []int{1, 2, 3, 4}
+for indice, valor := range numeros {
+    fmt.Println(indice, valor)
+}
+
+// range em map — equivalente a dict.items()
+config := map[string]string{&quot;env&quot;: &quot;prod&quot;, &quot;regiao&quot;: &quot;us-east-1&quot;}
+for chave, valor := range config {
+    fmt.Println(chave, valor)
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>for</code>, <code>while</code> (duas palavras-chave)</td>
+<td>só <code>for</code> (uma palavra-chave, 4 formas)</td>
+</tr>
+<tr>
+<td><code>for x in lista:</code></td>
+<td><code>for _, x := range lista</code></td>
+</tr>
+<tr>
+<td><code>for i, x in enumerate(lista):</code></td>
+<td><code>for i, x := range lista</code> (enumerate é nativo do range)</td>
+</tr>
+<tr>
+<td>List comprehension <code>[x*2 for x in l]</code></td>
+<td><strong>não existe</strong> — você escreve o loop explícito sempre</td>
+</tr>
+<tr>
+<td><code>continue</code>, <code>break</code></td>
+<td>iguais, mas Go também suporta <strong>labels</strong> para <code>break</code>/<code>continue</code> em loops aninhados</td>
+</tr>
+</tbody>
+</table>
+<p>Loops aninhados com <code>break</code> rotulado (não existe em Python — lá você precisaria de flags ou exceptions):</p>
+<pre><code class="language-go">busca:
+for _, lista := range matriz {
+    for _, item := range lista {
+        if item == alvo {
+            break busca // sai dos dois loops de uma vez
+        }
+    }
+}
+</code></pre>
+<hr />
+<h2 id="5-funcoes-e-metodos">5. Funções e métodos</h2>
+<h3 id="51-funcoes">5.1 Funções</h3>
+<pre><code class="language-go">func somar(a int, b int) int {
+    return a + b
+}
+
+// múltiplos retornos — usadíssimo para retornar (resultado, erro)
+func dividir(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, fmt.Errorf(&quot;divisão por zero&quot;)
+    }
+    return a / b, nil
+}
+
+// retornos nomeados — o &quot;return&quot; sozinho devolve as variáveis já nomeadas
+func dividirNomeado(a, b float64) (resultado float64, err error) {
+    if b == 0 {
+        err = fmt.Errorf(&quot;divisão por zero&quot;)
+        return
+    }
+    resultado = a / b
+    return
+}
+
+// variádica — equivalente a *args
+func somarTodos(numeros ...int) int {
+    total := 0
+    for _, n := range numeros {
+        total += n
+    }
+    return total
+}
+</code></pre>
+<p>Não existe <code>**kwargs</code> (named arbitrary args) em Go. O padrão idiomático para isso é passar uma <code>struct</code> de opções, ou o <strong>functional options pattern</strong>:</p>
+<pre><code class="language-go">type OpcoesServidor struct {
+    Porta   int
+    Timeout time.Duration
+}
+
+type Opcao func(*OpcoesServidor)
+
+func ComPorta(p int) Opcao {
+    return func(o *OpcoesServidor) { o.Porta = p }
+}
+
+func NovoServidor(opcoes ...Opcao) *OpcoesServidor {
+    config := &amp;OpcoesServidor{Porta: 8080, Timeout: 30 * time.Second} // defaults
+    for _, aplicar := range opcoes {
+        aplicar(config)
+    }
+    return config
+}
+
+// uso: NovoServidor(ComPorta(9000))
+</code></pre>
+<p>Isso é o equivalente funcional a <code>def __init__(self, porta=8080, timeout=30, **kwargs)</code>.</p>
+<p><strong>Closures</strong> existem e funcionam como em Python:</p>
+<pre><code class="language-go">func contadorFabrica() func() int {
+    contador := 0
+    return func() int {
+        contador++
+        return contador
+    }
+}
+proximo := contadorFabrica()
+proximo() // 1
+proximo() // 2
+</code></pre>
+<h3 id="52-metodos-o-que-substitui-self">5.2 Métodos: o que substitui <code>self</code></h3>
+<p>Go não tem classes, mas tem <strong>métodos</strong>: funções associadas a um tipo via um "receiver".</p>
+<pre><code class="language-go">type ContaBancaria struct {
+    Titular string
+    Saldo   float64
+}
+
+// receiver de VALOR — recebe uma cópia. Mudanças não persistem fora do método.
+func (c ContaBancaria) Resumo() string {
+    return fmt.Sprintf(&quot;%s: R$%.2f&quot;, c.Titular, c.Saldo)
+}
+
+// receiver de PONTEIRO — recebe a referência. Mudanças persistem.
+func (c *ContaBancaria) Depositar(valor float64) {
+    c.Saldo += valor
+}
+</code></pre>
+<pre><code class="language-go">conta := ContaBancaria{Titular: &quot;Leo&quot;, Saldo: 100}
+conta.Depositar(50)       // Go desreferencia automaticamente: equivale a (&amp;conta).Depositar(50)
+fmt.Println(conta.Resumo()) // Leo: R$150.00
+</code></pre>
+<p><strong>Regra prática</strong>: se o método precisa alterar o estado do struct, ou se o struct é "pesado" (evitar copiar), use receiver de ponteiro <code>(c *ContaBancaria)</code>. Em Python isso nunca é uma decisão — <code>self</code> <em>sempre</em> é a referência ao objeto, nunca uma cópia. Em Go, escolher errado entre valor/ponteiro é uma fonte clássica de bugs para quem migra de Python.</p><div class="callout callout-warning"><div class="callout-label">⚠ Cenário de falha</div><div class="callout-body">Usar receiver de valor num método que deveria alterar o estado (hábito de quem nunca precisou pensar nisso porque <code>self</code> em Python é sempre referência) não gera erro nem warning de compilação — o método simplesmente <strong>modifica uma cópia e descarta</strong> a mudança. O bug é silencioso: o código compila, os testes podem passar se você não checar o objeto original depois da chamada.</div></div>
+<hr />
+<h2 id="6-orientacao-a-objetos-em-go-structs-interfaces-composicao-e-polimorfismo">6. Orientação a objetos em Go: structs, interfaces, composição e polimorfismo</h2>
+<p>Esta é a seção que mais quebra expectativas de quem vem de Python/Java/C#. <strong>Go não tem classes, não tem herança, não tem <code>extends</code>.</strong> A OOP em Go é construída sobre três pilares: <strong>structs</strong> (estado), <strong>métodos</strong> (comportamento) e <strong>interfaces</strong> (abstração/polimorfismo).</p>
+<h3 id="61-structs-como-classes-sem-heranca">6.1 Structs como "classes sem herança"</h3>
+<pre><code class="language-go">type Usuario struct {
+    Nome  string
+    Email string
+    idade int // minúsculo = privado ao pacote (equivalente a _idade em Python, mas garantido)
+}
+
+func NovoUsuario(nome, email string, idade int) *Usuario { // &quot;construtor&quot; por convenção
+    return &amp;Usuario{Nome: nome, Email: email, idade: idade}
+}
+</code></pre>
+<p>Não existe <code>__init__</code>. A convenção da comunidade é uma função <code>NovoX(...) *X</code> (chamada "constructor function") que monta e retorna o struct já preenchido — você escolhe os parâmetros, valida o que precisa, e devolve um ponteiro.</p>
+<h3 id="62-composicao-em-vez-de-heranca-embedding">6.2 Composição em vez de herança ("embedding")</h3>
+<p>Onde Python usaria <code>class Gerente(Funcionario):</code>, Go usa <strong>embedding</strong> — você "encaixa" um struct dentro de outro, e os campos/métodos do struct embutido "sobem" automaticamente.</p>
+<pre><code class="language-go">type Funcionario struct {
+    Nome   string
+    Salario float64
+}
+
+func (f Funcionario) Apresentar() string {
+    return fmt.Sprintf(&quot;Sou %s&quot;, f.Nome)
+}
+
+type Gerente struct {
+    Funcionario // embedding — NÃO é &quot;herança&quot;, é composição com promoção de campos/métodos
+    Equipe []string
+}
+</code></pre>
+<pre><code class="language-go">g := Gerente{
+    Funcionario: Funcionario{Nome: &quot;Leo&quot;, Salario: 12000},
+    Equipe:      []string{&quot;Ana&quot;, &quot;Bruno&quot;},
+}
+fmt.Println(g.Nome)         // acessa campo promovido — funciona como se Gerente &quot;tivesse&quot; Nome
+fmt.Println(g.Apresentar()) // acessa método promovido
+</code></pre>
+<p>A diferença filosófica crucial: em herança clássica (Python), <code>Gerente</code> <em>é um</em> <code>Funcionario</code> por definição de tipo (relação "is-a", checada por <code>isinstance</code>). Em Go, <code>Gerente</code> <em>tem um</em> <code>Funcionario</code> embutido (relação "has-a" com sintaxe de atalho) — <strong>não existe upcasting/downcasting de tipo</strong>. Se uma função espera <code>Funcionario</code>, um <code>Gerente</code> não pode ser passado diretamente nessa posição (a não ser que você passe <code>g.Funcionario</code> explicitamente). Isso evita toda a complexidade de herança múltipla, MRO (method resolution order) e os problemas clássicos de "diamond inheritance" que Python tem que resolver com <code>super()</code> e C3 linearization.</p><div class="callout callout-info"><div class="callout-label">ℹ Diferença de modelo mental</div><div class="callout-body">Tentar passar um <code>Gerente</code> onde uma função espera <code>Funcionario</code> — esperando um upcast automático como em Python/Java — não compila: <code>cannot use g (type Gerente) as type Funcionario</code>. Embedding não cria uma relação de tipos, só promove campos e métodos; você precisa passar <code>g.Funcionario</code> explicitamente.</div></div>
+<h3 id="63-interfaces-abstracao-e-duck-typing-estatico">6.3 Interfaces: abstração e "duck typing estático"</h3>
+<p>Esta é a peça central da OOP em Go.</p>
+<pre><code class="language-go">type Notificador interface {
+    Enviar(mensagem string) error
+}
+</code></pre>
+<p>Uma interface define <strong>apenas comportamento</strong> (assinatura de métodos), nunca estado. Qualquer tipo que implemente esses métodos satisfaz a interface <strong>automaticamente, implicitamente</strong> — não existe <code>implements</code> explícito como em Java/C#.</p>
+<pre><code class="language-go">type EmailNotificador struct{ Remetente string }
+
+func (e EmailNotificador) Enviar(mensagem string) error {
+    fmt.Println(&quot;enviando email de&quot;, e.Remetente, &quot;:&quot;, mensagem)
+    return nil
+}
+
+type SMSNotificador struct{ Numero string }
+
+func (s SMSNotificador) Enviar(mensagem string) error {
+    fmt.Println(&quot;enviando SMS para&quot;, s.Numero, &quot;:&quot;, mensagem)
+    return nil
+}
+
+// função que aceita QUALQUER coisa que satisfaça Notificador
+func Alertar(n Notificador, msg string) {
+    n.Enviar(msg)
+}
+</code></pre>
+<pre><code class="language-go">Alertar(EmailNotificador{Remetente: &quot;alertas@empresa.com&quot;}, &quot;servidor caiu&quot;)
+Alertar(SMSNotificador{Numero: &quot;+5511999999999&quot;}, &quot;servidor caiu&quot;)
+</code></pre>
+<p>Isso <em>é</em> polimorfismo: a mesma chamada <code>n.Enviar(msg)</code> dentro de <code>Alertar</code> se comporta diferente dependendo do tipo concreto passado, exatamente como <code>notificador.enviar()</code> polimórfico em Python. A diferença é o <strong>momento da verificação</strong>: em Python isso é checado em runtime (duck typing dinâmico — se o objeto não tiver <code>.enviar()</code>, quebra na hora da chamada); em Go é checado <strong>em tempo de compilação</strong> (duck typing estático — se <code>EmailNotificador</code> não implementar <code>Enviar(string) error</code> exatamente, o build nem completa).</p>
+<table>
+<thead>
+<tr>
+<th>Conceito Python</th>
+<th>Equivalente Go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>class Animal(ABC): @abstractmethod def fazer_som(self)</code></td>
+<td><code>type Animal interface { FazerSom() string }</code></td>
+</tr>
+<tr>
+<td><code>Protocol</code> (PEP 544, structural typing)</td>
+<td>Interface (é o conceito nativo, não um "extra")</td>
+</tr>
+<tr>
+<td>Herança múltipla (<code>class C(A, B)</code>)</td>
+<td>Embedding múltiplo de structs, ou implementar múltiplas interfaces</td>
+</tr>
+<tr>
+<td><code>isinstance(obj, Classe)</code></td>
+<td>Type assertion: <code>valor, ok := obj.(TipoConcreto)</code></td>
+</tr>
+<tr>
+<td>Duck typing dinâmico (runtime)</td>
+<td>Duck typing estático (compile-time)</td>
+</tr>
+<tr>
+<td>Interface vazia universal (<code>object</code>)</td>
+<td><code>interface{}</code> ou <code>any</code> (Go 1.18+) — aceita qualquer tipo</td>
+</tr>
+</tbody>
+</table>
+<h3 id="64-abstracao-pratica-inversao-de-dependencia">6.4 Abstração prática: inversão de dependência</h3>
+<p>O padrão mais comum em produção (e que você já usa em FastAPI com injeção de dependência) é depender de uma interface, nunca de uma implementação concreta:</p>
+<pre><code class="language-go">type RepositorioUsuario interface {
+    BuscarPorID(ctx context.Context, id string) (*Usuario, error)
+    Salvar(ctx context.Context, u *Usuario) error
+}
+
+type ServicoUsuario struct {
+    repo RepositorioUsuario // depende da ABSTRAÇÃO, não de MySQLRepo ou DynamoRepo
+}
+
+func NovoServicoUsuario(repo RepositorioUsuario) *ServicoUsuario {
+    return &amp;ServicoUsuario{repo: repo}
+}
+</code></pre>
+<p>Isso permite trocar <code>MySQLRepositorioUsuario</code> por <code>DynamoRepositorioUsuario</code> (seções 8 e 9) ou por um mock em teste, sem tocar em <code>ServicoUsuario</code> — exatamente o mesmo princípio de <code>Protocol</code>/dependency injection em Python.</p>
+<hr />
+<h2 id="7-validacoes-e-tratamento-de-erros">7. Validações e tratamento de erros</h2>
+<h3 id="71-erros-sao-valores-nao-excecoes">7.1 Erros são valores, não exceções</h3>
+<p>A maior mudança de paradigma vindo de Python: <strong>Go não tem <code>try/except</code></strong> para fluxo normal de erro. Erros são retornados como valor comum, e você os checa explicitamente.</p>
+<pre><code class="language-go">import &quot;errors&quot;
+
+var ErrSaldoInsuficiente = errors.New(&quot;saldo insuficiente&quot;)
+
+func (c *ContaBancaria) Sacar(valor float64) error {
+    if valor &gt; c.Saldo {
+        return ErrSaldoInsuficiente
+    }
+    c.Saldo -= valor
+    return nil
+}
+</code></pre>
+<pre><code class="language-go">if err := conta.Sacar(1000); err != nil {
+    if errors.Is(err, ErrSaldoInsuficiente) {
+        fmt.Println(&quot;trate o saldo insuficiente especificamente&quot;)
+    }
+    return err // &quot;propagar a exceção&quot; em Go é simplesmente: devolver o erro
+}
+</code></pre>
+<p><strong>Wrapping de erros</strong> (equivalente a <code>raise NovaExcecao() from erro_original</code>):</p>
+<pre><code class="language-go">if err := repo.Salvar(ctx, usuario); err != nil {
+    return fmt.Errorf(&quot;falha ao salvar usuário %s: %w&quot;, usuario.ID, err) // %w preserva a cadeia
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>try/except Exception as e:</code></td>
+<td><code>if err != nil { ... }</code> (checagem explícita, sem stack unwinding)</td>
+</tr>
+<tr>
+<td><code>raise CustomError("msg") from original</code></td>
+<td><code>fmt.Errorf("msg: %w", original)</code></td>
+</tr>
+<tr>
+<td><code>except SpecificError:</code></td>
+<td><code>errors.Is(err, ErrEspecifico)</code> ou <code>errors.As(err, &amp;tipoEspecifico)</code></td>
+</tr>
+<tr>
+<td>Exceções não tratadas crasham o processo</td>
+<td><code>panic</code> não tratado também crasha — mas é reservado para erros <em>realmente</em> irrecuperáveis (índice fora do array, nil pointer)</td>
+</tr>
+<tr>
+<td><code>finally:</code></td>
+<td><code>defer</code> (sempre executa, mesmo com panic)</td>
+</tr>
+</tbody>
+</table>
+<p><code>panic</code>/<code>recover</code> existem mas <strong>não são o "try/except" do dia a dia</strong> — são para situações excepcionais de verdade (bug de programação, corrupção de estado). Usar panic para erro de validação de input é considerado anti-padrão em Go.</p>
+<pre><code class="language-go">func processarComSeguranca() {
+    defer func() {
+        if r := recover(); r != nil {
+            log.Printf(&quot;recuperado de panic: %v&quot;, r)
+        }
+    }()
+    // código que pode panic
+}
+</code></pre><div class="callout callout-danger"><div class="callout-label">⚠ Cenário de falha</div><div class="callout-body">Tratar <code>panic</code> como o <code>raise</code> genérico de Python para qualquer erro de validação é o erro mais comum de quem migra. Sem um <code>recover()</code> no ponto certo da pilha de chamadas, um panic em qualquer requisição HTTP derruba a goroutine que atende aquele request — e, dependendo de onde acontece, pode tirar o processo inteiro do ar, diferente de uma exceção HTTP que o FastAPI já intercepta e transforma em 500 automaticamente.</div></div>
+<h3 id="72-validacao-de-structs">7.2 Validação de structs</h3>
+<p>Go não tem Pydantic embutido. Para validação declarativa parecida, a comunidade usa <strong>struct tags</strong> + a lib <code>go-playground/validator</code> (a mais usada em produção):</p>
+<pre><code class="language-go">import &quot;github.com/go-playground/validator/v10&quot;
+
+type CriarUsuarioInput struct {
+    Nome  string `json:&quot;nome&quot; validate:&quot;required,min=2,max=100&quot;`
+    Email string `json:&quot;email&quot; validate:&quot;required,email&quot;`
+    Idade int    `json:&quot;idade&quot; validate:&quot;gte=0,lte=130&quot;`
+}
+
+var validate = validator.New()
+
+func ValidarInput(input CriarUsuarioInput) error {
+    if err := validate.Struct(input); err != nil {
+        return fmt.Errorf(&quot;validação falhou: %w&quot;, err)
+    }
+    return nil
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Pydantic (Python)</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>class CriarUsuarioInput(BaseModel): nome: str = Field(min_length=2)</code></td>
+<td>struct + tags <code>validate:"min=2"</code></td>
+</tr>
+<tr>
+<td>Validação automática na desserialização (<code>model_validate</code>)</td>
+<td>Validação <strong>manual</strong>, você chama <code>validate.Struct()</code> explicitamente após <code>json.Unmarshal</code></td>
+</tr>
+<tr>
+<td><code>@field_validator</code> para regra customizada</td>
+<td>Implementa a interface <code>validator.CustomTypeFunc</code> ou valida manualmente no handler</td>
+</tr>
+<tr>
+<td>Erros agregados automaticamente com path do campo</td>
+<td><code>validator</code> também agrega (<code>err.(validator.ValidationErrors)</code>), mas com menos "açúcar"</td>
+</tr>
+</tbody>
+</table>
+<p>Struct tags (<code>json:"nome"</code>, <code>validate:"required"</code>) são strings interpretadas via <em>reflection</em> em runtime pelas libs — é o mecanismo que substitui decorators/metaclasses do Python para esse tipo de metaprogramação declarativa.</p>
+<hr />
+<h2 id="8-crud-com-banco-relacional-mysql">8. CRUD com banco relacional (MySQL)</h2>
+<p>Go usa a interface padrão <code>database/sql</code> da biblioteca padrão + um <em>driver</em> específico do banco (aqui, <code>go-sql-driver/mysql</code>). É conceitualmente parecido com usar <code>sqlalchemy.create_engine</code> + driver <code>pymysql</code>, mas <strong>sem ORM por padrão</strong> — você escreve SQL puro (ou usa <code>gorm</code>/<code>sqlx</code> opcionalmente, citados ao final).</p>
+<pre><code class="language-go">import (
+    &quot;context&quot;
+    &quot;database/sql&quot;
+    &quot;time&quot;
+
+    _ &quot;github.com/go-sql-driver/mysql&quot; // import &quot;em branco&quot;: só registra o driver
+)
+
+func ConectarMySQL(dsn string) (*sql.DB, error) {
+    db, err := sql.Open(&quot;mysql&quot;, dsn)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;erro abrindo conexão: %w&quot;, err)
+    }
+    db.SetMaxOpenConns(25)                  // equivalente a pool_size do SQLAlchemy
+    db.SetMaxIdleConns(25)
+    db.SetConnMaxLifetime(5 * time.Minute)  // equivalente a pool_recycle
+
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    if err := db.PingContext(ctx); err != nil {
+        return nil, fmt.Errorf(&quot;falha no ping ao MySQL: %w&quot;, err)
+    }
+    return db, nil
+}
+</code></pre>
+<p><code>sql.Open</code> <strong>não conecta de fato</strong> — só prepara o pool. A conexão real só acontece na primeira query, por isso o <code>PingContext</code> explícito (equivalente a forçar uma conexão de teste no startup, como o <code>pool_pre_ping</code> do SQLAlchemy).</p>
+<h3 id="create">CREATE</h3>
+<pre><code class="language-go">func (r *MySQLRepositorioUsuario) Salvar(ctx context.Context, u *Usuario) error {
+    query := `INSERT INTO usuarios (id, nome, email, criado_em) VALUES (?, ?, ?, ?)`
+    _, err := r.db.ExecContext(ctx, query, u.ID, u.Nome, u.Email, time.Now())
+    if err != nil {
+        return fmt.Errorf(&quot;erro ao inserir usuário: %w&quot;, err)
+    }
+    return nil
+}
+</code></pre>
+<h3 id="read">READ</h3>
+<pre><code class="language-go">func (r *MySQLRepositorioUsuario) BuscarPorID(ctx context.Context, id string) (*Usuario, error) {
+    query := `SELECT id, nome, email FROM usuarios WHERE id = ?`
+    row := r.db.QueryRowContext(ctx, query, id)
+
+    var u Usuario
+    if err := row.Scan(&amp;u.ID, &amp;u.Nome, &amp;u.Email); err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, fmt.Errorf(&quot;usuário %s não encontrado&quot;, id)
+        }
+        return nil, fmt.Errorf(&quot;erro ao buscar usuário: %w&quot;, err)
+    }
+    return &amp;u, nil
+}
+
+func (r *MySQLRepositorioUsuario) ListarTodos(ctx context.Context) ([]Usuario, error) {
+    rows, err := r.db.QueryContext(ctx, `SELECT id, nome, email FROM usuarios`)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close() // CRÍTICO: sem isso, a conexão fica presa no pool (&quot;connection leak&quot;)<div class="callout callout-danger"><div class="callout-label">⚠ Cenário de falha em produção</div><div class="callout-body">Esquecer o <code>rows.Close()</code> não quebra nada nos testes locais nem no primeiro deploy — o bug só aparece sob carga real, quando o pool de conexões esgota silenciosamente. O sintoma em produção é <strong>timeouts e 500 intermitentes</strong> em endpoints que nem usam essa query, dias depois do deploy, porque todas as conexões do pool estão presas esperando um <code>Close()</code> que nunca veio.</div></div>
+
+    var usuarios []Usuario
+    for rows.Next() {
+        var u Usuario
+        if err := rows.Scan(&amp;u.ID, &amp;u.Nome, &amp;u.Email); err != nil {
+            return nil, err
+        }
+        usuarios = append(usuarios, u)
+    }
+    return usuarios, rows.Err() // checar erro acumulado da iteração
+}
+</code></pre>
+<h3 id="update">UPDATE</h3>
+<pre><code class="language-go">func (r *MySQLRepositorioUsuario) Atualizar(ctx context.Context, u *Usuario) error {
+    query := `UPDATE usuarios SET nome = ?, email = ? WHERE id = ?`
+    resultado, err := r.db.ExecContext(ctx, query, u.Nome, u.Email, u.ID)
+    if err != nil {
+        return err
+    }
+    linhas, _ := resultado.RowsAffected()
+    if linhas == 0 {
+        return fmt.Errorf(&quot;nenhum usuário com id %s para atualizar&quot;, u.ID)
+    }
+    return nil
+}
+</code></pre>
+<h3 id="delete">DELETE</h3>
+<pre><code class="language-go">func (r *MySQLRepositorioUsuario) Deletar(ctx context.Context, id string) error {
+    _, err := r.db.ExecContext(ctx, `DELETE FROM usuarios WHERE id = ?`, id)
+    return err
+}
+</code></pre>
+<h3 id="transacoes-equivalente-a-with-sessionbegin">Transações (equivalente a <code>with session.begin():</code>)</h3>
+<pre><code class="language-go">func TransferirSaldo(ctx context.Context, db *sql.DB, origemID, destinoID string, valor float64) error {
+    tx, err := db.BeginTx(ctx, nil)
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback() // se algo der &quot;return err&quot; antes do Commit, isso desfaz tudo
+
+    if _, err := tx.ExecContext(ctx, `UPDATE contas SET saldo = saldo - ? WHERE id = ?`, valor, origemID); err != nil {
+        return err
+    }
+    if _, err := tx.ExecContext(ctx, `UPDATE contas SET saldo = saldo + ? WHERE id = ?`, valor, destinoID); err != nil {
+        return err
+    }
+    return tx.Commit()
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>SQLAlchemy / psycopg2 (Python)</th>
+<th>database/sql (Go)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ORM com modelos declarativos</td>
+<td>Sem ORM nativo — SQL explícito (ou <code>sqlx</code>/<code>gorm</code> opcionalmente)</td>
+</tr>
+<tr>
+<td><code>session.query(Usuario).filter(...)</code></td>
+<td><code>db.QueryContext(ctx, "SELECT ... WHERE ...", args)</code></td>
+</tr>
+<tr>
+<td>Connection pool configurado no <code>create_engine</code></td>
+<td><code>SetMaxOpenConns</code>/<code>SetMaxIdleConns</code> no <code>*sql.DB</code></td>
+</tr>
+<tr>
+<td><code>with session.begin():</code> (context manager)</td>
+<td><code>tx, _ := db.BeginTx(...)</code> + <code>defer tx.Rollback()</code> manual</td>
+</tr>
+<tr>
+<td>Lazy loading de relacionamentos</td>
+<td>Não existe — você escreve o JOIN ou faz queries separadas</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-crud-com-banco-nao-relacional-dynamodb">9. CRUD com banco não relacional (DynamoDB)</h2>
+<p>Usando o <strong>AWS SDK for Go v2</strong> (equivalente direto ao <code>boto3</code> do Python), com a mesma filosofia que você já usa: chave de partição (<code>PK</code>) + chave de ordenação (<code>SK</code>).</p>
+<pre><code class="language-go">import (
+    &quot;context&quot;
+
+    &quot;github.com/aws/aws-sdk-go-v2/aws&quot;
+    &quot;github.com/aws/aws-sdk-go-v2/config&quot;
+    &quot;github.com/aws/aws-sdk-go-v2/service/dynamodb&quot;
+    &quot;github.com/aws/aws-sdk-go-v2/service/dynamodb/types&quot;
+    &quot;github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue&quot;
+)
+
+func NovoClienteDynamo(ctx context.Context) (*dynamodb.Client, error) {
+    cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(&quot;us-east-1&quot;))
+    if err != nil {
+        return nil, err
+    }
+    return dynamodb.NewFromConfig(cfg), nil
+}
+</code></pre>
+<h3 id="create-putitem">CREATE (PutItem)</h3>
+<pre><code class="language-go">type ItemUsuario struct {
+    PK    string `dynamodbav:&quot;PK&quot;` // ex: &quot;USER#123&quot;
+    SK    string `dynamodbav:&quot;SK&quot;` // ex: &quot;PROFILE&quot;
+    Nome  string `dynamodbav:&quot;nome&quot;`
+    Email string `dynamodbav:&quot;email&quot;`
+}
+
+func (r *DynamoRepositorioUsuario) Salvar(ctx context.Context, u *Usuario) error {
+    item := ItemUsuario{PK: &quot;USER#&quot; + u.ID, SK: &quot;PROFILE&quot;, Nome: u.Nome, Email: u.Email}
+
+    av, err := attributevalue.MarshalMap(item) // equivalente a boto3's TypeSerializer
+    if err != nil {
+        return fmt.Errorf(&quot;erro ao serializar item: %w&quot;, err)
+    }
+
+    _, err = r.client.PutItem(ctx, &amp;dynamodb.PutItemInput{
+        TableName: aws.String(&quot;usuarios&quot;),
+        Item:      av,
+    })
+    return err
+}
+</code></pre>
+<h3 id="read-getitem">READ (GetItem)</h3>
+<pre><code class="language-go">func (r *DynamoRepositorioUsuario) BuscarPorID(ctx context.Context, id string) (*Usuario, error) {
+    chave, _ := attributevalue.MarshalMap(map[string]string{
+        &quot;PK&quot;: &quot;USER#&quot; + id,
+        &quot;SK&quot;: &quot;PROFILE&quot;,
+    })
+
+    resultado, err := r.client.GetItem(ctx, &amp;dynamodb.GetItemInput{
+        TableName: aws.String(&quot;usuarios&quot;),
+        Key:       chave,
+    })
+    if err != nil {
+        return nil, fmt.Errorf(&quot;erro ao buscar item: %w&quot;, err)
+    }
+    if resultado.Item == nil {
+        return nil, fmt.Errorf(&quot;usuário %s não encontrado&quot;, id)
+    }
+
+    var item ItemUsuario
+    if err := attributevalue.UnmarshalMap(resultado.Item, &amp;item); err != nil {
+        return nil, err
+    }
+    return &amp;Usuario{ID: id, Nome: item.Nome, Email: item.Email}, nil
+}
+</code></pre>
+<h3 id="read-multiplo-query-busca-por-particao">READ múltiplo (Query — busca por partição)</h3>
+<pre><code class="language-go">func (r *DynamoRepositorioUsuario) ListarPedidosDoUsuario(ctx context.Context, userID string) ([]Pedido, error) {
+    resultado, err := r.client.Query(ctx, &amp;dynamodb.QueryInput{
+        TableName:              aws.String(&quot;usuarios&quot;),
+        KeyConditionExpression: aws.String(&quot;PK = :pk AND begins_with(SK, :prefixo)&quot;),
+        ExpressionAttributeValues: map[string]types.AttributeValue{
+            &quot;:pk&quot;:       &amp;types.AttributeValueMemberS{Value: &quot;USER#&quot; + userID},
+            &quot;:prefixo&quot;:  &amp;types.AttributeValueMemberS{Value: &quot;PEDIDO#&quot;},
+        },
+    })
+    if err != nil {
+        return nil, err
+    }
+
+    var pedidos []Pedido
+    err = attributevalue.UnmarshalListOfMaps(resultado.Items, &amp;pedidos)
+    return pedidos, err
+}
+</code></pre>
+<h3 id="update-updateitem-atualizacao-parcial-e-atomica">UPDATE (UpdateItem — atualização parcial e atômica)</h3>
+<pre><code class="language-go">func (r *DynamoRepositorioUsuario) AtualizarNome(ctx context.Context, id, novoNome string) error {
+    chave, _ := attributevalue.MarshalMap(map[string]string{&quot;PK&quot;: &quot;USER#&quot; + id, &quot;SK&quot;: &quot;PROFILE&quot;})
+
+    _, err := r.client.UpdateItem(ctx, &amp;dynamodb.UpdateItemInput{
+        TableName:        aws.String(&quot;usuarios&quot;),
+        Key:              chave,
+        UpdateExpression: aws.String(&quot;SET nome = :n&quot;),
+        ExpressionAttributeValues: map[string]types.AttributeValue{
+            &quot;:n&quot;: &amp;types.AttributeValueMemberS{Value: novoNome},
+        },
+        ConditionExpression: aws.String(&quot;attribute_exists(PK)&quot;), // evita criar item &quot;fantasma&quot;
+    })
+    return err
+}
+</code></pre>
+<h3 id="delete_1">DELETE</h3>
+<pre><code class="language-go">func (r *DynamoRepositorioUsuario) Deletar(ctx context.Context, id string) error {
+    chave, _ := attributevalue.MarshalMap(map[string]string{&quot;PK&quot;: &quot;USER#&quot; + id, &quot;SK&quot;: &quot;PROFILE&quot;})
+    _, err := r.client.DeleteItem(ctx, &amp;dynamodb.DeleteItemInput{
+        TableName: aws.String(&quot;usuarios&quot;),
+        Key:       chave,
+    })
+    return err
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>boto3 (Python)</th>
+<th>aws-sdk-go-v2 (Go)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>boto3.resource("dynamodb")</code> (alto nível, com serialização automática)</td>
+<td><code>dynamodb.NewFromConfig</code> (baixo nível — você sempre lida com <code>AttributeValue</code>)</td>
+</tr>
+<tr>
+<td><code>table.put_item(Item={...})</code> (dict puro)</td>
+<td><code>attributevalue.MarshalMap(struct)</code> — exige struct + tags <code>dynamodbav</code></td>
+</tr>
+<tr>
+<td><code>table.get_item(Key={...})</code></td>
+<td><code>client.GetItem(ctx, &amp;dynamodb.GetItemInput{...})</code></td>
+</tr>
+<tr>
+<td>Resposta já vem como <code>dict</code> Python nativo</td>
+<td>Resposta vem tipada (<code>types.AttributeValueMemberS</code>, etc.) — mais verboso, porém com checagem em compile-time</td>
+</tr>
+<tr>
+<td>Paginadores (<code>paginator.paginate()</code>)</td>
+<td><code>LastEvaluatedKey</code> manual em loop, ou usa o pacote auxiliar de paginators do SDK v2</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-concorrencia-goroutines-e-channels">10. Concorrência: goroutines e channels</h2>
+<p>Aqui está a maior vantagem competitiva de Go sobre Python para sistemas de alta concorrência.</p>
+<h3 id="101-goroutines-vs-threadsasyncio">10.1 Goroutines vs threads/asyncio</h3>
+<pre><code class="language-go">func main() {
+    go fazerAlgo() // &quot;go&quot; + chamada de função = dispara em uma goroutine
+    fazerOutraCoisa()
+    time.Sleep(time.Second) // só para o exemplo não terminar antes da goroutine rodar
+}
+</code></pre>
+<p>Uma <strong>goroutine</strong> é uma "thread verde": gerenciada pelo <em>runtime</em> do Go (não pelo SO), com stack inicial de ~2KB (cresce dinamicamente) — você pode rodar <strong>centenas de milhares</strong> de goroutines simultaneamente sem o overhead de threads de SO. O runtime do Go faz o <em>scheduling</em> dessas goroutines sobre um pool de threads reais do sistema operacional (controlado por <code>GOMAXPROCS</code>, ver seção 11).</p>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>threading.Thread</code> — thread real do SO, presa pelo <strong>GIL</strong> (só uma executa Python por vez)</td>
+<td>Goroutine — leve, sem GIL, <strong>paralelismo real</strong> em múltiplos cores</td>
+</tr>
+<tr>
+<td><code>asyncio</code> — concorrência cooperativa em 1 thread, precisa de <code>async</code>/<code>await</code> em toda a cadeia de chamadas</td>
+<td>Goroutines são concorrentes E paralelas nativamente, sem sintaxe <code>async</code>/<code>await</code> — qualquer função pode ser chamada com <code>go</code></td>
+</tr>
+<tr>
+<td><code>multiprocessing</code> — contorna o GIL gerando processos (caro: memória duplicada, IPC)</td>
+<td>Não precisa: uma única goroutine já usa múltiplos cores de verdade</td>
+</tr>
+<tr>
+<td>Custo de uma thread: ~8MB de stack</td>
+<td>Custo de uma goroutine: ~2KB de stack inicial</td>
+</tr>
+</tbody>
+</table>
+<p>Esta é a diferença estrutural mais importante: em Python você escolhe entre <code>asyncio</code> (rápido, mas I/O-bound apenas, sem usar múltiplos cores) ou <code>multiprocessing</code> (usa múltiplos cores, mas caro). Em Go, <strong>goroutines resolvem os dois casos com o mesmo modelo de programação</strong>.</p>
+<h3 id="102-channels-comunicacao-entre-goroutines">10.2 Channels: comunicação entre goroutines</h3>
+<p>Channels são filas tipadas e seguras para concorrência — o mecanismo oficial de comunicação entre goroutines (a filosofia de Go: <em>"don't communicate by sharing memory; share memory by communicating"</em>).</p>
+<pre><code class="language-go">canal := make(chan string)             // channel sem buffer (bloqueia até alguém receber)
+canalComBuffer := make(chan string, 10) // buffer de 10 — não bloqueia até estar cheio
+
+go func() {
+    canal &lt;- &quot;resultado processado&quot; // envia
+}()
+
+mensagem := &lt;-canal // recebe (bloqueia até ter algo)
+fmt.Println(mensagem)
+</code></pre>
+<pre><code class="language-go">canal := make(chan int)
+go func() {
+    for i := 0; i &lt; 5; i++ {
+        canal &lt;- i
+    }
+    close(canal) // sinaliza &quot;não vem mais nada&quot;
+}()
+
+for valor := range canal { // itera até o channel ser fechado
+    fmt.Println(valor)
+}
+</code></pre>
+<p><code>select</code> é o <code>switch</code> para channels — espera em múltiplos channels simultaneamente:</p>
+<pre><code class="language-go">select {
+case msg := &lt;-canalA:
+    fmt.Println(&quot;recebido de A:&quot;, msg)
+case msg := &lt;-canalB:
+    fmt.Println(&quot;recebido de B:&quot;, msg)
+case &lt;-time.After(2 * time.Second):
+    fmt.Println(&quot;timeout — nenhum canal respondeu em 2s&quot;)
+}
+</code></pre>
+<p>Não existe equivalente direto disso no Python padrão — <code>select</code> em Go é parecido conceitualmente com <code>asyncio.wait([...], return_when=FIRST_COMPLETED)</code>, mas é uma construção nativa da linguagem, não uma função de biblioteca.</p>
+<h3 id="103-syncwaitgroup-e-syncmutex">10.3 sync.WaitGroup e sync.Mutex</h3>
+<pre><code class="language-go">import &quot;sync&quot;
+
+func ProcessarEmParalelo(itens []string) {
+    var wg sync.WaitGroup // equivalente a asyncio.gather, mas para goroutines
+
+    for _, item := range itens {
+        wg.Add(1)
+        go func(it string) { // SEMPRE passe a variável de loop como parâmetro (evita bug clássico de closure)
+            defer wg.Done()
+            processar(it)
+        }(item)
+    }
+
+    wg.Wait() // bloqueia até todas as goroutines chamarem Done()
+}
+</code></pre>
+<pre><code class="language-go">type ContadorSeguro struct {
+    mu       sync.Mutex // equivalente a threading.Lock()
+    contador int
+}
+
+func (c *ContadorSeguro) Incrementar() {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.contador++
+}
+</code></pre><div class="callout callout-warning"><div class="callout-label">⚠ Cenário de falha</div><div class="callout-body">Sem o <code>sync.Mutex</code>, duas goroutines podem ler o mesmo valor de <code>c.contador</code> antes de qualquer uma escrever de volta — você perde incrementos silenciosamente (o contador final fica menor que o esperado), sem nenhum erro, crash ou stack trace apontando o problema. Em Python com threads, o GIL mascara boa parte desses casos simples; em Go, paralelismo real significa que essa proteção é obrigatória desde o primeiro código concorrente.</div></div>
+<p><code>sync.Mutex</code> é necessário porque, <strong>sem o GIL</strong>, acessar a mesma variável de múltiplas goroutines simultaneamente é uma <em>race condition</em> real (detectável com a flag <code>go run -race</code>). Em Python com threads isso também acontece, mas o GIL mascara parte dos casos mais simples; em Go, paralelismo real significa que você precisa pensar em sincronização desde o primeiro dia.</p>
+<hr />
+<h2 id="11-paralelismo-throttling-e-padroes-multi-task">11. Paralelismo, throttling e padrões multi-task</h2>
+<h3 id="111-gomaxprocs-paralelismo-real">11.1 GOMAXPROCS — paralelismo real</h3>
+<pre><code class="language-go">import &quot;runtime&quot;
+
+func init() {
+    fmt.Println(&quot;CPUs disponíveis:&quot;, runtime.NumCPU())
+    fmt.Println(&quot;GOMAXPROCS atual:&quot;, runtime.GOMAXPROCS(0))
+}
+</code></pre>
+<p><code>GOMAXPROCS</code> define quantas threads do SO o <em>scheduler</em> do Go usa para executar goroutines <strong>em paralelo de verdade</strong>. Por padrão, é igual ao número de CPUs disponíveis (e, desde Go 1.21+/1.5, respeita automaticamente <code>cgroups</code>/limites de CPU do container — importante em ECS/Kubernetes, onde sem isso o runtime poderia "achar" que tem mais CPU do que o container realmente recebeu).</p>
+<h3 id="112-worker-pool-multi-tasking-controlado">11.2 Worker pool — multi-tasking controlado</h3>
+<p>O padrão central para processar muitas tarefas sem explodir o número de goroutines simultâneas (equivalente ao <code>ThreadPoolExecutor(max_workers=N)</code> ou <code>asyncio.Semaphore(N)</code> do Python):</p>
+<pre><code class="language-go">func WorkerPool(ctx context.Context, tarefas &lt;-chan Tarefa, numWorkers int) &lt;-chan Resultado {
+    resultados := make(chan Resultado, numWorkers)
+    var wg sync.WaitGroup
+
+    for w := 0; w &lt; numWorkers; w++ {
+        wg.Add(1)
+        go func(workerID int) {
+            defer wg.Done()
+            for tarefa := range tarefas { // cada worker consome do mesmo channel — distribuição automática
+                select {
+                case &lt;-ctx.Done():
+                    return // cancelamento propagado
+                default:
+                    resultados &lt;- processarTarefa(tarefa)
+                }
+            }
+        }(w)
+    }
+
+    go func() {
+        wg.Wait()
+        close(resultados)
+    }()
+    return resultados
+}
+</code></pre>
+<pre><code class="language-go">tarefas := make(chan Tarefa, 100)
+go func() {
+    for _, t := range listaDeTarefas {
+        tarefas &lt;- t
+    }
+    close(tarefas)
+}()
+
+for resultado := range WorkerPool(ctx, tarefas, 10) { // 10 workers fixos — &quot;multi-tasking&quot; limitado
+    fmt.Println(resultado)
+}
+</code></pre>
+<h3 id="113-rate-limiting-multi-throttling">11.3 Rate limiting — "multi-throttling"</h3>
+<p>Para limitar <em>taxa</em> (não apenas concorrência simultânea), Go tem o pacote oficial <code>golang.org/x/time/rate</code> (algoritmo <em>token bucket</em>, o mesmo conceito do <code>aiolimiter</code>/<code>ratelimit</code> em Python):</p>
+<pre><code class="language-go">import &quot;golang.org/x/time/rate&quot;
+
+limitador := rate.NewLimiter(rate.Limit(50), 10) // 50 req/s sustentado, burst de 10
+
+func ChamarAPIExterna(ctx context.Context, requisicao Requisicao) error {
+    if err := limitador.Wait(ctx); err != nil { // bloqueia até ter &quot;token&quot; disponível, respeitando ctx
+        return fmt.Errorf(&quot;rate limit: %w&quot;, err)
+    }
+    return executarChamada(requisicao)
+}
+</code></pre>
+<p>Para limitar <strong>múltiplos recursos com taxas diferentes</strong> ("multi-throttling" — ex: um limitador por tenant, ou um por endpoint downstream):</p>
+<pre><code class="language-go">type LimitadorMultiTenant struct {
+    mu         sync.Mutex
+    limitadores map[string]*rate.Limiter
+}
+
+func (l *LimitadorMultiTenant) Para(tenantID string) *rate.Limiter {
+    l.mu.Lock()
+    defer l.mu.Unlock()
+    if lim, existe := l.limitadores[tenantID]; existe {
+        return lim
+    }
+    novo := rate.NewLimiter(rate.Limit(10), 5) // 10 req/s por tenant, burst 5
+    l.limitadores[tenantID] = novo
+    return novo
+}
+</code></pre>
+<h3 id="114-semaforos-via-channel-bufferizado-alternativa-simples-ao-rate-limiter">11.4 Semáforos via channel bufferizado (alternativa simples ao rate limiter)</h3>
+<pre><code class="language-go">semaforo := make(chan struct{}, 5) // permite só 5 operações concorrentes
+
+func ChamarComLimite(ctx context.Context, fn func() error) error {
+    select {
+    case semaforo &lt;- struct{}{}: // &quot;adquire&quot; uma vaga
+        defer func() { &lt;-semaforo }() // &quot;libera&quot; a vaga
+        return fn()
+    case &lt;-ctx.Done():
+        return ctx.Err()
+    }
+}
+</code></pre>
+<p>Equivalente direto a <code>asyncio.Semaphore(5)</code> do Python — mas usando a primitiva nativa de channel em vez de uma classe de biblioteca.</p>
+<h3 id="115-contextcontext-timeout-cancelamento-e-deadline-propagation">11.5 context.Context — timeout, cancelamento e deadline propagation</h3>
+<p><code>context.Context</code> é a peça que amarra tudo: propaga timeout/cancelamento por toda a cadeia de chamadas (incluindo entre goroutines), exatamente como você já faz com <code>asyncio.timeout()</code>/<code>anyio</code> cancel scopes, ou como o <code>trace_id</code> propagado entre containers no seu sistema multi-agente.</p>
+<pre><code class="language-go">func BuscarComTimeout(parent context.Context, id string) (*Usuario, error) {
+    ctx, cancel := context.WithTimeout(parent, 3*time.Second)
+    defer cancel() // SEMPRE chame cancel, mesmo se o timeout não disparar — libera recursos<div class="callout callout-warning"><div class="callout-label">⚠ Cenário de falha</div><div class="callout-body">Esquecer o <code>defer cancel()</code> não trava o programa na hora — o timer interno do context continua vivo até o timeout original expirar por conta própria. Em um serviço de alto throughput, isso vira um <strong>vazamento lento</strong> de goroutines/timers que só fica visível em métricas de memória depois de horas em produção, nunca em ambiente de desenvolvimento.</div></div>
+
+    return repositorio.BuscarPorID(ctx, id) // o context &quot;viaja&quot; até a query SQL/HTTP downstream
+}
+</code></pre>
+<pre><code class="language-go">ctx, cancel := context.WithCancel(context.Background())
+go func() {
+    time.Sleep(1 * time.Second)
+    cancel() // cancela manualmente — toda goroutine que escuta ctx.Done() é notificada
+}()
+</code></pre>
+<h3 id="116-fan-out-fan-in-pipeline-de-processamento">11.6 Fan-out / fan-in (pipeline de processamento)</h3>
+<pre><code class="language-go">func FanOut(ctx context.Context, entrada &lt;-chan int, numWorkers int) []&lt;-chan int {
+    saidas := make([]&lt;-chan int, numWorkers)
+    for i := 0; i &lt; numWorkers; i++ {
+        saida := make(chan int)
+        saidas[i] = saida
+        go func() {
+            defer close(saida)
+            for v := range entrada {
+                saida &lt;- v * v // exemplo: processamento qualquer
+            }
+        }()
+    }
+    return saidas
+}
+
+func FanIn(canais ...&lt;-chan int) &lt;-chan int {
+    saida := make(chan int)
+    var wg sync.WaitGroup
+    for _, c := range canais {
+        wg.Add(1)
+        go func(canal &lt;-chan int) {
+            defer wg.Done()
+            for v := range canal {
+                saida &lt;- v
+            }
+        }(c)
+    }
+    go func() {
+        wg.Wait()
+        close(saida)
+    }()
+    return saida
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asyncio.Semaphore(N)</code></td>
+<td><code>chan struct{}</code> bufferizado com capacidade N</td>
+</tr>
+<tr>
+<td><code>ThreadPoolExecutor(max_workers=N)</code></td>
+<td>Worker pool com N goroutines lendo do mesmo channel</td>
+</tr>
+<tr>
+<td><code>aiolimiter.AsyncLimiter</code></td>
+<td><code>golang.org/x/time/rate.Limiter</code></td>
+</tr>
+<tr>
+<td><code>asyncio.wait_for(coro, timeout=N)</code></td>
+<td><code>context.WithTimeout</code></td>
+</tr>
+<tr>
+<td><code>asyncio.gather(*tasks)</code></td>
+<td><code>sync.WaitGroup</code> + goroutines</td>
+</tr>
+<tr>
+<td>GIL impede paralelismo real em threads</td>
+<td>Sem GIL — paralelismo real, controlado por <code>GOMAXPROCS</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="12-escalabilidade-horizontal-e-arquitetura">12. Escalabilidade horizontal e arquitetura</h2>
+<p>Os princípios são os mesmos que você já aplica com FastAPI + ECS — a diferença é onde cada responsabilidade vive.</p>
+<h3 id="121-stateless-services">12.1 Stateless services</h3>
+<p>Assim como em FastAPI, cada instância do serviço Go não deve guardar estado de sessão em memória local — estado vai para Redis/DynamoDB, exatamente como na sua arquitetura atual de memória de agentes. Goroutines/threads HTTP de uma instância não compartilham nada com outra instância — escalar horizontalmente é simplesmente subir mais réplicas do binário atrás de um load balancer (ALB/NLB), sem nenhuma configuração especial do lado do Go.</p>
+<h3 id="122-graceful-shutdown">12.2 Graceful shutdown</h3>
+<p>Equivalente ao shutdown handler do Uvicorn/Gunicorn, mas escrito explicitamente:</p>
+<pre><code class="language-go">func main() {
+    servidor := &amp;http.Server{Addr: &quot;:8080&quot;, Handler: Router()}
+
+    go func() {
+        if err := servidor.ListenAndServe(); err != nil &amp;&amp; !errors.Is(err, http.ErrServerClosed) {
+            log.Fatalf(&quot;erro no servidor: %v&quot;, err)
+        }
+    }()
+
+    sinal := make(chan os.Signal, 1)
+    signal.Notify(sinal, syscall.SIGINT, syscall.SIGTERM) // captura o sinal que o ECS envia no deploy
+    &lt;-sinal
+
+    ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+    defer cancel()
+    if err := servidor.Shutdown(ctx); err != nil { // espera requisições em andamento terminarem
+        log.Printf(&quot;forçando encerramento: %v&quot;, err)
+    }
+}
+</code></pre>
+<p>Isso é o equivalente direto ao <code>lifespan</code> do FastAPI + o tratamento de <code>SIGTERM</code> que o ECS já manda no seu setup atual antes de matar uma task.</p><div class="callout callout-danger"><div class="callout-label">⚠ Cenário de falha em produção</div><div class="callout-body">Sem esse tratamento de <code>SIGTERM</code>, o ECS mata o processo imediatamente em todo deploy ou scale-in, cortando conexões em andamento na marra. O sintoma não é um incidente raro: é um <strong>pico de connection reset/502 a cada deploy</strong>, porque requisições que estavam sendo processadas no exato momento do sinal nunca recebem resposta.</div></div>
+<h3 id="123-health-checks-readiness-vs-liveness">12.3 Health checks (readiness vs liveness)</h3>
+<pre><code class="language-go">func HandlerSaude(db *sql.DB, redisClient *redis.Client) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+        defer cancel()
+
+        if err := db.PingContext(ctx); err != nil {
+            http.Error(w, &quot;MySQL indisponível&quot;, http.StatusServiceUnavailable)
+            return
+        }
+        if err := redisClient.Ping(ctx).Err(); err != nil {
+            http.Error(w, &quot;Redis indisponível&quot;, http.StatusServiceUnavailable)
+            return
+        }
+        w.WriteHeader(http.StatusOK)
+    }
+}
+</code></pre>
+<p>Mesma lógica de <code>/health</code> que você já tem no FastAPI — o ALB/health check do ECS consome esse endpoint da mesma forma, independente da linguagem.</p>
+<h3 id="124-o-ganho-real-de-escalabilidade-vindo-de-go">12.4 O ganho real de escalabilidade vindo de Go</h3>
+<p>A diferença prática que você vai sentir em produção: um binário Go consome <strong>frações da memória</strong> de um processo Python equivalente (sem interpretador, sem GC tão pesado, sem múltiplos workers Gunicorn para contornar o GIL). Em FastAPI, escalar verticalmente dentro de <strong>uma</strong> task ECS exige múltiplos workers Uvicorn (cada um um processo separado, cada um com seu próprio heap). Em Go, <strong>uma única instância do binário já usa todos os cores da task</strong> via goroutines — você tipicamente precisa de menos réplicas/menos vCPU para o mesmo throughput, o que se traduz diretamente em menor custo de ECS Fargate.</p>
+<hr />
+<h2 id="13-logs-e-monitoramento">13. Logs e monitoramento</h2>
+<h3 id="131-logslog-logging-estruturado-nativo-go-121">13.1 <code>log/slog</code> — logging estruturado nativo (Go 1.21+)</h3>
+<p>Antes do <code>slog</code>, Go só tinha o pacote <code>log</code> (texto puro, sem campos estruturados). Hoje <code>slog</code> é o equivalente nativo ao <code>structlog</code>/<code>logging</code> com <code>JSONFormatter</code> do Python:</p>
+<pre><code class="language-go">import &quot;log/slog&quot;
+
+logger := slog.New(slog.NewJSONHandler(os.Stdout, &amp;slog.HandlerOptions{Level: slog.LevelInfo}))
+
+logger.Info(&quot;requisição processada&quot;,
+    slog.String(&quot;thread_id&quot;, threadID), // exatamente o seu eixo de correlação atual
+    slog.String(&quot;usuario_id&quot;, usuarioID),
+    slog.Int(&quot;status&quot;, 200),
+    slog.Duration(&quot;duracao&quot;, tempoGasto),
+)
+// saída: {&quot;time&quot;:&quot;...&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;msg&quot;:&quot;requisição processada&quot;,&quot;thread_id&quot;:&quot;...&quot;,&quot;usuario_id&quot;:&quot;...&quot;,&quot;status&quot;:200,&quot;duracao&quot;:&quot;45ms&quot;}
+</code></pre>
+<pre><code class="language-go">loggerComContexto := logger.With(slog.String(&quot;servico&quot;, &quot;api-usuarios&quot;)) // equivalente a logger.bind() do structlog
+loggerComContexto.Error(&quot;falha ao salvar no MySQL&quot;, slog.String(&quot;erro&quot;, err.Error()))
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>structlog / logging (Python)</th>
+<th>log/slog (Go)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>logger.bind(thread_id=...)</code></td>
+<td><code>logger.With(slog.String("thread_id", ...))</code></td>
+</tr>
+<tr>
+<td><code>JSONRenderer()</code></td>
+<td><code>slog.NewJSONHandler(...)</code></td>
+</tr>
+<tr>
+<td><code>logging.getLogger(__name__)</code></td>
+<td>Geralmente um logger por pacote/serviço, passado explicitamente (sem registry global automático)</td>
+</tr>
+<tr>
+<td>Nível configurado via <code>logging.basicConfig(level=...)</code></td>
+<td><code>slog.HandlerOptions{Level: slog.LevelInfo}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="132-opentelemetry-em-go-tracingmetrics">13.2 OpenTelemetry em Go (tracing/metrics)</h3>
+<p>Mesmo SDK conceitual que você já usa em Python, com a mesma propagação <strong>W3C TraceContext</strong> entre serviços:</p>
+<pre><code class="language-go">import (
+    &quot;go.opentelemetry.io/otel&quot;
+    &quot;go.opentelemetry.io/otel/trace&quot;
+)
+
+var tracer = otel.Tracer(&quot;servico-usuarios&quot;)
+
+func BuscarUsuario(ctx context.Context, id string) (*Usuario, error) {
+    ctx, span := tracer.Start(ctx, &quot;BuscarUsuario&quot;, trace.WithAttributes(
+        attribute.String(&quot;usuario.id&quot;, id),
+    ))
+    defer span.End()
+
+    usuario, err := repositorio.BuscarPorID(ctx, id) // ctx propaga o span para a query SQL
+    if err != nil {
+        span.RecordError(err)
+        span.SetStatus(codes.Error, err.Error())
+        return nil, err
+    }
+    return usuario, nil
+}
+</code></pre>
+<p>A propagação de trace entre containers Go ↔ Python (caso seu sistema venha a ser híbrido) funciona pelo mesmo header HTTP <code>traceparent</code> do W3C TraceContext — o protocolo é o mesmo independente da linguagem, exatamente como já acontece entre seus containers ECS de agentes hoje.</p>
+<table>
+<thead>
+<tr>
+<th>Python (OTel)</th>
+<th>Go (OTel)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tracer.start_as_current_span("nome")</code> (context manager)</td>
+<td><code>ctx, span := tracer.Start(ctx, "nome")</code> + <code>defer span.End()</code></td>
+</tr>
+<tr>
+<td>Propagação automática via <code>instrumentation</code> libs (FastAPI, httpx)</td>
+<td>Frequentemente manual: você passa <code>ctx</code> explicitamente em cada chamada (<code>otelhttp</code> instrumenta o <code>http.Client</code>/<code>http.Server</code> automaticamente)</td>
+</tr>
+<tr>
+<td>Exporter para X-Ray/OTLP configurado no SDK</td>
+<td>Mesmo conceito — <code>go.opentelemetry.io/contrib/exporters/autoexport</code> ou exporter AWS X-Ray dedicado</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="14-cheat-sheet-final-go-vs-python">14. Cheat sheet final — Go vs Python</h2>
+<table>
+<thead>
+<tr>
+<th>Tema</th>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tipagem</td>
+<td>Dinâmica, hints opcionais</td>
+<td>Estática, obrigatória, checada em compilação</td>
+</tr>
+<tr>
+<td>Execução</td>
+<td>Interpretado (CPython)</td>
+<td>Compilado para binário nativo</td>
+</tr>
+<tr>
+<td>OOP</td>
+<td>Classes + herança (única e múltipla)</td>
+<td>Structs + interfaces + composição (sem herança)</td>
+</tr>
+<tr>
+<td>Polimorfismo</td>
+<td>Duck typing dinâmico (runtime)</td>
+<td>Duck typing estático (compile-time, via interfaces)</td>
+</tr>
+<tr>
+<td>Erros</td>
+<td>Exceções (<code>try/except</code>)</td>
+<td>Valores de retorno (<code>if err != nil</code>)</td>
+</tr>
+<tr>
+<td>Concorrência I/O-bound</td>
+<td><code>asyncio</code> (cooperativo, 1 thread)</td>
+<td>Goroutines (cooperativo E paralelo)</td>
+</tr>
+<tr>
+<td>Concorrência CPU-bound</td>
+<td><code>multiprocessing</code> (processos separados)</td>
+<td>Goroutines (mesmo processo, múltiplos cores)</td>
+</tr>
+<tr>
+<td>Gerenciador de dependências</td>
+<td>pip/poetry + venv</td>
+<td>Go Modules (<code>go.mod</code>/<code>go.sum</code>), sem venv</td>
+</tr>
+<tr>
+<td>Deploy</td>
+<td>Precisa do interpretador Python no destino</td>
+<td>Binário único, sem runtime necessário</td>
+</tr>
+<tr>
+<td>Validação de dados</td>
+<td>Pydantic (automática)</td>
+<td><code>go-playground/validator</code> (manual, via tags)</td>
+</tr>
+<tr>
+<td>Logging estruturado</td>
+<td>structlog / logging + JSONFormatter</td>
+<td>log/slog (nativo desde 1.21)</td>
+</tr>
+<tr>
+<td>Null/None</td>
+<td><code>None</code> universal</td>
+<td><code>nil</code> só para ponteiro/slice/map/chan/func/interface; zero values para o resto</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="proximos-passos-sugeridos">Próximos passos sugeridos</h2>
+<ol>
+<li>Reescrever um endpoint simples do seu FastAPI atual (ex: CRUD de usuário) em Go usando <code>net/http</code> puro ou o router <code>chi</code>/<code>gin</code>, comparando linha a linha.</li>
+<li>Rodar <code>go run -race</code> num exemplo com goroutines + Mutex para ver a detecção de race condition na prática.</li>
+<li>Medir consumo de memória de um binário Go vs um processo Uvicorn equivalente, no mesmo container ECS — esse número costuma ser o argumento mais convincente para adoção em produção.</li>
+</ol>
+    </article>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>
+  hljs.highlightAll();
+
+  // Toggle sidebar (mobile)
+  const sidebar = document.getElementById('sidebar');
+  const toggle = document.getElementById('menuToggle');
+  toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+  document.querySelectorAll('.sidebar nav a').forEach(a => {
+    a.addEventListener('click', () => sidebar.classList.remove('open'));
+  });
+
+  // Scrollspy
+  const links = document.querySelectorAll('.nav-link');
+  const headings = Array.from(links).map(l => document.getElementById(l.dataset.id)).filter(Boolean);
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const id = entry.target.id;
+      const link = document.querySelector(`.nav-link[data-id="${id}"]`);
+      if (!link) return;
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+
+  headings.forEach(h => observer.observe(h));
+</script>
+</body>
+</html>
