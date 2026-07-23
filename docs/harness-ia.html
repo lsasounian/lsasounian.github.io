@@ -4,491 +4,453 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Harness baseado em IA — Guia completo</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-:root {
-  --bg: #0d1117;
-  --panel: #161b22;
-  --panel-2: #1c2129;
-  --border: #30363d;
-  --text: #c9d1d9;
-  --text-muted: #8b949e;
-  --heading: #e6edf3;
-  --blue: #58a6ff;
-  --purple: #bc8cff;
-  --green: #56d364;
-  --amber: #e3b341;
-  --red: #f85149;
-  --teal: #39c5cf;
-  --sidebar-w: 272px;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 24px; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 15.5px;
-  line-height: 1.75;
-}
-/* ---------- Sidebar ---------- */
-nav.sidebar {
-  position: fixed; top: 0; left: 0; bottom: 0;
-  width: var(--sidebar-w);
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  padding: 28px 0 40px;
-}
-.sidebar .logo {
-  padding: 0 24px 20px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
-}
-.sidebar .logo .title { font-weight: 700; color: var(--heading); font-size: 16px; letter-spacing: -0.01em; }
-.sidebar .logo .subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
-.sidebar .group { padding: 10px 24px 4px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
-.sidebar a {
-  display: block; padding: 5px 24px 5px 24px;
-  color: var(--text-muted); text-decoration: none; font-size: 13.5px;
-  border-left: 2px solid transparent;
-}
-.sidebar a:hover { color: var(--heading); background: var(--panel-2); }
-.sidebar a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.06); }
-/* ---------- Main ---------- */
-main {
-  margin-left: var(--sidebar-w);
-  max-width: 900px;
-  padding: 48px 56px 120px;
-}
-@media (max-width: 900px) {
-  nav.sidebar { display: none; }
-  main { margin-left: 0; padding: 32px 20px 80px; }
-}
-header.hero { border-bottom: 1px solid var(--border); padding-bottom: 28px; margin-bottom: 40px; }
-.eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--teal); letter-spacing: 0.08em; text-transform: uppercase; }
-h1 { color: var(--heading); font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 8px 0 12px; }
-.lead { color: var(--text-muted); font-size: 17px; max-width: 680px; }
-h2 {
-  color: var(--heading); font-size: 24px; font-weight: 600; letter-spacing: -0.01em;
-  margin: 56px 0 16px; padding-top: 20px; border-top: 1px solid var(--border);
-}
-h3 { color: var(--heading); font-size: 18px; font-weight: 600; margin: 32px 0 10px; }
-h4 { color: var(--heading); font-size: 15.5px; font-weight: 600; margin: 24px 0 8px; }
-p { margin: 0 0 14px; }
-strong { color: var(--heading); font-weight: 600; }
-em { color: var(--text); }
-a.inline { color: var(--blue); text-decoration: none; }
-a.inline:hover { text-decoration: underline; }
-ul, ol { margin: 0 0 16px 24px; }
-li { margin-bottom: 6px; }
-/* ---------- Code ---------- */
-code {
-  font-family: 'IBM Plex Mono', monospace; font-size: 0.88em;
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 5px; padding: 1.5px 6px; color: var(--teal);
-}
-pre {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-  padding: 18px 20px; overflow-x: auto; margin: 16px 0 22px;
-  font-size: 13px; line-height: 1.65;
-}
-pre code { background: none; border: none; padding: 0; color: var(--text); font-size: inherit; }
-pre .filename {
-  display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
-  color: var(--text-muted); margin-bottom: 10px; padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-.kw { color: #ff7b72; }        /* keywords */
-.fn { color: #d2a8ff; }        /* funções */
-.st { color: #a5d6ff; }        /* strings */
-.nb { color: #79c0ff; }        /* números / builtins */
-.cm { color: #8b949e; font-style: italic; } /* comentários */
-.cl { color: #ffa657; }        /* classes / tipos */
-/* ---------- Callouts ---------- */
-.callout {
-  border: 1px solid var(--border); border-left-width: 4px; border-radius: 0 8px 8px 0;
-  padding: 14px 18px; margin: 18px 0 22px; background: var(--panel);
-}
-.callout .ctitle {
-  font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 500;
-  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; display: block;
-}
-.callout p:last-child { margin-bottom: 0; }
-.callout.info   { border-left-color: var(--blue); }   .callout.info .ctitle { color: var(--blue); }
-.callout.tip    { border-left-color: var(--green); }  .callout.tip .ctitle { color: var(--green); }
-.callout.warn   { border-left-color: var(--amber); }  .callout.warn .ctitle { color: var(--amber); }
-.callout.danger { border-left-color: var(--red); }    .callout.danger .ctitle { color: var(--red); }
-.callout.biz    { border-left-color: var(--purple); } .callout.biz .ctitle { color: var(--purple); }
-/* ---------- Tabelas ---------- */
-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14px; }
-th, td { border: 1px solid var(--border); padding: 9px 13px; text-align: left; vertical-align: top; }
-th { background: var(--panel); color: var(--heading); font-weight: 600; font-size: 13px; }
-td { background: rgba(22,27,34,0.4); }
-/* ---------- Misc ---------- */
-.tag {
-  display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
-  padding: 2px 9px; border-radius: 20px; border: 1px solid var(--border);
-  color: var(--text-muted); margin-right: 6px; vertical-align: middle;
-}
-.tag.t-tech { color: var(--teal); border-color: rgba(57,197,207,0.4); }
-.tag.t-biz  { color: var(--purple); border-color: rgba(188,140,255,0.4); }
-hr.sep { border: none; border-top: 1px dashed var(--border); margin: 40px 0; }
-.kbd-flow {
-  font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--text-muted);
-  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-  padding: 12px 16px; margin: 14px 0 20px; line-height: 2;
-}
-.kbd-flow b { color: var(--heading); font-weight: 500; }
+:root { --accent: var(--cyan); --accent-dim: #103a44; }
+.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.callout.blue .callout-label   { color: var(--blue); }
+.callout.green .callout-label  { color: var(--green); }
+.callout.warn .callout-label   { color: var(--amber); }
+.callout.danger .callout-label { color: var(--red); }
+.callout.purple .callout-label { color: var(--purple); }
 </style>
 </head>
 <body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
 
-<nav class="sidebar" id="sidebar">
-  <div class="logo">
-    <div class="title">Harness baseado em IA</div>
-    <div class="subtitle">agentes // llm // langgraph</div>
+<aside class="sidebar">
+  <a href="../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">IA</span>
+    <span class="doc-title">Harness de Agentes</span>
+  </a>
+  <nav>
+    <div class="nav-section">Fundamentos</div>
+    <a href="#fundamentos">Conceitos essenciais</a>
+    <a href="#o-que-e">O que é um harness</a>
+
+    <div class="nav-section">Parte 1 · Anatomia</div>
+    <a href="#s-usuario">Entrada do usuário</a>
+    <a href="#s-contexto">Montagem de contexto</a>
+    <a href="#s-loop">Loop agêntico</a>
+    <a href="#s-llm">O LLM</a>
+    <a href="#s-tools">Execução de tools</a>
+    <a href="#s-guardrails">Guardrails e telemetria</a>
+
+    <div class="nav-section">Parte 2 · O loop em detalhe</div>
+    <a href="#l-chamada">Chamada ao LLM</a>
+    <a href="#l-parsing">Parsing da resposta</a>
+    <a href="#l-executar">Executar tool</a>
+    <a href="#l-realimentar">Realimentar histórico</a>
+    <a href="#l-final">Resposta final</a>
+    <a href="#l-forcadas">Saídas forçadas</a>
+
+    <div class="nav-section">Implementação</div>
+    <a href="#impl-langgraph">O loop em LangGraph</a>
+
+    <div class="nav-section">Negócio</div>
+    <a href="#negocio">Custo, risco e decisão</a>
+
+    <div class="nav-section">Referência</div>
+    <a href="#glossario">Glossário</a>
+  </nav>
+</aside>
+
+<div class="main">
+<div class="wrapper">
+
+  <div class="doc-header">
+    <div class="doc-num">Arquitetura de Agentes</div>
+    <h1>Harness baseado em <em>IA</em></h1>
+    <p class="doc-lead">Um guia completo sobre a infraestrutura que transforma um modelo de linguagem em um sistema agêntico de produção — cada componente explicado do zero, com a implementação em Python + LangGraph e a leitura de negócio de cada decisão.</p>
   </div>
-  <div class="group">Fundamentos</div>
-  <a href="#fundamentos">Conceitos essenciais</a>
-  <a href="#o-que-e">O que é um harness</a>
-  <div class="group">Parte 1 · Anatomia</div>
-  <a href="#s-usuario">Entrada do usuário</a>
-  <a href="#s-contexto">Montagem de contexto</a>
-  <a href="#s-loop">Loop agêntico</a>
-  <a href="#s-llm">O LLM</a>
-  <a href="#s-tools">Execução de tools</a>
-  <a href="#s-guardrails">Guardrails e telemetria</a>
-  <div class="group">Parte 2 · O loop em detalhe</div>
-  <a href="#l-chamada">Chamada ao LLM</a>
-  <a href="#l-parsing">Parsing da resposta</a>
-  <a href="#l-executar">Executar tool</a>
-  <a href="#l-realimentar">Realimentar histórico</a>
-  <a href="#l-final">Resposta final</a>
-  <a href="#l-forcadas">Saídas forçadas</a>
-  <div class="group">Implementação</div>
-  <a href="#impl-langgraph">O loop em LangGraph</a>
-  <div class="group">Negócio</div>
-  <a href="#negocio">Custo, risco e decisão</a>
-  <div class="group">Referência</div>
-  <a href="#glossario">Glossário</a>
-</nav>
 
-<main>
+  <section class="section" id="fundamentos">
+    <h2>Conceitos essenciais</h2>
+    <p>Antes do harness em si, quatro conceitos que todo o resto pressupõe. Se você já domina LLMs, pule para a <a href="#o-que-e">próxima seção</a>.</p>
 
-<header class="hero">
-  <div class="eyebrow">Arquitetura de agentes</div>
-  <h1>Harness baseado em IA</h1>
-  <p class="lead">Um guia completo sobre a infraestrutura que transforma um modelo de linguagem em um sistema agêntico de produção — cada componente explicado do zero, com a implementação em Python + LangGraph e a leitura de negócio de cada decisão.</p>
-</header>
+    <h3>O que um LLM realmente faz</h3>
+    <p>Um LLM (<em>Large Language Model</em>) é uma função estatística gigante: recebe uma sequência de <strong>tokens</strong> (pedaços de texto — palavras, sílabas, símbolos) e devolve, token a token, a continuação mais provável dessa sequência. Só isso. Ele não "executa" nada, não acessa a internet, não lembra da conversa anterior, não tem estado entre chamadas.</p>
+    <div class="callout blue">
+      <div class="callout-label">Ponto central</div>
+      <p>O modelo é <strong>stateless</strong>: cada chamada à API é independente. Se parece que ele "lembra" da conversa, é porque alguém reenviou o histórico inteiro dentro da requisição. Esse "alguém" é o harness — e essa única observação explica metade da arquitetura deste guia.</p>
+    </div>
 
-<h2 id="fundamentos">Conceitos essenciais</h2>
-<p>Antes do harness em si, quatro conceitos que todo o resto pressupõe. Se você já domina LLMs, pule para a <a class="inline" href="#o-que-e">próxima seção</a>.</p>
+    <h3>Janela de contexto</h3>
+    <p>Cada modelo tem um limite de tokens que consegue processar por chamada — a <strong>janela de contexto</strong> (context window). Tudo o que o modelo "sabe" sobre a tarefa atual precisa caber ali: instruções, histórico, documentos, resultados de ferramentas. Estourou o limite, a chamada falha ou informação é cortada. Administrar esse espaço finito é uma das funções mais críticas do harness.</p>
 
-<h3>O que um LLM realmente faz</h3>
-<p>Um LLM (<em>Large Language Model</em>) é uma função estatística gigante: recebe uma sequência de <strong>tokens</strong> (pedaços de texto — palavras, sílabas, símbolos) e devolve, token a token, a continuação mais provável dessa sequência. Só isso. Ele não "executa" nada, não acessa a internet, não lembra da conversa anterior, não tem estado entre chamadas.</p>
-<div class="callout info">
-  <span class="ctitle">Ponto central</span>
-  <p>O modelo é <strong>stateless</strong>: cada chamada à API é independente. Se parece que ele "lembra" da conversa, é porque alguém reenviou o histórico inteiro dentro da requisição. Esse "alguém" é o harness — e essa única observação explica metade da arquitetura deste guia.</p>
-</div>
+    <h3>Function calling (tool use)</h3>
+    <p>Modelos modernos aceitam, junto do prompt, uma lista de <strong>ferramentas (tools)</strong> descritas em JSON Schema: nome, descrição, parâmetros. Em vez de responder com texto, o modelo pode responder com um objeto estruturado dizendo <em>"chame a função X com os argumentos Y"</em>. Importante: <strong>o modelo não executa a função</strong> — ele apenas <em>pede</em>. Quem executa, valida e devolve o resultado é o software em volta dele. De novo: o harness.</p>
 
-<h3>Janela de contexto</h3>
-<p>Cada modelo tem um limite de tokens que consegue processar por chamada — a <strong>janela de contexto</strong> (context window). Tudo o que o modelo "sabe" sobre a tarefa atual precisa caber ali: instruções, histórico, documentos, resultados de ferramentas. Estourou o limite, a chamada falha ou informação é cortada. Administrar esse espaço finito é uma das funções mais críticas do harness.</p>
+    <h3>Agente</h3>
+    <p>Um <strong>agente</strong> é um sistema em que o LLM decide, iterativamente, quais ações tomar para cumprir um objetivo — chamando ferramentas, observando resultados e ajustando o plano — em vez de apenas responder uma pergunta de uma vez. A diferença entre um chatbot e um agente não está no modelo: está no software que permite (e controla) esse ciclo de decisão.</p>
+  </section>
 
-<h3>Function calling (tool use)</h3>
-<p>Modelos modernos aceitam, junto do prompt, uma lista de <strong>ferramentas (tools)</strong> descritas em JSON Schema: nome, descrição, parâmetros. Em vez de responder com texto, o modelo pode responder com um objeto estruturado dizendo <em>"chame a função X com os argumentos Y"</em>. Importante: <strong>o modelo não executa a função</strong> — ele apenas <em>pede</em>. Quem executa, valida e devolve o resultado é o software em volta dele. De novo: o harness.</p>
+  <section class="section" id="o-que-e">
+    <h2>O que é um harness</h2>
+    <p><strong>Harness</strong> (literalmente "arnês" ou "arreio"; em engenharia, "andaime de execução") é toda a infraestrutura de software que envolve o LLM e o transforma em um sistema útil e confiável. A analogia canônica:</p>
+    <div class="callout green">
+      <div class="callout-label">Analogia</div>
+      <p><strong>O modelo é o motor; o harness é o resto do carro.</strong> Um motor sozinho não vai a lugar nenhum — precisa de chassi, transmissão, freios, painel e airbag. Dois carros com o mesmo motor podem ter desempenhos e níveis de segurança completamente diferentes. Com agentes é idêntico: o mesmo modelo, em dois harnesses diferentes, produz sistemas radicalmente distintos.</p>
+    </div>
+    <p>O termo aparece em dois contextos que compartilham a mesma mecânica:</p>
+    <div class="table-wrap">
+    <table>
+      <tr><th>Tipo</th><th>Objetivo</th><th>Exemplos</th></tr>
+      <tr>
+        <td><strong>Harness de agente</strong> (produção)</td>
+        <td>Executar tarefas reais com confiabilidade: montar contexto, rodar o loop, executar tools, aplicar guardrails.</td>
+        <td>LangGraph, Claude Code, OpenAI Agents SDK, um supervisor customizado em FastAPI</td>
+      </tr>
+      <tr>
+        <td><strong>Harness de eval</strong> (avaliação)</td>
+        <td>Rodar o agente contra um dataset de tarefas, capturar trajetórias e medir desempenho de forma reprodutível.</td>
+        <td>SWE-bench harness, harness internos de benchmark, pipelines de trajectory evals</td>
+      </tr>
+    </table>
+    </div>
+    <div class="callout warn">
+      <div class="callout-label">Regra de ouro</div>
+      <p>Avalie com o <strong>mesmo harness</strong> que roda em produção. Um benchmark medido em um harness diferente do seu mede outra coisa — os resultados não transferem, porque grande parte da performance vem do scaffolding, não do modelo.</p>
+    </div>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>É por isso que dois times com acesso ao mesmo modelo entregam produtos com qualidade radicalmente diferente. O modelo é uma commodity acessível por API; <strong>o harness é onde mora o diferencial competitivo</strong> — e também onde mora a maior parte do custo de engenharia, do risco operacional e da dívida técnica de um produto de IA.</p>
+    </div>
+  </section>
 
-<h3>Agente</h3>
-<p>Um <strong>agente</strong> é um sistema em que o LLM decide, iterativamente, quais ações tomar para cumprir um objetivo — chamando ferramentas, observando resultados e ajustando o plano — em vez de apenas responder uma pergunta de uma vez. A diferença entre um chatbot e um agente não está no modelo: está no software que permite (e controla) esse ciclo de decisão.</p>
+  <section class="section" id="s-usuario">
+    <h2>Parte 1 · Entrada do usuário</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+      <span class="tag">negócio</span>
+    </div>
+    <p>No primeiro diagrama, a seta "Usuário" entrando no container do harness parece trivial — mas é a primeira fronteira de segurança e de contrato do sistema.</p>
+    <h3>O que acontece tecnicamente</h3>
+    <ul>
+      <li><strong>Autenticação e identidade.</strong> Antes de qualquer token chegar ao modelo, o harness estabelece <em>quem</em> está pedindo: valida o JWT, extrai claims (usuário, tenant, escopos) e materializa isso em um objeto de contexto tipado. Em sistemas multiagente, essa identidade precisa se propagar por toda a cadeia de chamadas (padrão de <em>token propagation</em>).</li>
+      <li><strong>Normalização da entrada.</strong> A mensagem crua vira uma estrutura interna: texto, anexos, metadados de sessão (<code>thread_id</code>), idioma, canal de origem.</li>
+      <li><strong>Primeira camada de defesa.</strong> Filtros de entrada rodam aqui: limites de tamanho, sanitização, detecção precoce de <em>prompt injection</em> (instruções maliciosas embutidas na mensagem tentando sequestrar o comportamento do agente).</li>
+    </ul>
+    <div class="callout danger">
+      <div class="callout-label">Erro comum</div>
+      <p>Tratar a entrada do usuário como "apenas texto" e concatená-la direto no prompt. Toda entrada é <strong>dado não confiável</strong> — inclusive documentos anexados e resultados de RAG. O harness precisa distinguir estruturalmente <em>instruções do sistema</em> (confiáveis) de <em>conteúdo do usuário</em> (não confiável), porque o modelo, sozinho, não distingue.</p>
+    </div>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>Essa fronteira define o <strong>contrato do produto</strong>: quem pode usar, com quais dados, sob qual isolamento entre clientes (multi-tenancy). Falhas aqui não são bugs — são incidentes de segurança e de compliance (LGPD/GDPR), com custo reputacional e jurídico. É a camada mais barata de acertar no design e a mais cara de corrigir depois.</p>
+    </div>
+  </section>
 
-<h2 id="o-que-e">O que é um harness</h2>
-<p><strong>Harness</strong> (literalmente "arnês" ou "arreio"; em engenharia, "andaime de execução") é toda a infraestrutura de software que envolve o LLM e o transforma em um sistema útil e confiável. A analogia canônica:</p>
-<div class="callout tip">
-  <span class="ctitle">Analogia</span>
-  <p><strong>O modelo é o motor; o harness é o resto do carro.</strong> Um motor sozinho não vai a lugar nenhum — precisa de chassi, transmissão, freios, painel e airbag. Dois carros com o mesmo motor podem ter desempenhos e níveis de segurança completamente diferentes. Com agentes é idêntico: o mesmo modelo, em dois harnesses diferentes, produz sistemas radicalmente distintos.</p>
-</div>
-<p>O termo aparece em dois contextos que compartilham a mesma mecânica:</p>
-<table>
-  <tr><th>Tipo</th><th>Objetivo</th><th>Exemplos</th></tr>
-  <tr>
-    <td><strong>Harness de agente</strong> (produção)</td>
-    <td>Executar tarefas reais com confiabilidade: montar contexto, rodar o loop, executar tools, aplicar guardrails.</td>
-    <td>LangGraph, Claude Code, OpenAI Agents SDK, um supervisor customizado em FastAPI</td>
-  </tr>
-  <tr>
-    <td><strong>Harness de eval</strong> (avaliação)</td>
-    <td>Rodar o agente contra um dataset de tarefas, capturar trajetórias e medir desempenho de forma reprodutível.</td>
-    <td>SWE-bench harness, harness internos de benchmark, pipelines de trajectory evals</td>
-  </tr>
-</table>
-<div class="callout warn">
-  <span class="ctitle">Regra de ouro</span>
-  <p>Avalie com o <strong>mesmo harness</strong> que roda em produção. Um benchmark medido em um harness diferente do seu mede outra coisa — os resultados não transferem, porque grande parte da performance vem do scaffolding, não do modelo.</p>
-</div>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>É por isso que dois times com acesso ao mesmo modelo entregam produtos com qualidade radicalmente diferente. O modelo é uma commodity acessível por API; <strong>o harness é onde mora o diferencial competitivo</strong> — e também onde mora a maior parte do custo de engenharia, do risco operacional e da dívida técnica de um produto de IA.</p>
-</div>
+  <section class="section" id="s-contexto">
+    <h2>Parte 1 · Montagem de contexto</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+      <span class="tag">negócio</span>
+    </div>
+    <p>Esta é a etapa que decide <strong>o que o modelo "vê"</strong> a cada chamada. Como o modelo é stateless e a janela de contexto é finita, cada requisição precisa ser montada do zero — e a qualidade dessa montagem determina, mais do que qualquer outra variável, a qualidade do agente. A disciplina que estuda isso hoje se chama <strong>context engineering</strong>.</p>
 
-<hr class="sep">
+    <h3>Os ingredientes do contexto</h3>
+    <div class="table-wrap">
+    <table>
+      <tr><th>Componente</th><th>O que é</th><th>Responsabilidade do harness</th></tr>
+      <tr><td><strong>System prompt</strong></td><td>Instruções fixas: papel do agente, regras, formato de saída, políticas.</td><td>Versionar, testar e proteger (o usuário não pode sobrescrevê-lo).</td></tr>
+      <tr><td><strong>Histórico da conversa</strong></td><td>Mensagens anteriores do usuário, do modelo e resultados de tools.</td><td>Persistir por sessão (<code>thread_id</code>), truncar ou resumir quando crescer demais.</td></tr>
+      <tr><td><strong>Memória de longo prazo</strong></td><td>Fatos sobre o usuário/domínio que sobrevivem entre sessões.</td><td>Decidir o que gravar, como indexar e o que injetar em cada chamada.</td></tr>
+      <tr><td><strong>RAG</strong> (Retrieval-Augmented Generation)</td><td>Trechos de documentos recuperados de uma base vetorial, relevantes à pergunta atual.</td><td>Chunking, embedding, busca, re-ranking e citação de fontes.</td></tr>
+      <tr><td><strong>Definições de tools</strong></td><td>Os JSON Schemas das ferramentas disponíveis.</td><td>Escrever descrições claras (o modelo escolhe a tool <em>pela descrição</em>) e filtrar por permissão do usuário.</td></tr>
+    </table>
+    </div>
 
-<h2 id="s-usuario">Parte 1 · Entrada do usuário</h2>
-<p><span class="tag t-tech">técnico</span><span class="tag t-biz">negócio</span></p>
-<p>No primeiro diagrama, a seta "Usuário" entrando no container do harness parece trivial — mas é a primeira fronteira de segurança e de contrato do sistema.</p>
-<h3>O que acontece tecnicamente</h3>
-<ul>
-  <li><strong>Autenticação e identidade.</strong> Antes de qualquer token chegar ao modelo, o harness estabelece <em>quem</em> está pedindo: valida o JWT, extrai claims (usuário, tenant, escopos) e materializa isso em um objeto de contexto tipado. Em sistemas multiagente, essa identidade precisa se propagar por toda a cadeia de chamadas (padrão de <em>token propagation</em>).</li>
-  <li><strong>Normalização da entrada.</strong> A mensagem crua vira uma estrutura interna: texto, anexos, metadados de sessão (<code>thread_id</code>), idioma, canal de origem.</li>
-  <li><strong>Primeira camada de defesa.</strong> Filtros de entrada rodam aqui: limites de tamanho, sanitização, detecção precoce de <em>prompt injection</em> (instruções maliciosas embutidas na mensagem tentando sequestrar o comportamento do agente).</li>
-</ul>
-<div class="callout danger">
-  <span class="ctitle">Erro comum</span>
-  <p>Tratar a entrada do usuário como "apenas texto" e concatená-la direto no prompt. Toda entrada é <strong>dado não confiável</strong> — inclusive documentos anexados e resultados de RAG. O harness precisa distinguir estruturalmente <em>instruções do sistema</em> (confiáveis) de <em>conteúdo do usuário</em> (não confiável), porque o modelo, sozinho, não distingue.</p>
-</div>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>Essa fronteira define o <strong>contrato do produto</strong>: quem pode usar, com quais dados, sob qual isolamento entre clientes (multi-tenancy). Falhas aqui não são bugs — são incidentes de segurança e de compliance (LGPD/GDPR), com custo reputacional e jurídico. É a camada mais barata de acertar no design e a mais cara de corrigir depois.</p>
-</div>
-<h2 id="s-contexto">Parte 1 · Montagem de contexto</h2>
-<p><span class="tag t-tech">técnico</span><span class="tag t-biz">negócio</span></p>
-<p>Esta é a etapa que decide <strong>o que o modelo "vê"</strong> a cada chamada. Como o modelo é stateless e a janela de contexto é finita, cada requisição precisa ser montada do zero — e a qualidade dessa montagem determina, mais do que qualquer outra variável, a qualidade do agente. A disciplina que estuda isso hoje se chama <strong>context engineering</strong>.</p>
+    <h3>O problema central: espaço finito</h3>
+    <p>Tudo isso disputa a mesma janela de tokens. As estratégias clássicas do harness:</p>
+    <ul>
+      <li><strong>Truncamento por janela deslizante</strong> — descartar mensagens antigas, mantendo as N mais recentes. Simples, mas perde informação.</li>
+      <li><strong>Sumarização (compactação)</strong> — quando o histórico cruza um limiar, o harness chama o próprio LLM para resumir o trecho antigo e substitui as mensagens pelo resumo. Custa uma chamada extra, preserva o essencial.</li>
+      <li><strong>Recuperação seletiva</strong> — em vez de carregar tudo sempre, guardar em storage externo e recuperar sob demanda (memória como RAG).</li>
+      <li><strong>Prompt caching</strong> — provedores permitem cachear o prefixo estável do contexto (system prompt + tools), reduzindo custo e latência das chamadas repetidas. O harness precisa ordenar o contexto para maximizar o prefixo cacheável: o que é estável vem primeiro, o que muda vem por último.</li>
+    </ul>
+    <div class="callout green">
+      <div class="callout-label">Boa prática</div>
+      <p>Trate a montagem de contexto como uma função pura e testável: <code>build_context(state) -&gt; list[Message]</code>. Isso permite fazer snapshot testing do prompt final, medir tokens por componente e auditar exatamente o que o modelo viu em cada decisão — essencial para depurar comportamento estranho em produção.</p>
+    </div>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>Contexto é <strong>custo direto</strong>: você paga por token de entrada em toda chamada, e o loop reenvia o histórico a cada iteração. Um contexto 2× maior pode significar uma conta de API 2× maior com ganho marginal de qualidade. Context engineering é, na prática, uma alavanca de margem: as maiores reduções de custo unitário em produtos de IA vêm de compactação, caching e curadoria do que entra no prompt — não de trocar de modelo.</p>
+    </div>
+  </section>
 
-<h3>Os ingredientes do contexto</h3>
-<table>
-  <tr><th>Componente</th><th>O que é</th><th>Responsabilidade do harness</th></tr>
-  <tr><td><strong>System prompt</strong></td><td>Instruções fixas: papel do agente, regras, formato de saída, políticas.</td><td>Versionar, testar e proteger (o usuário não pode sobrescrevê-lo).</td></tr>
-  <tr><td><strong>Histórico da conversa</strong></td><td>Mensagens anteriores do usuário, do modelo e resultados de tools.</td><td>Persistir por sessão (<code>thread_id</code>), truncar ou resumir quando crescer demais.</td></tr>
-  <tr><td><strong>Memória de longo prazo</strong></td><td>Fatos sobre o usuário/domínio que sobrevivem entre sessões.</td><td>Decidir o que gravar, como indexar e o que injetar em cada chamada.</td></tr>
-  <tr><td><strong>RAG</strong> (Retrieval-Augmented Generation)</td><td>Trechos de documentos recuperados de uma base vetorial, relevantes à pergunta atual.</td><td>Chunking, embedding, busca, re-ranking e citação de fontes.</td></tr>
-  <tr><td><strong>Definições de tools</strong></td><td>Os JSON Schemas das ferramentas disponíveis.</td><td>Escrever descrições claras (o modelo escolhe a tool <em>pela descrição</em>) e filtrar por permissão do usuário.</td></tr>
-</table>
+  <section class="section" id="s-loop">
+    <h2>Parte 1 · Loop agêntico (visão geral)</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+    </div>
+    <p>O loop é o coração do harness — o mecanismo que transforma um modelo que só completa texto em um sistema que <em>age</em>. Em uma frase: um <code>while</code> que alterna entre <strong>chamar o modelo</strong> e <strong>executar o que ele pediu</strong>, realimentando os resultados, até a tarefa terminar.</p>
+    <div class="diagram"><pre>while não_terminou:
+  resposta = chamar_llm(contexto)
+  if resposta.tool_calls → executar e realimentar
+  else → resposta final, break</pre></div>
+    <p>Esse padrão tem nome na literatura: <strong>ReAct</strong> (<em>Reasoning + Acting</em>) — o modelo raciocina, age, observa o resultado e raciocina de novo. Cada volta do laço é uma <strong>iteração</strong>; a sequência completa de decisões e observações de uma execução chama-se <strong>trajetória</strong> (conceito central em avaliação de agentes).</p>
+    <p>A visão geral fica aqui; a <a href="#l-chamada">Parte 2</a> disseca cada etapa interna do loop — que é exatamente o segundo diagrama.</p>
+    <div class="callout blue">
+      <div class="callout-label">Por que um loop e não uma chamada só?</div>
+      <p>Porque tarefas reais exigem <em>observar antes de decidir</em>. O modelo não sabe o que tem no banco antes de consultá-lo, nem se o deploy passou antes de rodar o teste. O loop permite que cada decisão seja condicionada ao resultado da anterior — é isso que separa "gerar um texto plausível" de "resolver um problema".</p>
+    </div>
+  </section>
 
-<h3>O problema central: espaço finito</h3>
-<p>Tudo isso disputa a mesma janela de tokens. As estratégias clássicas do harness:</p>
-<ul>
-  <li><strong>Truncamento por janela deslizante</strong> — descartar mensagens antigas, mantendo as N mais recentes. Simples, mas perde informação.</li>
-  <li><strong>Sumarização (compactação)</strong> — quando o histórico cruza um limiar, o harness chama o próprio LLM para resumir o trecho antigo e substitui as mensagens pelo resumo. Custa uma chamada extra, preserva o essencial.</li>
-  <li><strong>Recuperação seletiva</strong> — em vez de carregar tudo sempre, guardar em storage externo e recuperar sob demanda (memória como RAG).</li>
-  <li><strong>Prompt caching</strong> — provedores permitem cachear o prefixo estável do contexto (system prompt + tools), reduzindo custo e latência das chamadas repetidas. O harness precisa ordenar o contexto para maximizar o prefixo cacheável: o que é estável vem primeiro, o que muda vem por último.</li>
-</ul>
-<div class="callout tip">
-  <span class="ctitle">Boa prática</span>
-  <p>Trate a montagem de contexto como uma função pura e testável: <code>build_context(state) -&gt; list[Message]</code>. Isso permite fazer snapshot testing do prompt final, medir tokens por componente e auditar exatamente o que o modelo viu em cada decisão — essencial para depurar comportamento estranho em produção.</p>
-</div>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>Contexto é <strong>custo direto</strong>: você paga por token de entrada em toda chamada, e o loop reenvia o histórico a cada iteração. Um contexto 2× maior pode significar uma conta de API 2× maior com ganho marginal de qualidade. Context engineering é, na prática, uma alavanca de margem: as maiores reduções de custo unitário em produtos de IA vêm de compactação, caching e curadoria do que entra no prompt — não de trocar de modelo.</p>
-</div>
+  <section class="section" id="s-llm">
+    <h2>Parte 1 · O LLM dentro do harness</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+      <span class="tag">negócio</span>
+    </div>
+    <p>No diagrama, o LLM é <em>uma caixa entre as outras</em> — e isso é proposital. Dentro do harness, o modelo é um componente com um contrato estreito: <strong>tokens entram, tokens saem</strong>. Todo o resto é responsabilidade do software em volta.</p>
+    <h3>O contrato do componente</h3>
+    <ul>
+      <li><strong>Entrada:</strong> lista de mensagens + definições de tools + parâmetros de amostragem (temperatura, máximo de tokens de saída).</li>
+      <li><strong>Saída:</strong> texto e/ou uma lista de tool calls estruturadas. Nada mais.</li>
+      <li><strong>Garantias que ele NÃO dá:</strong> determinismo (a mesma entrada pode gerar saídas diferentes), veracidade (pode alucinar), aderência perfeita a schema (pode gerar argumentos inválidos), disponibilidade (a API pode falhar ou limitar taxa).</li>
+    </ul>
+    <p>O harness existe, em grande parte, para <strong>compensar cada uma dessas não-garantias</strong>: validação compensa a falta de aderência a schema; retries e fallback de provedor compensam a disponibilidade; guardrails e citação de fontes mitigam alucinação; temperatura baixa + testes estatísticos lidam com o não-determinismo.</p>
+    <div class="callout blue">
+      <div class="callout-label">Abstração de provedor</div>
+      <p>Um bom harness isola o modelo atrás de uma interface (no LangChain/LangGraph, <code>BaseChatModel</code>). Trocar de GPT para Claude, ou rotear tarefas simples para um modelo barato e tarefas complexas para um modelo forte (<em>model routing</em>), vira uma decisão de configuração — não uma reescrita.</p>
+    </div>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>Tratar o LLM como componente substituível é uma decisão estratégica: reduz <strong>lock-in de fornecedor</strong>, permite arbitrar preço entre provedores (os preços caem e mudam constantemente) e habilita otimização de custo por rota — usar o modelo caro só onde ele paga o próprio preço. Empresas que acoplam o produto a um provedor específico perdem essa alavanca de negociação.</p>
+    </div>
+  </section>
 
-<h2 id="s-loop">Parte 1 · Loop agêntico (visão geral)</h2>
-<p><span class="tag t-tech">técnico</span></p>
-<p>O loop é o coração do harness — o mecanismo que transforma um modelo que só completa texto em um sistema que <em>age</em>. Em uma frase: um <code>while</code> que alterna entre <strong>chamar o modelo</strong> e <strong>executar o que ele pediu</strong>, realimentando os resultados, até a tarefa terminar.</p>
-<div class="kbd-flow">
-  <b>while</b> não_terminou:<br>
-  &nbsp;&nbsp;resposta = <b>chamar_llm</b>(contexto)<br>
-  &nbsp;&nbsp;<b>if</b> resposta.tool_calls → <b>executar</b> e <b>realimentar</b><br>
-  &nbsp;&nbsp;<b>else</b> → resposta final, <b>break</b>
-</div>
-<p>Esse padrão tem nome na literatura: <strong>ReAct</strong> (<em>Reasoning + Acting</em>) — o modelo raciocina, age, observa o resultado e raciocina de novo. Cada volta do laço é uma <strong>iteração</strong>; a sequência completa de decisões e observações de uma execução chama-se <strong>trajetória</strong> (conceito central em avaliação de agentes).</p>
-<p>A visão geral fica aqui; a <a class="inline" href="#l-chamada">Parte 2</a> disseca cada etapa interna do loop — que é exatamente o segundo diagrama.</p>
-<div class="callout info">
-  <span class="ctitle">Por que um loop e não uma chamada só?</span>
-  <p>Porque tarefas reais exigem <em>observar antes de decidir</em>. O modelo não sabe o que tem no banco antes de consultá-lo, nem se o deploy passou antes de rodar o teste. O loop permite que cada decisão seja condicionada ao resultado da anterior — é isso que separa "gerar um texto plausível" de "resolver um problema".</p>
-</div>
+  <section class="section" id="s-tools">
+    <h2>Parte 1 · Execução de tools</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+      <span class="tag">negócio</span>
+    </div>
+    <p>As tools são as "mãos" do agente: consultas a banco, chamadas HTTP, buscas, escrita de arquivos, envio de mensagens — ou, em arquiteturas multiagente, outros agentes inteiros expostos como ferramentas (via protocolos como MCP). Esta camada do harness é o <strong>runtime de execução</strong> dessas ações.</p>
+    <h3>Responsabilidades</h3>
+    <ol>
+      <li><strong>Registro e descoberta.</strong> Manter o catálogo de tools disponíveis, com schema e descrição. Em setups com MCP, isso inclui conectar-se a servidores externos e importar as tools que eles expõem dinamicamente.</li>
+      <li><strong>Dispatch.</strong> Receber a tool call do modelo (nome + argumentos em JSON) e rotear para a implementação correta.</li>
+      <li><strong>Validação de argumentos.</strong> Checar o JSON contra o schema (Pydantic em Python) <em>antes</em> de executar. O modelo erra: inventa campos, troca tipos, esquece obrigatórios.</li>
+      <li><strong>Execução protegida.</strong> Rodar com timeout, retry com backoff exponencial + jitter para falhas transitórias, e circuit breaker para dependências degradadas (parar de insistir em um serviço que está fora, falhando rápido em vez de acumular timeouts).</li>
+      <li><strong>Autorização.</strong> Verificar se <em>este usuário</em>, com <em>estas permissões</em>, pode executar <em>esta tool</em> com <em>estes argumentos</em> (ACLs por escopo). O modelo pedir não é autorização.</li>
+      <li><strong>Serialização do resultado.</strong> Converter o retorno (objeto, DataFrame, erro) em texto/JSON que caiba no contexto — inclusive truncando resultados gigantes.</li>
+    </ol>
+    <div class="callout danger">
+      <div class="callout-label">Princípio de segurança</div>
+      <p><strong>O modelo propõe; o harness dispõe.</strong> Nenhuma tool call vai direto para execução pela vontade do modelo. Entre a intenção e o efeito existem validação, autorização e, para ações destrutivas ou irreversíveis (pagamentos, deleções, e-mails), aprovação humana explícita (<em>human-in-the-loop</em>). Um agente comprometido por prompt injection só causa o dano que essa camada permitir.</p>
+    </div>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>As tools definem o <strong>raio de ação — e o raio de estrago — do produto</strong>. A pergunta de negócio não é "o que o agente consegue fazer?", e sim "qual é o pior efeito de uma ação errada, e quem responde por ele?". A granularidade das permissões e os pontos de aprovação humana são decisões de risco/produto, não detalhes de implementação: determinam desde o preço do seguro cibernético até o que o jurídico deixa ir para produção.</p>
+    </div>
+  </section>
 
-<h2 id="s-llm">Parte 1 · O LLM dentro do harness</h2>
-<p><span class="tag t-tech">técnico</span><span class="tag t-biz">negócio</span></p>
-<p>No diagrama, o LLM é <em>uma caixa entre as outras</em> — e isso é proposital. Dentro do harness, o modelo é um componente com um contrato estreito: <strong>tokens entram, tokens saem</strong>. Todo o resto é responsabilidade do software em volta.</p>
-<h3>O contrato do componente</h3>
-<ul>
-  <li><strong>Entrada:</strong> lista de mensagens + definições de tools + parâmetros de amostragem (temperatura, máximo de tokens de saída).</li>
-  <li><strong>Saída:</strong> texto e/ou uma lista de tool calls estruturadas. Nada mais.</li>
-  <li><strong>Garantias que ele NÃO dá:</strong> determinismo (a mesma entrada pode gerar saídas diferentes), veracidade (pode alucinar), aderência perfeita a schema (pode gerar argumentos inválidos), disponibilidade (a API pode falhar ou limitar taxa).</li>
-</ul>
-<p>O harness existe, em grande parte, para <strong>compensar cada uma dessas não-garantias</strong>: validação compensa a falta de aderência a schema; retries e fallback de provedor compensam a disponibilidade; guardrails e citação de fontes mitigam alucinação; temperatura baixa + testes estatísticos lidam com o não-determinismo.</p>
-<div class="callout info">
-  <span class="ctitle">Abstração de provedor</span>
-  <p>Um bom harness isola o modelo atrás de uma interface (no LangChain/LangGraph, <code>BaseChatModel</code>). Trocar de GPT para Claude, ou rotear tarefas simples para um modelo barato e tarefas complexas para um modelo forte (<em>model routing</em>), vira uma decisão de configuração — não uma reescrita.</p>
-</div>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>Tratar o LLM como componente substituível é uma decisão estratégica: reduz <strong>lock-in de fornecedor</strong>, permite arbitrar preço entre provedores (os preços caem e mudam constantemente) e habilita otimização de custo por rota — usar o modelo caro só onde ele paga o próprio preço. Empresas que acoplam o produto a um provedor específico perdem essa alavanca de negociação.</p>
-</div>
+  <section class="section" id="s-guardrails">
+    <h2>Parte 1 · Guardrails e telemetria</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+      <span class="tag">negócio</span>
+    </div>
+    <p>A faixa horizontal na base do primeiro diagrama é proposital: guardrails e observabilidade são <strong>transversais</strong> — cortam todas as outras camadas, da entrada do usuário à execução de tools.</p>
+    <h3>Guardrails (trilhos de proteção)</h3>
+    <ul>
+      <li><strong>Na entrada:</strong> detecção de prompt injection, filtros de conteúdo, limites de tamanho e taxa (rate limiting) por usuário/tenant.</li>
+      <li><strong>No meio:</strong> separação estrutural entre instruções confiáveis e dados não confiáveis; allowlists de tools por contexto; validação de que o agente permanece dentro do escopo da tarefa.</li>
+      <li><strong>Na saída:</strong> checagem de vazamento de dados sensíveis (PII, segredos), validação de formato, filtros de conteúdo e, em domínios críticos, verificação factual contra as fontes recuperadas.</li>
+      <li><strong>Defesa em profundidade:</strong> nenhuma camada é suficiente sozinha; a segurança vem do empilhamento (tipicamente 3–4 camadas independentes entre a entrada e o efeito colateral).</li>
+    </ul>
+    <h3>Telemetria (observabilidade)</h3>
+    <p>Sistemas agênticos são não-determinísticos e distribuídos — sem instrumentação, são caixas-pretas impossíveis de depurar. O harness precisa registrar, para cada execução:</p>
+    <ul>
+      <li><strong>Traces distribuídos</strong> (OpenTelemetry): cada chamada ao LLM, cada tool call e cada hop entre serviços como spans correlacionados, propagando o trace context (W3C TraceContext) e o <code>thread_id</code> da sessão por toda a cadeia.</li>
+      <li><strong>Métricas:</strong> tokens de entrada/saída por chamada, custo estimado, latência por etapa, taxa de erro por tool, iterações por tarefa, taxa de acionamento de guardrails.</li>
+      <li><strong>Trajetórias completas:</strong> a sequência de decisões do agente, persistida — é a matéria-prima tanto do debugging quanto das avaliações offline (trajectory evals).</li>
+    </ul>
+    <div class="callout green">
+      <div class="callout-label">Boa prática</div>
+      <p>Instrumente <em>antes</em> de precisar. A pergunta "por que o agente fez isso ontem às 3h?" só tem resposta se a trajetória e o contexto exato daquela execução foram gravados. Logs de aplicação comuns não bastam: você precisa do <strong>prompt completo que o modelo viu</strong> e da <strong>resposta completa que ele deu</strong>, por iteração.</p>
+    </div>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>Guardrails são o que permite <strong>vender para empresas</strong>: auditoria, trilha de decisão e controles são requisitos de procurement em setores regulados (financeiro, saúde, jurídico). E a telemetria é o que torna o custo <em>gerenciável</em> — sem métricas de tokens por rota, o produto tem uma conta de API que ninguém explica. Observabilidade em agentes não é engenharia de plataforma opcional; é pré-requisito de unit economics e de compliance.</p>
+    </div>
+  </section>
 
-<h2 id="s-tools">Parte 1 · Execução de tools</h2>
-<p><span class="tag t-tech">técnico</span><span class="tag t-biz">negócio</span></p>
-<p>As tools são as "mãos" do agente: consultas a banco, chamadas HTTP, buscas, escrita de arquivos, envio de mensagens — ou, em arquiteturas multiagente, outros agentes inteiros expostos como ferramentas (via protocolos como MCP). Esta camada do harness é o <strong>runtime de execução</strong> dessas ações.</p>
-<h3>Responsabilidades</h3>
-<ol>
-  <li><strong>Registro e descoberta.</strong> Manter o catálogo de tools disponíveis, com schema e descrição. Em setups com MCP, isso inclui conectar-se a servidores externos e importar as tools que eles expõem dinamicamente.</li>
-  <li><strong>Dispatch.</strong> Receber a tool call do modelo (nome + argumentos em JSON) e rotear para a implementação correta.</li>
-  <li><strong>Validação de argumentos.</strong> Checar o JSON contra o schema (Pydantic em Python) <em>antes</em> de executar. O modelo erra: inventa campos, troca tipos, esquece obrigatórios.</li>
-  <li><strong>Execução protegida.</strong> Rodar com timeout, retry com backoff exponencial + jitter para falhas transitórias, e circuit breaker para dependências degradadas (parar de insistir em um serviço que está fora, falhando rápido em vez de acumular timeouts).</li>
-  <li><strong>Autorização.</strong> Verificar se <em>este usuário</em>, com <em>estas permissões</em>, pode executar <em>esta tool</em> com <em>estes argumentos</em> (ACLs por escopo). O modelo pedir não é autorização.</li>
-  <li><strong>Serialização do resultado.</strong> Converter o retorno (objeto, DataFrame, erro) em texto/JSON que caiba no contexto — inclusive truncando resultados gigantes.</li>
-</ol>
-<div class="callout danger">
-  <span class="ctitle">Princípio de segurança</span>
-  <p><strong>O modelo propõe; o harness dispõe.</strong> Nenhuma tool call vai direto para execução pela vontade do modelo. Entre a intenção e o efeito existem validação, autorização e, para ações destrutivas ou irreversíveis (pagamentos, deleções, e-mails), aprovação humana explícita (<em>human-in-the-loop</em>). Um agente comprometido por prompt injection só causa o dano que essa camada permitir.</p>
-</div>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>As tools definem o <strong>raio de ação — e o raio de estrago — do produto</strong>. A pergunta de negócio não é "o que o agente consegue fazer?", e sim "qual é o pior efeito de uma ação errada, e quem responde por ele?". A granularidade das permissões e os pontos de aprovação humana são decisões de risco/produto, não detalhes de implementação: determinam desde o preço do seguro cibernético até o que o jurídico deixa ir para produção.</p>
-</div>
+  <section class="section" id="l-chamada">
+    <h2>Parte 2 · Chamada ao LLM</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+      <span class="tag">negócio</span>
+    </div>
+    <p>Cada iteração do loop começa aqui: o harness pega o <strong>contexto acumulado</strong> — system prompt, histórico e todos os resultados de tools até agora — e envia ao modelo junto com as definições de tools.</p>
+    <h3>Detalhes que importam</h3>
+    <ul>
+      <li><strong>O histórico inteiro vai de novo, sempre.</strong> Como o modelo é stateless, a iteração 8 reenvia tudo o que aconteceu nas iterações 1–7. Consequência direta: <em>o custo por iteração cresce ao longo da execução</em>, porque o contexto só acumula. Prompt caching mitiga (o prefixo estável não é reprocessado a preço cheio), mas não elimina.</li>
+      <li><strong>Resiliência da chamada.</strong> A API do provedor falha: rate limits (HTTP 429), erros de servidor (5xx), timeouts. O harness aplica retry com backoff exponencial + jitter, respeita cabeçalhos de rate limit e, em setups maduros, tem fallback para um segundo provedor ou modelo.</li>
+      <li><strong>Parâmetros por propósito.</strong> Temperatura baixa (0–0.3) para decisões de roteamento e tool calls (queremos consistência); mais alta para geração criativa. O harness escolhe por etapa, não usa um valor global.</li>
+      <li><strong>Streaming.</strong> Para UX, o harness pode consumir a resposta token a token e repassar ao usuário em tempo real — o que complica o parsing (tool calls chegam fragmentadas) e é mais um trabalho da camada de harness.</li>
+    </ul>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>Esta etapa é <strong>o taxímetro do sistema</strong>. Custo = (tokens de entrada × preço) + (tokens de saída × preço), por iteração, e a entrada cresce a cada volta. Uma tarefa que converge em 3 iterações vs. 10 iterações não é 3× mais barata — é mais, porque as iterações finais carregam contexto maior. Otimizar convergência (boas descrições de tools, contexto limpo) é otimizar margem.</p>
+    </div>
+  </section>
 
-<h2 id="s-guardrails">Parte 1 · Guardrails e telemetria</h2>
-<p><span class="tag t-tech">técnico</span><span class="tag t-biz">negócio</span></p>
-<p>A faixa horizontal na base do primeiro diagrama é proposital: guardrails e observabilidade são <strong>transversais</strong> — cortam todas as outras camadas, da entrada do usuário à execução de tools.</p>
-<h3>Guardrails (trilhos de proteção)</h3>
-<ul>
-  <li><strong>Na entrada:</strong> detecção de prompt injection, filtros de conteúdo, limites de tamanho e taxa (rate limiting) por usuário/tenant.</li>
-  <li><strong>No meio:</strong> separação estrutural entre instruções confiáveis e dados não confiáveis; allowlists de tools por contexto; validação de que o agente permanece dentro do escopo da tarefa.</li>
-  <li><strong>Na saída:</strong> checagem de vazamento de dados sensíveis (PII, segredos), validação de formato, filtros de conteúdo e, em domínios críticos, verificação factual contra as fontes recuperadas.</li>
-  <li><strong>Defesa em profundidade:</strong> nenhuma camada é suficiente sozinha; a segurança vem do empilhamento (tipicamente 3–4 camadas independentes entre a entrada e o efeito colateral).</li>
-</ul>
-<h3>Telemetria (observabilidade)</h3>
-<p>Sistemas agênticos são não-determinísticos e distribuídos — sem instrumentação, são caixas-pretas impossíveis de depurar. O harness precisa registrar, para cada execução:</p>
-<ul>
-  <li><strong>Traces distribuídos</strong> (OpenTelemetry): cada chamada ao LLM, cada tool call e cada hop entre serviços como spans correlacionados, propagando o trace context (W3C TraceContext) e o <code>thread_id</code> da sessão por toda a cadeia.</li>
-  <li><strong>Métricas:</strong> tokens de entrada/saída por chamada, custo estimado, latência por etapa, taxa de erro por tool, iterações por tarefa, taxa de acionamento de guardrails.</li>
-  <li><strong>Trajetórias completas:</strong> a sequência de decisões do agente, persistida — é a matéria-prima tanto do debugging quanto das avaliações offline (trajectory evals).</li>
-</ul>
-<div class="callout tip">
-  <span class="ctitle">Boa prática</span>
-  <p>Instrumente <em>antes</em> de precisar. A pergunta "por que o agente fez isso ontem às 3h?" só tem resposta se a trajetória e o contexto exato daquela execução foram gravados. Logs de aplicação comuns não bastam: você precisa do <strong>prompt completo que o modelo viu</strong> e da <strong>resposta completa que ele deu</strong>, por iteração.</p>
-</div>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>Guardrails são o que permite <strong>vender para empresas</strong>: auditoria, trilha de decisão e controles são requisitos de procurement em setores regulados (financeiro, saúde, jurídico). E a telemetria é o que torna o custo <em>gerenciável</em> — sem métricas de tokens por rota, o produto tem uma conta de API que ninguém explica. Observabilidade em agentes não é engenharia de plataforma opcional; é pré-requisito de unit economics e de compliance.</p>
-</div>
-<hr class="sep">
+  <section class="section" id="l-parsing">
+    <h2>Parte 2 · Parsing da resposta</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+    </div>
+    <p>A resposta do modelo chega e o harness precisa responder uma pergunta: <strong>isso é uma ação ou uma resposta final?</strong> Esta é a bifurcação do segundo diagrama.</p>
+    <h3>Como funciona</h3>
+    <p>A decisão é <strong>determinística</strong> — não envolve outra chamada ao LLM. A API do provedor devolve a resposta em campos estruturados: um bloco de texto e/ou uma lista de <code>tool_calls</code>, cada uma com <code>id</code>, <code>name</code> e <code>arguments</code> (JSON). O parsing é inspecionar esse payload:</p>
 
-<h2 id="l-chamada">Parte 2 · Chamada ao LLM</h2>
-<p><span class="tag t-tech">técnico</span><span class="tag t-biz">negócio</span></p>
-<p>Cada iteração do loop começa aqui: o harness pega o <strong>contexto acumulado</strong> — system prompt, histórico e todos os resultados de tools até agora — e envia ao modelo junto com as definições de tools.</p>
-<h3>Detalhes que importam</h3>
-<ul>
-  <li><strong>O histórico inteiro vai de novo, sempre.</strong> Como o modelo é stateless, a iteração 8 reenvia tudo o que aconteceu nas iterações 1–7. Consequência direta: <em>o custo por iteração cresce ao longo da execução</em>, porque o contexto só acumula. Prompt caching mitiga (o prefixo estável não é reprocessado a preço cheio), mas não elimina.</li>
-  <li><strong>Resiliência da chamada.</strong> A API do provedor falha: rate limits (HTTP 429), erros de servidor (5xx), timeouts. O harness aplica retry com backoff exponencial + jitter, respeita cabeçalhos de rate limit e, em setups maduros, tem fallback para um segundo provedor ou modelo.</li>
-  <li><strong>Parâmetros por propósito.</strong> Temperatura baixa (0–0.3) para decisões de roteamento e tool calls (queremos consistência); mais alta para geração criativa. O harness escolhe por etapa, não usa um valor global.</li>
-  <li><strong>Streaming.</strong> Para UX, o harness pode consumir a resposta token a token e repassar ao usuário em tempo real — o que complica o parsing (tool calls chegam fragmentadas) e é mais um trabalho da camada de harness.</li>
-</ul>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>Esta etapa é <strong>o taxímetro do sistema</strong>. Custo = (tokens de entrada × preço) + (tokens de saída × preço), por iteração, e a entrada cresce a cada volta. Uma tarefa que converge em 3 iterações vs. 10 iterações não é 3× mais barata — é mais, porque as iterações finais carregam contexto maior. Otimizar convergência (boas descrições de tools, contexto limpo) é otimizar margem.</p>
-</div>
-
-<h2 id="l-parsing">Parte 2 · Parsing da resposta</h2>
-<p><span class="tag t-tech">técnico</span></p>
-<p>A resposta do modelo chega e o harness precisa responder uma pergunta: <strong>isso é uma ação ou uma resposta final?</strong> Esta é a bifurcação do segundo diagrama.</p>
-<h3>Como funciona</h3>
-<p>A decisão é <strong>determinística</strong> — não envolve outra chamada ao LLM. A API do provedor devolve a resposta em campos estruturados: um bloco de texto e/ou uma lista de <code>tool_calls</code>, cada uma com <code>id</code>, <code>name</code> e <code>arguments</code> (JSON). O parsing é inspecionar esse payload:</p>
-<pre><code><span class="cm"># A conditional edge do LangGraph faz exatamente isto:</span>
-<span class="kw">def</span> <span class="fn">route</span>(state: <span class="cl">AgentState</span>) -&gt; <span class="cl">str</span>:
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span class="code-lang">PYTHON</span></div>
+      </div>
+      <pre><code><span class="cm"># A conditional edge do LangGraph faz exatamente isto:</span>
+<span class="kw">def</span> <span class="fn">route</span>(state: <span class="tp">AgentState</span>) -&gt; <span class="tp">str</span>:
     last = state[<span class="st">"messages"</span>][-<span class="nb">1</span>]
     <span class="kw">if</span> last.tool_calls:          <span class="cm"># o modelo pediu ações</span>
         <span class="kw">return</span> <span class="st">"tools"</span>
     <span class="kw">return</span> <span class="st">"end"</span>               <span class="cm"># texto puro = resposta final</span></code></pre>
-<h3>Onde mora a complexidade real</h3>
-<ul>
-  <li><strong>Tool calls paralelas.</strong> O modelo pode pedir várias tools numa única resposta ("busque X <em>e</em> consulte Y"). O harness decide se executa em paralelo (mais rápido) ou em série (mais seguro quando há dependências ou efeitos colaterais).</li>
-  <li><strong>Respostas mistas.</strong> Texto + tool calls na mesma resposta: o texto costuma ser raciocínio ou explicação intermediária. O harness decide se exibe ao usuário, guarda no histórico ou descarta.</li>
-  <li><strong>Malformações.</strong> Argumentos que não são JSON válido, nomes de tools inexistentes, JSON truncado por limite de tokens de saída. A política correta quase sempre é <em>devolver o erro ao modelo</em> como observação — ele se corrige na iteração seguinte — em vez de derrubar a execução.</li>
-  <li><strong>Saída estruturada.</strong> Quando a resposta final precisa seguir um schema (um JSON de decisão, por exemplo), o parsing também valida isso — com Pydantic — e reprompta em caso de violação.</li>
-</ul>
-<div class="callout info">
-  <span class="ctitle">Por que isso é "harness" e não "modelo"</span>
-  <p>O modelo só emitiu tokens. Interpretar esses tokens como <em>intenção de agir</em>, decidir a ordem de execução e tratar malformações é pura engenharia de software — e cada uma dessas políticas muda o comportamento do agente sem mudar uma linha do modelo.</p>
-</div>
+    </div>
 
-<h2 id="l-executar">Parte 2 · Executar tool</h2>
-<p><span class="tag t-tech">técnico</span><span class="tag t-biz">negócio</span></p>
-<p>Com a tool call parseada, entra o pipeline de execução protegida — os três subtítulos do box no diagrama: <strong>validação, timeout, retry</strong>.</p>
-<h3>O pipeline, passo a passo</h3>
-<ol>
-  <li><strong>Autorização.</strong> O usuário desta sessão pode executar esta tool? (checagem de escopo/ACL — cacheável para não custar uma ida ao banco por call).</li>
-  <li><strong>Validação de schema.</strong> <code>model_validate()</code> do Pydantic sobre os argumentos. Falhou → o <code>ValidationError</code> vira observação para o modelo, não exceção para o usuário.</li>
-  <li><strong>Execução com timeout.</strong> Toda tool roda dentro de um limite de tempo. Em cadeias de serviços, os timeouts formam um <strong>orçamento em cascata</strong>: se a requisição toda tem 30s, e já se passaram 12s, a próxima chamada downstream recebe no máximo o que resta (menos uma margem) — nunca um timeout fixo maior que o orçamento restante, o que causaria estouros silenciosos na ponta.</li>
-  <li><strong>Retry seletivo.</strong> Backoff exponencial com jitter, <em>apenas</em> para falhas transitórias (rede, 429, 5xx). Erros determinísticos (validação, 404, permissão negada) não se repetem — retry neles só queima tempo e dinheiro.</li>
-  <li><strong>Circuit breaker.</strong> Se uma dependência falha repetidamente, o breaker "abre" e as próximas chamadas falham imediatamente por um período, dando tempo de recuperação ao serviço e devolvendo um erro claro ao modelo ("serviço indisponível, tente outra abordagem").</li>
-  <li><strong>Captura do resultado.</strong> Sucesso ou erro, o desfecho é serializado em texto — porque o destino dele é a janela de contexto.</li>
-</ol>
-<div class="callout warn">
-  <span class="ctitle">Detalhe traiçoeiro</span>
-  <p><strong>Resultados gigantes explodem o contexto.</strong> Uma query que retorna 50 mil linhas, ou uma página HTML inteira, não pode ir crua para o histórico. O harness trunca, pagina ou resume resultados de tools — e informa o modelo de que o resultado foi cortado, para ele poder pedir mais se precisar.</p>
-</div>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>Esta etapa concentra a <strong>confiabilidade percebida</strong> do produto. O usuário não vê "o circuit breaker abriu" — vê "o agente resolveu mesmo com instabilidade" ou "o agente travou". SLAs de produtos agênticos são, na prática, SLAs desta camada: é aqui que se decide se uma dependência instável derruba a experiência ou vira um desvio elegante.</p>
-</div>
+    <h3>Onde mora a complexidade real</h3>
+    <ul>
+      <li><strong>Tool calls paralelas.</strong> O modelo pode pedir várias tools numa única resposta ("busque X <em>e</em> consulte Y"). O harness decide se executa em paralelo (mais rápido) ou em série (mais seguro quando há dependências ou efeitos colaterais).</li>
+      <li><strong>Respostas mistas.</strong> Texto + tool calls na mesma resposta: o texto costuma ser raciocínio ou explicação intermediária. O harness decide se exibe ao usuário, guarda no histórico ou descarta.</li>
+      <li><strong>Malformações.</strong> Argumentos que não são JSON válido, nomes de tools inexistentes, JSON truncado por limite de tokens de saída. A política correta quase sempre é <em>devolver o erro ao modelo</em> como observação — ele se corrige na iteração seguinte — em vez de derrubar a execução.</li>
+      <li><strong>Saída estruturada.</strong> Quando a resposta final precisa seguir um schema (um JSON de decisão, por exemplo), o parsing também valida isso — com Pydantic — e reprompta em caso de violação.</li>
+    </ul>
+    <div class="callout blue">
+      <div class="callout-label">Por que isso é "harness" e não "modelo"</div>
+      <p>O modelo só emitiu tokens. Interpretar esses tokens como <em>intenção de agir</em>, decidir a ordem de execução e tratar malformações é pura engenharia de software — e cada uma dessas políticas muda o comportamento do agente sem mudar uma linha do modelo.</p>
+    </div>
+  </section>
 
-<h2 id="l-realimentar">Parte 2 · Realimentar histórico</h2>
-<p><span class="tag t-tech">técnico</span></p>
-<p>O resultado da tool (ou o erro) vira uma mensagem do tipo <code>tool_result</code>, vinculada ao <code>id</code> da tool call original, e é <strong>anexado ao histórico</strong>. O loop volta ao topo — e na próxima chamada, o modelo "vê" o que aconteceu e decide o próximo passo. O símbolo ↻ do diagrama é este retorno.</p>
-<h3>Três propriedades fundamentais</h3>
-<ul>
-  <li><strong>O histórico É o estado.</strong> Não existe máquina de estados paralela escondida: a lista de mensagens é a única fonte de verdade sobre onde a execução está. Persistir o histórico é persistir o loop inteiro; retomar é continuar de onde as mensagens pararam. É exatamente assim que o checkpointing do LangGraph funciona — o checkpointer (<code>MemorySaver</code>, <code>RedisSaver</code>, etc.) serializa o estado do grafo por <code>thread_id</code> a cada superstep, habilitando resiliência a crashes, pausas para aprovação humana e <em>time travel</em> de debugging.</li>
-  <li><strong>Erros são observações, não exceções.</strong> Quando a tool falha, o texto do erro volta ao modelo — que tem uma capacidade notável de se autocorrigir: ajusta argumentos, tenta outra tool, muda a abordagem. Essa é a fonte da resiliência dos agentes… e também do risco de laços infinitos, tratado nas <a class="inline" href="#l-forcadas">saídas forçadas</a>.</li>
-  <li><strong>Todo <code>tool_call</code> exige um <code>tool_result</code>.</strong> As APIs rejeitam históricos com tool calls "órfãs" (pedidas e nunca respondidas). Se o harness decidiu não executar uma call (permissão negada, por exemplo), ainda precisa anexar um resultado dizendo isso.</li>
-</ul>
-<div class="callout tip">
-  <span class="ctitle">Conexão com avaliação</span>
-  <p>A sequência acumulada de mensagens — pensamentos, ações, observações — é a <strong>trajetória</strong> da execução. Gravá-la integralmente é o que permite trajectory evals depois: analisar não só <em>se</em> o agente acertou, mas <em>como</em> chegou lá (quantas iterações, quais desvios, quais erros se autocorrigiram).</p>
-</div>
+  <section class="section" id="l-executar">
+    <h2>Parte 2 · Executar tool</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+      <span class="tag">negócio</span>
+    </div>
+    <p>Com a tool call parseada, entra o pipeline de execução protegida — os três subtítulos do box no diagrama: <strong>validação, timeout, retry</strong>.</p>
+    <h3>O pipeline, passo a passo</h3>
+    <ol>
+      <li><strong>Autorização.</strong> O usuário desta sessão pode executar esta tool? (checagem de escopo/ACL — cacheável para não custar uma ida ao banco por call).</li>
+      <li><strong>Validação de schema.</strong> <code>model_validate()</code> do Pydantic sobre os argumentos. Falhou → o <code>ValidationError</code> vira observação para o modelo, não exceção para o usuário.</li>
+      <li><strong>Execução com timeout.</strong> Toda tool roda dentro de um limite de tempo. Em cadeias de serviços, os timeouts formam um <strong>orçamento em cascata</strong>: se a requisição toda tem 30s, e já se passaram 12s, a próxima chamada downstream recebe no máximo o que resta (menos uma margem) — nunca um timeout fixo maior que o orçamento restante, o que causaria estouros silenciosos na ponta.</li>
+      <li><strong>Retry seletivo.</strong> Backoff exponencial com jitter, <em>apenas</em> para falhas transitórias (rede, 429, 5xx). Erros determinísticos (validação, 404, permissão negada) não se repetem — retry neles só queima tempo e dinheiro.</li>
+      <li><strong>Circuit breaker.</strong> Se uma dependência falha repetidamente, o breaker "abre" e as próximas chamadas falham imediatamente por um período, dando tempo de recuperação ao serviço e devolvendo um erro claro ao modelo ("serviço indisponível, tente outra abordagem").</li>
+      <li><strong>Captura do resultado.</strong> Sucesso ou erro, o desfecho é serializado em texto — porque o destino dele é a janela de contexto.</li>
+    </ol>
+    <div class="callout warn">
+      <div class="callout-label">Detalhe traiçoeiro</div>
+      <p><strong>Resultados gigantes explodem o contexto.</strong> Uma query que retorna 50 mil linhas, ou uma página HTML inteira, não pode ir crua para o histórico. O harness trunca, pagina ou resume resultados de tools — e informa o modelo de que o resultado foi cortado, para ele poder pedir mais se precisar.</p>
+    </div>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>Esta etapa concentra a <strong>confiabilidade percebida</strong> do produto. O usuário não vê "o circuit breaker abriu" — vê "o agente resolveu mesmo com instabilidade" ou "o agente travou". SLAs de produtos agênticos são, na prática, SLAs desta camada: é aqui que se decide se uma dependência instável derruba a experiência ou vira um desvio elegante.</p>
+    </div>
+  </section>
 
-<h2 id="l-final">Parte 2 · Resposta final</h2>
-<p><span class="tag t-tech">técnico</span></p>
-<p>A condição de parada natural: o modelo responde <strong>sem tool calls</strong>. A interpretação semântica é "não preciso de mais informações nem ações — eis a resposta". O harness então:</p>
-<ol>
-  <li><strong>Pós-processa a saída</strong> — valida formato/schema se a resposta é estruturada, aplica os guardrails de saída (PII, conteúdo, vazamento de dados), anexa citações de fontes quando houve RAG.</li>
-  <li><strong>Persiste o estado final</strong> — o checkpoint da conversa fica pronto para o próximo turno do usuário, que reabre o loop com o histórico completo.</li>
-  <li><strong>Emite a telemetria de fechamento</strong> — total de iterações, tokens, custo, latência ponta a ponta, desfecho (sucesso natural vs. saída forçada). São as métricas agregadas que alimentam dashboards e evals.</li>
-</ol>
-<div class="callout warn">
-  <span class="ctitle">Nuance</span>
-  <p>"Sem tool calls" significa que <em>o modelo acha</em> que terminou — não que a tarefa foi cumprida. Modelos terminam cedo demais ("declaro sucesso!") ou desistem sem avisar. Harnesses maduros adicionam uma verificação: um passo de crítica (o próprio modelo ou um segundo modelo revisa a resposta contra o objetivo) ou validação programática (os testes passam? o arquivo existe?) antes de aceitar o desfecho. É a diferença entre confiar na autoavaliação do modelo e verificar.</p>
-</div>
+  <section class="section" id="l-realimentar">
+    <h2>Parte 2 · Realimentar histórico</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+    </div>
+    <p>O resultado da tool (ou o erro) vira uma mensagem do tipo <code>tool_result</code>, vinculada ao <code>id</code> da tool call original, e é <strong>anexado ao histórico</strong>. O loop volta ao topo — e na próxima chamada, o modelo "vê" o que aconteceu e decide o próximo passo. O símbolo ↻ do diagrama é este retorno.</p>
+    <h3>Três propriedades fundamentais</h3>
+    <ul>
+      <li><strong>O histórico É o estado.</strong> Não existe máquina de estados paralela escondida: a lista de mensagens é a única fonte de verdade sobre onde a execução está. Persistir o histórico é persistir o loop inteiro; retomar é continuar de onde as mensagens pararam. É exatamente assim que o checkpointing do LangGraph funciona — o checkpointer (<code>MemorySaver</code>, <code>RedisSaver</code>, etc.) serializa o estado do grafo por <code>thread_id</code> a cada superstep, habilitando resiliência a crashes, pausas para aprovação humana e <em>time travel</em> de debugging.</li>
+      <li><strong>Erros são observações, não exceções.</strong> Quando a tool falha, o texto do erro volta ao modelo — que tem uma capacidade notável de se autocorrigir: ajusta argumentos, tenta outra tool, muda a abordagem. Essa é a fonte da resiliência dos agentes… e também do risco de laços infinitos, tratado nas <a href="#l-forcadas">saídas forçadas</a>.</li>
+      <li><strong>Todo <code>tool_call</code> exige um <code>tool_result</code>.</strong> As APIs rejeitam históricos com tool calls "órfãs" (pedidas e nunca respondidas). Se o harness decidiu não executar uma call (permissão negada, por exemplo), ainda precisa anexar um resultado dizendo isso.</li>
+    </ul>
+    <div class="callout green">
+      <div class="callout-label">Conexão com avaliação</div>
+      <p>A sequência acumulada de mensagens — pensamentos, ações, observações — é a <strong>trajetória</strong> da execução. Gravá-la integralmente é o que permite trajectory evals depois: analisar não só <em>se</em> o agente acertou, mas <em>como</em> chegou lá (quantas iterações, quais desvios, quais erros se autocorrigiram).</p>
+    </div>
+  </section>
 
-<h2 id="l-forcadas">Parte 2 · Saídas forçadas (budgets)</h2>
-<p><span class="tag t-tech">técnico</span><span class="tag t-biz">negócio</span></p>
-<p>A faixa âmbar do diagrama: as condições em que <strong>o harness encerra o loop contra a vontade do modelo</strong>. Sem elas, um agente pode ciclar para sempre — tentando a mesma tool quebrada, alternando entre duas abordagens, ou simplesmente queimando tokens sem convergir.</p>
-<table>
-  <tr><th>Budget</th><th>Mecanismo</th><th>Protege contra</th></tr>
-  <tr><td><strong>Máximo de iterações</strong></td><td>Contador de voltas do loop (no LangGraph, <code>recursion_limit</code>).</td><td>Laços infinitos e não-convergência.</td></tr>
-  <tr><td><strong>Timeout global</strong></td><td>Deadline da execução inteira, propagado em cascata para cada chamada interna.</td><td>Tarefas que "penduram" e seguram recursos/conexões.</td></tr>
-  <tr><td><strong>Teto de custo</strong></td><td>Acumulador de tokens/dinheiro por execução, por usuário e por tenant.</td><td>Explosão de custo — acidental (bug) ou maliciosa (abuso).</td></tr>
-  <tr><td><strong>Guardrail disparado</strong></td><td>Interrupção imediata quando um trilho de segurança detecta violação.</td><td>Dano em andamento: injection bem-sucedida, vazamento, ação fora de escopo.</td></tr>
-</table>
-<h3>O que fazer ao estourar o budget</h3>
-<p>Encerrar bem importa tanto quanto encerrar. As políticas comuns, da mais simples à mais sofisticada:</p>
-<ul>
-  <li><strong>Falha explícita</strong> — devolver erro claro ao usuário ("não consegui concluir em N passos"), preservando a trajetória para análise.</li>
-  <li><strong>Resumo forçado</strong> — uma última chamada ao modelo, sem tools, pedindo o melhor resultado parcial possível com o que foi apurado.</li>
-  <li><strong>Escalação humana</strong> — rotear a tarefa, com todo o contexto, para uma fila de atendimento humano (padrão obrigatório em produtos de suporte).</li>
-</ul>
-<div class="callout biz">
-  <span class="ctitle">Leitura de negócio</span>
-  <p>Budgets são <strong>a apólice de seguro do produto</strong> — e um instrumento de pricing. O teto de custo por execução define o pior caso da sua margem unitária; sem ele, um único usuário (ou um único bug) pode gerar uma fatura de API de cinco dígitos numa madrugada. Casos assim são recorrentes o suficiente na indústria para que "cost ceiling por tenant" seja checklist de lançamento, não otimização futura. A taxa de saídas forçadas também é um KPI de qualidade: se 20% das execuções morrem por limite de iterações, o problema não é o limite — é o agente que não converge.</p>
-</div>
-<hr class="sep">
+  <section class="section" id="l-final">
+    <h2>Parte 2 · Resposta final</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+    </div>
+    <p>A condição de parada natural: o modelo responde <strong>sem tool calls</strong>. A interpretação semântica é "não preciso de mais informações nem ações — eis a resposta". O harness então:</p>
+    <ol>
+      <li><strong>Pós-processa a saída</strong> — valida formato/schema se a resposta é estruturada, aplica os guardrails de saída (PII, conteúdo, vazamento de dados), anexa citações de fontes quando houve RAG.</li>
+      <li><strong>Persiste o estado final</strong> — o checkpoint da conversa fica pronto para o próximo turno do usuário, que reabre o loop com o histórico completo.</li>
+      <li><strong>Emite a telemetria de fechamento</strong> — total de iterações, tokens, custo, latência ponta a ponta, desfecho (sucesso natural vs. saída forçada). São as métricas agregadas que alimentam dashboards e evals.</li>
+    </ol>
+    <div class="callout warn">
+      <div class="callout-label">Nuance</div>
+      <p>"Sem tool calls" significa que <em>o modelo acha</em> que terminou — não que a tarefa foi cumprida. Modelos terminam cedo demais ("declaro sucesso!") ou desistem sem avisar. Harnesses maduros adicionam uma verificação: um passo de crítica (o próprio modelo ou um segundo modelo revisa a resposta contra o objetivo) ou validação programática (os testes passam? o arquivo existe?) antes de aceitar o desfecho. É a diferença entre confiar na autoavaliação do modelo e verificar.</p>
+    </div>
+  </section>
 
-<h2 id="impl-langgraph">O loop completo em LangGraph</h2>
-<p><span class="tag t-tech">técnico</span></p>
-<p>O LangGraph materializa tudo que vimos como um <strong>grafo de estados</strong>: cada etapa vira um nó, a bifurcação do parsing vira uma aresta condicional, e a realimentação vira a aresta que fecha o ciclo. O mapeamento direto entre os diagramas e o código:</p>
-<table>
-  <tr><th>Etapa do diagrama</th><th>Construto no LangGraph</th></tr>
-  <tr><td>Chamada ao LLM</td><td>Nó <code>agent</code> — invoca <code>llm.bind_tools(tools)</code></td></tr>
-  <tr><td>Parsing da resposta</td><td>Aresta condicional (<code>tools_condition</code> ou função própria)</td></tr>
-  <tr><td>Executar tool + realimentar</td><td>Nó <code>tools</code> (<code>ToolNode</code>: dispatch, validação e append do <code>ToolMessage</code>)</td></tr>
-  <tr><td>↻ nova iteração</td><td>Aresta <code>tools → agent</code>, fechando o ciclo</td></tr>
-  <tr><td>Resposta final</td><td>Aresta condicional → <code>END</code></td></tr>
-  <tr><td>Histórico como estado</td><td><code>AgentState</code> com <code>add_messages</code> (reducer de append)</td></tr>
-  <tr><td>Persistência do estado</td><td>Checkpointer (<code>MemorySaver</code> / <code>RedisSaver</code>) por <code>thread_id</code></td></tr>
-  <tr><td>Máximo de iterações</td><td><code>recursion_limit</code> na invocação</td></tr>
-</table>
+  <section class="section" id="l-forcadas">
+    <h2>Parte 2 · Saídas forçadas (budgets)</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+      <span class="tag">negócio</span>
+    </div>
+    <p>A faixa âmbar do diagrama: as condições em que <strong>o harness encerra o loop contra a vontade do modelo</strong>. Sem elas, um agente pode ciclar para sempre — tentando a mesma tool quebrada, alternando entre duas abordagens, ou simplesmente queimando tokens sem convergir.</p>
+    <div class="table-wrap">
+    <table>
+      <tr><th>Budget</th><th>Mecanismo</th><th>Protege contra</th></tr>
+      <tr><td><strong>Máximo de iterações</strong></td><td>Contador de voltas do loop (no LangGraph, <code>recursion_limit</code>).</td><td>Laços infinitos e não-convergência.</td></tr>
+      <tr><td><strong>Timeout global</strong></td><td>Deadline da execução inteira, propagado em cascata para cada chamada interna.</td><td>Tarefas que "penduram" e seguram recursos/conexões.</td></tr>
+      <tr><td><strong>Teto de custo</strong></td><td>Acumulador de tokens/dinheiro por execução, por usuário e por tenant.</td><td>Explosão de custo — acidental (bug) ou maliciosa (abuso).</td></tr>
+      <tr><td><strong>Guardrail disparado</strong></td><td>Interrupção imediata quando um trilho de segurança detecta violação.</td><td>Dano em andamento: injection bem-sucedida, vazamento, ação fora de escopo.</td></tr>
+    </table>
+    </div>
+    <h3>O que fazer ao estourar o budget</h3>
+    <p>Encerrar bem importa tanto quanto encerrar. As políticas comuns, da mais simples à mais sofisticada:</p>
+    <ul>
+      <li><strong>Falha explícita</strong> — devolver erro claro ao usuário ("não consegui concluir em N passos"), preservando a trajetória para análise.</li>
+      <li><strong>Resumo forçado</strong> — uma última chamada ao modelo, sem tools, pedindo o melhor resultado parcial possível com o que foi apurado.</li>
+      <li><strong>Escalação humana</strong> — rotear a tarefa, com todo o contexto, para uma fila de atendimento humano (padrão obrigatório em produtos de suporte).</li>
+    </ul>
+    <div class="callout purple">
+      <div class="callout-label">Leitura de negócio</div>
+      <p>Budgets são <strong>a apólice de seguro do produto</strong> — e um instrumento de pricing. O teto de custo por execução define o pior caso da sua margem unitária; sem ele, um único usuário (ou um único bug) pode gerar uma fatura de API de cinco dígitos numa madrugada. Casos assim são recorrentes o suficiente na indústria para que "cost ceiling por tenant" seja checklist de lançamento, não otimização futura. A taxa de saídas forçadas também é um KPI de qualidade: se 20% das execuções morrem por limite de iterações, o problema não é o limite — é o agente que não converge.</p>
+    </div>
+  </section>
 
-<pre><code><span class="filename">agent_harness.py</span><span class="kw">from</span> typing <span class="kw">import</span> Annotated
+  <section class="section" id="impl-langgraph">
+    <h2>O loop completo em LangGraph</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">técnico</span>
+    </div>
+    <p>O LangGraph materializa tudo que vimos como um <strong>grafo de estados</strong>: cada etapa vira um nó, a bifurcação do parsing vira uma aresta condicional, e a realimentação vira a aresta que fecha o ciclo. O mapeamento direto entre os diagramas e o código:</p>
+    <div class="table-wrap">
+    <table>
+      <tr><th>Etapa do diagrama</th><th>Construto no LangGraph</th></tr>
+      <tr><td>Chamada ao LLM</td><td>Nó <code>agent</code> — invoca <code>llm.bind_tools(tools)</code></td></tr>
+      <tr><td>Parsing da resposta</td><td>Aresta condicional (<code>tools_condition</code> ou função própria)</td></tr>
+      <tr><td>Executar tool + realimentar</td><td>Nó <code>tools</code> (<code>ToolNode</code>: dispatch, validação e append do <code>ToolMessage</code>)</td></tr>
+      <tr><td>↻ nova iteração</td><td>Aresta <code>tools → agent</code>, fechando o ciclo</td></tr>
+      <tr><td>Resposta final</td><td>Aresta condicional → <code>END</code></td></tr>
+      <tr><td>Histórico como estado</td><td><code>AgentState</code> com <code>add_messages</code> (reducer de append)</td></tr>
+      <tr><td>Persistência do estado</td><td>Checkpointer (<code>MemorySaver</code> / <code>RedisSaver</code>) por <code>thread_id</code></td></tr>
+      <tr><td>Máximo de iterações</td><td><code>recursion_limit</code> na invocação</td></tr>
+    </table>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span class="code-filename">agent_harness.py</span><span class="code-lang">PYTHON</span></div>
+      </div>
+      <pre><code><span class="kw">from</span> typing <span class="kw">import</span> Annotated
 <span class="kw">from</span> typing_extensions <span class="kw">import</span> TypedDict
 <span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, START, END
 <span class="kw">from</span> langgraph.graph.message <span class="kw">import</span> add_messages
@@ -499,15 +461,15 @@ hr.sep { border: none; border-top: 1px dashed var(--border); margin: 40px 0; }
 
 
 <span class="cm"># ---- 1. Estado: o histórico É o estado --------------------------------</span>
-<span class="kw">class</span> <span class="cl">AgentState</span>(<span class="cl">TypedDict</span>):
+<span class="kw">class</span> <span class="tp">AgentState</span>(<span class="tp">TypedDict</span>):
     <span class="cm"># add_messages é um "reducer": novos itens são anexados, não substituem</span>
-    messages: <span class="cl">Annotated</span>[<span class="cl">list</span>, add_messages]
+    messages: <span class="tp">Annotated</span>[<span class="tp">list</span>, add_messages]
 
 
 <span class="cm"># ---- 2. Tools: schema inferido da assinatura + docstring --------------</span>
 <span class="cm"># A docstring é o que o modelo lê para decidir QUANDO usar a tool.</span>
 <span class="nb">@tool</span>
-<span class="kw">def</span> <span class="fn">consultar_pedido</span>(pedido_id: <span class="cl">str</span>) -&gt; <span class="cl">str</span>:
+<span class="kw">def</span> <span class="fn">consultar_pedido</span>(pedido_id: <span class="tp">str</span>) -&gt; <span class="tp">str</span>:
     <span class="st">"""Consulta o status de um pedido pelo seu ID."""</span>
     <span class="kw">return</span> buscar_no_banco(pedido_id)   <span class="cm"># timeout/retry ficam aqui dentro</span>
 
@@ -515,19 +477,19 @@ tools = [consultar_pedido]
 
 
 <span class="cm"># ---- 3. Nó agent: a "chamada ao LLM" do diagrama ----------------------</span>
-llm = <span class="cl">ChatAnthropic</span>(model=<span class="st">"claude-sonnet-4-6"</span>, temperature=<span class="nb">0</span>)
+llm = <span class="tp">ChatAnthropic</span>(model=<span class="st">"claude-sonnet-4-6"</span>, temperature=<span class="nb">0</span>)
 llm_com_tools = llm.bind_tools(tools)   <span class="cm"># anexa os JSON Schemas à chamada</span>
 
-<span class="kw">def</span> <span class="fn">agent</span>(state: <span class="cl">AgentState</span>):
+<span class="kw">def</span> <span class="fn">agent</span>(state: <span class="tp">AgentState</span>):
     <span class="cm"># montagem de contexto: aqui entrariam compactação, RAG, memória...</span>
     resposta = llm_com_tools.invoke(state[<span class="st">"messages"</span>])
     <span class="kw">return</span> {<span class="st">"messages"</span>: [resposta]}    <span class="cm"># reducer anexa ao histórico</span>
 
 
 <span class="cm"># ---- 4. Grafo: as setas do diagrama viram edges -----------------------</span>
-builder = <span class="cl">StateGraph</span>(<span class="cl">AgentState</span>)
+builder = <span class="tp">StateGraph</span>(<span class="tp">AgentState</span>)
 builder.add_node(<span class="st">"agent"</span>, agent)
-builder.add_node(<span class="st">"tools"</span>, <span class="cl">ToolNode</span>(tools))   <span class="cm"># dispatch + ToolMessage</span>
+builder.add_node(<span class="st">"tools"</span>, <span class="tp">ToolNode</span>(tools))   <span class="cm"># dispatch + ToolMessage</span>
 
 builder.add_edge(START, <span class="st">"agent"</span>)
 <span class="cm"># parsing da resposta: tool_calls? -&gt; "tools" ; senão -&gt; END</span>
@@ -535,7 +497,7 @@ builder.add_conditional_edges(<span class="st">"agent"</span>, tools_condition)
 builder.add_edge(<span class="st">"tools"</span>, <span class="st">"agent"</span>)          <span class="cm"># ↻ fecha o ciclo</span>
 
 <span class="cm"># ---- 5. Checkpointer: persistir o histórico = persistir o loop --------</span>
-grafo = builder.compile(checkpointer=<span class="cl">MemorySaver</span>())
+grafo = builder.compile(checkpointer=<span class="tp">MemorySaver</span>())
 
 
 <span class="cm"># ---- 6. Invocação com budgets -----------------------------------------</span>
@@ -547,85 +509,106 @@ resultado = grafo.invoke(
     {<span class="st">"messages"</span>: [(<span class="st">"user"</span>, <span class="st">"Qual o status do pedido A-981?"</span>)]},
     config,
 )</code></pre>
+    </div>
 
-<p>O que este código <em>não</em> mostra — e que separa um tutorial de um harness de produção — são as camadas transversais: autenticação na borda, ACL por tool, timeouts em cascata dentro de cada tool, circuit breakers nas dependências, instrumentação OpenTelemetry por nó, teto de custo por tenant e o checkpointer trocado por um backend durável (Redis/Postgres) em vez de memória. Cada uma delas se encaixa exatamente nos pontos descritos nas Partes 1 e 2.</p>
+    <p>O que este código <em>não</em> mostra — e que separa um tutorial de um harness de produção — são as camadas transversais: autenticação na borda, ACL por tool, timeouts em cascata dentro de cada tool, circuit breakers nas dependências, instrumentação OpenTelemetry por nó, teto de custo por tenant e o checkpointer trocado por um backend durável (Redis/Postgres) em vez de memória. Cada uma delas se encaixa exatamente nos pontos descritos nas Partes 1 e 2.</p>
 
-<div class="callout info">
-  <span class="ctitle">Padrão supervisor</span>
-  <p>Em arquiteturas multiagente, o mesmo loop se aninha: um agente <strong>supervisor</strong> roda seu próprio ciclo tratando cada agente <em>especialista</em> como uma "tool" — o resultado do especialista realimenta o roteador do supervisor, que decide o próximo passo. É o mesmo padrão do diagrama, recursivo: harnesses dentro de harnesses, com identidade e budgets propagados entre os níveis.</p>
+    <div class="callout blue">
+      <div class="callout-label">Padrão supervisor</div>
+      <p>Em arquiteturas multiagente, o mesmo loop se aninha: um agente <strong>supervisor</strong> roda seu próprio ciclo tratando cada agente <em>especialista</em> como uma "tool" — o resultado do especialista realimenta o roteador do supervisor, que decide o próximo passo. É o mesmo padrão do diagrama, recursivo: harnesses dentro de harnesses, com identidade e budgets propagados entre os níveis.</p>
+    </div>
+  </section>
+
+  <section class="section" id="negocio">
+    <h2>Custo, risco e decisão de negócio</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="tag">negócio</span>
+    </div>
+    <p>Consolidando as leituras de negócio espalhadas pelo guia em um único quadro de decisão:</p>
+
+    <h3>1. O harness é o produto</h3>
+    <p>O modelo é acessível por API a qualquer concorrente pelo mesmo preço. O que diferencia produtos é o que está em volta: a curadoria de contexto, as tools e suas descrições, os guardrails, a experiência de recuperação de erro. Investimento em harness é investimento em <em>moat</em>; investimento em "prompt mágico" é vantagem que evapora no próximo lançamento de modelo.</p>
+
+    <h3>2. Unit economics vivem no loop</h3>
+    <ul>
+      <li><strong>Custo por tarefa</strong> = tokens acumulados ao longo das iterações. As alavancas, em ordem de impacto típico: reduzir iterações até a convergência, compactar contexto, prompt caching, model routing (modelo barato onde ele basta).</li>
+      <li><strong>Sem teto de custo por execução/tenant, não há pricing seguro.</strong> O pior caso da margem é definido pelos budgets — ou pela sorte.</li>
+      <li><strong>Latência é composta:</strong> N iterações × (latência do modelo + latência das tools). Produtos interativos precisam de streaming e de convergência rápida; produtos batch podem trocar latência por custo.</li>
+    </ul>
+
+    <h3>3. Risco operacional tem endereço</h3>
+    <div class="table-wrap">
+    <table>
+      <tr><th>Risco</th><th>Camada do harness que o controla</th></tr>
+      <tr><td>Vazamento de dados / violação de privacidade</td><td>Fronteira de entrada, guardrails de saída, ACLs</td></tr>
+      <tr><td>Ação destrutiva indevida</td><td>Autorização por tool + human-in-the-loop</td></tr>
+      <tr><td>Prompt injection</td><td>Defesa em camadas (entrada → contexto → tools → saída)</td></tr>
+      <tr><td>Explosão de custo</td><td>Budgets (iterações, custo, timeout)</td></tr>
+      <tr><td>Impossibilidade de auditar decisões</td><td>Telemetria e persistência de trajetórias</td></tr>
+      <tr><td>Lock-in de fornecedor</td><td>Abstração de provedor no componente LLM</td></tr>
+    </table>
+    </div>
+
+    <h3>4. Build vs. buy</h3>
+    <p>A pergunta certa não é "framework ou código próprio?", e sim <strong>onde está o seu diferencial</strong>. Frameworks como LangGraph resolvem bem a mecânica genérica (grafo, checkpointing, ToolNode) e custam pouco a adotar; o que nenhum framework entrega são as suas tools, os seus guardrails, o seu modelo de permissões e a sua observabilidade — que é onde o esforço deveria se concentrar de qualquer forma. O anti-padrão é gastar meses reescrevendo o loop genérico e chegar sem fôlego na parte que diferencia.</p>
+
+    <h3>5. Qualidade se mede, não se sente</h3>
+    <p>Como o sistema é não-determinístico, "parece bom nas demos" não é evidência. O ciclo de melhoria maduro: gravar trajetórias em produção → construir datasets de avaliação a partir de casos reais → rodar evals (outcome + trajectory) no <em>mesmo harness</em> a cada mudança de prompt, tool ou modelo → tratar regressão de eval como quebra de build. Sem isso, cada ajuste de prompt é um lançamento às cegas.</p>
+  </section>
+
+  <section class="section" id="glossario">
+    <h2>Glossário</h2>
+    <div class="table-wrap">
+    <table>
+      <tr><th>Termo</th><th>Definição</th></tr>
+      <tr><td><strong>Harness</strong></td><td>Infraestrutura de software que envolve o LLM: contexto, loop, tools, guardrails e telemetria.</td></tr>
+      <tr><td><strong>Token</strong></td><td>Unidade mínima de texto processada pelo modelo; base de cobrança e do limite de contexto.</td></tr>
+      <tr><td><strong>Janela de contexto</strong></td><td>Máximo de tokens que o modelo processa por chamada.</td></tr>
+      <tr><td><strong>Function calling / tool use</strong></td><td>Capacidade do modelo de responder com pedidos estruturados de execução de funções.</td></tr>
+      <tr><td><strong>Tool call / tool result</strong></td><td>O pedido de ação emitido pelo modelo / a observação devolvida pelo harness após executar.</td></tr>
+      <tr><td><strong>Loop agêntico (ReAct)</strong></td><td>Ciclo raciocinar → agir → observar que estrutura a execução do agente.</td></tr>
+      <tr><td><strong>Iteração</strong></td><td>Uma volta completa do loop (uma chamada ao modelo + eventuais execuções de tools).</td></tr>
+      <tr><td><strong>Trajetória</strong></td><td>Sequência completa de decisões, ações e observações de uma execução; insumo de debugging e evals.</td></tr>
+      <tr><td><strong>Checkpointing</strong></td><td>Persistência do estado do loop (o histórico) por sessão, habilitando retomada e auditoria.</td></tr>
+      <tr><td><strong>thread_id</strong></td><td>Identificador que isola o estado de uma conversa/sessão no checkpointer e na telemetria.</td></tr>
+      <tr><td><strong>Guardrail</strong></td><td>Controle automático que restringe entradas, comportamentos ou saídas do agente.</td></tr>
+      <tr><td><strong>Prompt injection</strong></td><td>Ataque em que instruções maliciosas embutidas em dados tentam sequestrar o agente.</td></tr>
+      <tr><td><strong>Human-in-the-loop</strong></td><td>Ponto de aprovação humana obrigatória antes de ações sensíveis ou irreversíveis.</td></tr>
+      <tr><td><strong>Circuit breaker</strong></td><td>Padrão que interrompe chamadas a uma dependência degradada, falhando rápido até ela se recuperar.</td></tr>
+      <tr><td><strong>Backoff exponencial + jitter</strong></td><td>Estratégia de retry com esperas crescentes e aleatorizadas para falhas transitórias.</td></tr>
+      <tr><td><strong>Budget</strong></td><td>Limite imposto pelo harness (iterações, tempo, custo) que força o encerramento do loop.</td></tr>
+      <tr><td><strong>RAG</strong></td><td>Recuperação de trechos relevantes de uma base de conhecimento para enriquecer o contexto.</td></tr>
+      <tr><td><strong>Prompt caching</strong></td><td>Reuso do prefixo estável do contexto entre chamadas, reduzindo custo e latência.</td></tr>
+      <tr><td><strong>Model routing</strong></td><td>Direcionar cada tarefa ao modelo mais custo-efetivo capaz de resolvê-la.</td></tr>
+      <tr><td><strong>MCP</strong></td><td>Model Context Protocol — padrão aberto para expor tools e contexto de servidores externos a agentes.</td></tr>
+      <tr><td><strong>Supervisor / especialista</strong></td><td>Padrão multiagente em que um agente roteador orquestra agentes especializados como se fossem tools.</td></tr>
+      <tr><td><strong>Eval (outcome / trajectory)</strong></td><td>Avaliação sistemática do agente: pelo resultado final e/ou pelo caminho percorrido.</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <div class="doc-footer">
+    <a href="../index.html">← Voltar para DevDocs</a>
+    <span>Harness de Agentes</span>
+  </div>
+
+</div>
 </div>
 
-<h2 id="negocio">Custo, risco e decisão de negócio</h2>
-<p><span class="tag t-biz">negócio</span></p>
-<p>Consolidando as leituras de negócio espalhadas pelo guia em um único quadro de decisão:</p>
-
-<h3>1. O harness é o produto</h3>
-<p>O modelo é acessível por API a qualquer concorrente pelo mesmo preço. O que diferencia produtos é o que está em volta: a curadoria de contexto, as tools e suas descrições, os guardrails, a experiência de recuperação de erro. Investimento em harness é investimento em <em>moat</em>; investimento em "prompt mágico" é vantagem que evapora no próximo lançamento de modelo.</p>
-
-<h3>2. Unit economics vivem no loop</h3>
-<ul>
-  <li><strong>Custo por tarefa</strong> = tokens acumulados ao longo das iterações. As alavancas, em ordem de impacto típico: reduzir iterações até a convergência, compactar contexto, prompt caching, model routing (modelo barato onde ele basta).</li>
-  <li><strong>Sem teto de custo por execução/tenant, não há pricing seguro.</strong> O pior caso da margem é definido pelos budgets — ou pela sorte.</li>
-  <li><strong>Latência é composta:</strong> N iterações × (latência do modelo + latência das tools). Produtos interativos precisam de streaming e de convergência rápida; produtos batch podem trocar latência por custo.</li>
-</ul>
-
-<h3>3. Risco operacional tem endereço</h3>
-<table>
-  <tr><th>Risco</th><th>Camada do harness que o controla</th></tr>
-  <tr><td>Vazamento de dados / violação de privacidade</td><td>Fronteira de entrada, guardrails de saída, ACLs</td></tr>
-  <tr><td>Ação destrutiva indevida</td><td>Autorização por tool + human-in-the-loop</td></tr>
-  <tr><td>Prompt injection</td><td>Defesa em camadas (entrada → contexto → tools → saída)</td></tr>
-  <tr><td>Explosão de custo</td><td>Budgets (iterações, custo, timeout)</td></tr>
-  <tr><td>Impossibilidade de auditar decisões</td><td>Telemetria e persistência de trajetórias</td></tr>
-  <tr><td>Lock-in de fornecedor</td><td>Abstração de provedor no componente LLM</td></tr>
-</table>
-
-<h3>4. Build vs. buy</h3>
-<p>A pergunta certa não é "framework ou código próprio?", e sim <strong>onde está o seu diferencial</strong>. Frameworks como LangGraph resolvem bem a mecânica genérica (grafo, checkpointing, ToolNode) e custam pouco a adotar; o que nenhum framework entrega são as suas tools, os seus guardrails, o seu modelo de permissões e a sua observabilidade — que é onde o esforço deveria se concentrar de qualquer forma. O anti-padrão é gastar meses reescrevendo o loop genérico e chegar sem fôlego na parte que diferencia.</p>
-
-<h3>5. Qualidade se mede, não se sente</h3>
-<p>Como o sistema é não-determinístico, "parece bom nas demos" não é evidência. O ciclo de melhoria maduro: gravar trajetórias em produção → construir datasets de avaliação a partir de casos reais → rodar evals (outcome + trajectory) no <em>mesmo harness</em> a cada mudança de prompt, tool ou modelo → tratar regressão de eval como quebra de build. Sem isso, cada ajuste de prompt é um lançamento às cegas.</p>
-
-<h2 id="glossario">Glossário</h2>
-<table>
-  <tr><th>Termo</th><th>Definição</th></tr>
-  <tr><td><strong>Harness</strong></td><td>Infraestrutura de software que envolve o LLM: contexto, loop, tools, guardrails e telemetria.</td></tr>
-  <tr><td><strong>Token</strong></td><td>Unidade mínima de texto processada pelo modelo; base de cobrança e do limite de contexto.</td></tr>
-  <tr><td><strong>Janela de contexto</strong></td><td>Máximo de tokens que o modelo processa por chamada.</td></tr>
-  <tr><td><strong>Function calling / tool use</strong></td><td>Capacidade do modelo de responder com pedidos estruturados de execução de funções.</td></tr>
-  <tr><td><strong>Tool call / tool result</strong></td><td>O pedido de ação emitido pelo modelo / a observação devolvida pelo harness após executar.</td></tr>
-  <tr><td><strong>Loop agêntico (ReAct)</strong></td><td>Ciclo raciocinar → agir → observar que estrutura a execução do agente.</td></tr>
-  <tr><td><strong>Iteração</strong></td><td>Uma volta completa do loop (uma chamada ao modelo + eventuais execuções de tools).</td></tr>
-  <tr><td><strong>Trajetória</strong></td><td>Sequência completa de decisões, ações e observações de uma execução; insumo de debugging e evals.</td></tr>
-  <tr><td><strong>Checkpointing</strong></td><td>Persistência do estado do loop (o histórico) por sessão, habilitando retomada e auditoria.</td></tr>
-  <tr><td><strong>thread_id</strong></td><td>Identificador que isola o estado de uma conversa/sessão no checkpointer e na telemetria.</td></tr>
-  <tr><td><strong>Guardrail</strong></td><td>Controle automático que restringe entradas, comportamentos ou saídas do agente.</td></tr>
-  <tr><td><strong>Prompt injection</strong></td><td>Ataque em que instruções maliciosas embutidas em dados tentam sequestrar o agente.</td></tr>
-  <tr><td><strong>Human-in-the-loop</strong></td><td>Ponto de aprovação humana obrigatória antes de ações sensíveis ou irreversíveis.</td></tr>
-  <tr><td><strong>Circuit breaker</strong></td><td>Padrão que interrompe chamadas a uma dependência degradada, falhando rápido até ela se recuperar.</td></tr>
-  <tr><td><strong>Backoff exponencial + jitter</strong></td><td>Estratégia de retry com esperas crescentes e aleatorizadas para falhas transitórias.</td></tr>
-  <tr><td><strong>Budget</strong></td><td>Limite imposto pelo harness (iterações, tempo, custo) que força o encerramento do loop.</td></tr>
-  <tr><td><strong>RAG</strong></td><td>Recuperação de trechos relevantes de uma base de conhecimento para enriquecer o contexto.</td></tr>
-  <tr><td><strong>Prompt caching</strong></td><td>Reuso do prefixo estável do contexto entre chamadas, reduzindo custo e latência.</td></tr>
-  <tr><td><strong>Model routing</strong></td><td>Direcionar cada tarefa ao modelo mais custo-efetivo capaz de resolvê-la.</td></tr>
-  <tr><td><strong>MCP</strong></td><td>Model Context Protocol — padrão aberto para expor tools e contexto de servidores externos a agentes.</td></tr>
-  <tr><td><strong>Supervisor / especialista</strong></td><td>Padrão multiagente em que um agente roteador orquestra agentes especializados como se fossem tools.</td></tr>
-  <tr><td><strong>Eval (outcome / trajectory)</strong></td><td>Avaliação sistemática do agente: pelo resultado final e/ou pelo caminho percorrido.</td></tr>
-</table>
-
-</main>
-
 <script>
-const links = document.querySelectorAll('.sidebar a');
-const targets = [...links].map(a => document.querySelector(a.getAttribute('href')));
-function onScroll() {
-  let idx = 0;
-  const y = window.scrollY + 120;
-  targets.forEach((t, i) => { if (t && t.offsetTop <= y) idx = i; });
-  links.forEach((a, i) => a.classList.toggle('active', i === idx));
-}
-document.addEventListener('scroll', onScroll, { passive: true });
-onScroll();
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
 </script>
+
 </body>
 </html>
