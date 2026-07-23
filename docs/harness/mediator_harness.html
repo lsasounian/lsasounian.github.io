@@ -4,383 +4,64 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agente Mediador com Harness — LangChain + LangGraph + MCP</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/night-owl.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<link rel="stylesheet" href="../../assets/css/theme.css" />
 <style>
-  :root {
-    --bg: #0d1117;
-    --bg-elevated: #131a24;
-    --border: #21283244;
-    --border-strong: #2b3644;
-    --text: #c9d1d9;
-    --text-dim: #8b949e;
-    --text-bright: #f0f3f6;
-    --accent: #58a6ff;
-    --accent-dim: #58a6ff33;
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'IBM Plex Sans', sans-serif;
-
-    --clr-info-bg: #0d2a3d;
-    --clr-info-border: #388bfd;
-    --clr-info-text: #79c0ff;
-
-    --clr-warn-bg: #3d2e0d;
-    --clr-warn-border: #d29922;
-    --clr-warn-text: #e3b341;
-
-    --clr-danger-bg: #3d0d15;
-    --clr-danger-border: #f85149;
-    --clr-danger-text: #ff7b72;
-
-    --clr-ok-bg: #0d3d1f;
-    --clr-ok-border: #3fb950;
-    --clr-ok-text: #56d364;
-  }
-
-  * { box-sizing: border-box; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 15.5px;
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* ---------- Layout ---------- */
-  .layout {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    min-height: 100vh;
-  }
-
-  nav.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 260px;
-    height: 100vh;
-    overflow-y: auto;
-    background: var(--bg-elevated);
-    border-right: 1px solid var(--border-strong);
-    padding: 28px 20px 40px;
-  }
-
-  nav.sidebar .brand {
-    font-family: var(--mono);
-    font-size: 12.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 22px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-strong);
-  }
-
-  nav.sidebar .brand strong {
-    display: block;
-    color: var(--text-bright);
-    font-size: 14px;
-    letter-spacing: 0;
-    text-transform: none;
-    margin-bottom: 4px;
-  }
-
-  nav.sidebar ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  nav.sidebar li a {
-    display: block;
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 13.5px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    border-left: 2px solid transparent;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  }
-
-  nav.sidebar li a:hover {
-    color: var(--text-bright);
-    background: #ffffff08;
-  }
-
-  nav.sidebar li a.active {
-    color: var(--accent);
-    border-left-color: var(--accent);
-    background: var(--accent-dim);
-  }
-
-  nav.sidebar .sub a {
-    padding-left: 22px;
-    font-size: 13px;
-  }
-
-  main {
-    grid-column: 2;
-    margin-left: 260px;
-    max-width: 860px;
-    padding: 48px 56px 120px;
-  }
-
-  /* ---------- Typography ---------- */
-  h1 {
-    font-family: var(--mono);
-    font-size: 27px;
-    font-weight: 600;
-    color: var(--text-bright);
-    line-height: 1.35;
-    margin: 0 0 10px;
-    letter-spacing: -0.01em;
-  }
-
-  .subtitle {
-    color: var(--text-dim);
-    font-size: 14.5px;
-    margin: 0 0 44px;
-    font-family: var(--mono);
-  }
-
-  h2 {
-    font-family: var(--mono);
-    font-size: 19px;
-    font-weight: 600;
-    color: var(--text-bright);
-    margin: 56px 0 18px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-strong);
-  }
-
-  h3 {
-    font-family: var(--mono);
-    font-size: 15.5px;
-    font-weight: 600;
-    color: var(--accent);
-    margin: 32px 0 12px;
-  }
-
-  p { margin: 0 0 16px; color: var(--text); }
-
-  a { color: var(--accent); }
-
-  strong { color: var(--text-bright); font-weight: 600; }
-
-  em { color: var(--text-dim); font-style: italic; }
-
-  ul, ol {
-    margin: 0 0 16px;
-    padding-left: 22px;
-  }
-
-  li { margin-bottom: 8px; }
-
-  li > ul, li > ol { margin-top: 8px; margin-bottom: 0; }
-
-  code {
-    font-family: var(--mono);
-    font-size: 0.87em;
-    background: #ffffff0f;
-    color: #e3b341;
-    padding: 0.15em 0.4em;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-
-  pre {
-    margin: 0 0 20px;
-    border-radius: 10px;
-    border: 1px solid var(--border-strong);
-    overflow-x: auto;
-    background: #0b0f14 !important;
-  }
-
-  pre code {
-    display: block;
-    padding: 18px 20px;
-    white-space: pre;
-    background: transparent !important;
-    color: inherit;
-    border-radius: 0;
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  hr {
-    border: none;
-    border-top: 1px solid var(--border-strong);
-    margin: 44px 0;
-  }
-
-  /* ---------- Table ---------- */
-  .table-wrap {
-    overflow-x: auto;
-    margin: 0 0 22px;
-    border: 1px solid var(--border-strong);
-    border-radius: 10px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13.8px;
-  }
-
-  th {
-    text-align: left;
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    background: var(--bg-elevated);
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-strong);
-  }
-
-  td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
-  }
-
-  tr:last-child td { border-bottom: none; }
-
-  td:first-child, th:first-child {
-    white-space: nowrap;
-    color: var(--text-bright);
-  }
-
-  /* ---------- Callouts ---------- */
-  .callout {
-    border-radius: 10px;
-    border-left: 3px solid;
-    padding: 16px 18px;
-    margin: 0 0 22px;
-    font-size: 14.5px;
-  }
-
-  .callout p:last-child { margin-bottom: 0; }
-
-  .callout .callout-label {
-    font-family: var(--mono);
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 8px;
-  }
-
-  .callout.info {
-    background: var(--clr-info-bg);
-    border-color: var(--clr-info-border);
-  }
-  .callout.info .callout-label { color: var(--clr-info-text); }
-
-  .callout.warn {
-    background: var(--clr-warn-bg);
-    border-color: var(--clr-warn-border);
-  }
-  .callout.warn .callout-label { color: var(--clr-warn-text); }
-
-  .callout.danger {
-    background: var(--clr-danger-bg);
-    border-color: var(--clr-danger-border);
-  }
-  .callout.danger .callout-label { color: var(--clr-danger-text); }
-
-  .callout.ok {
-    background: var(--clr-ok-bg);
-    border-color: var(--clr-ok-border);
-  }
-  .callout.ok .callout-label { color: var(--clr-ok-text); }
-
-  /* ---------- Badges (Sim/Não/Parcial) ---------- */
-  .badge {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 2px 9px;
-    border-radius: 5px;
-    white-space: nowrap;
-  }
-  .badge.yes { background: var(--clr-ok-bg); color: var(--clr-ok-text); border: 1px solid var(--clr-ok-border); }
-  .badge.no { background: var(--clr-danger-bg); color: var(--clr-danger-text); border: 1px solid var(--clr-danger-border); }
-  .badge.partial { background: var(--clr-warn-bg); color: var(--clr-warn-text); border: 1px solid var(--clr-warn-border); }
-
-  /* ---------- File chips ---------- */
-  .file-chip {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text-bright);
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-strong);
-    padding: 1px 8px;
-    border-radius: 5px;
-  }
-
-  /* ---------- Scrollbar ---------- */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
-  ::-webkit-scrollbar-thumb:hover { background: #3a4552; }
-
-  @media (max-width: 900px) {
-    nav.sidebar { display: none; }
-    main { margin-left: 0; padding: 32px 22px 80px; }
-  }
+.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.callout.blue .callout-label   { color: var(--blue); }
+.callout.green .callout-label  { color: var(--green); }
+.callout.warn .callout-label   { color: var(--amber); }
+.callout.danger .callout-label { color: var(--red); }
+.callout.purple .callout-label { color: var(--purple); }
 </style>
 </head>
 <body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
 
-<div class="layout">
-  <nav class="sidebar">
-    <div class="brand">
-      <strong>Agent Docs</strong>
-      mediator harness · agentcore
-    </div>
-    <ul>
-      <li><a href="#visao-geral" class="active">Visão geral</a></li>
-      <li><a href="#o-que-e-harness">O que é harness</a></li>
-      <li class="sub"><a href="#ciclo-de-vida">1. Ciclo de vida</a></li>
-      <li class="sub"><a href="#controle-de-execucao">2. Controle de execução</a></li>
-      <li class="sub"><a href="#resiliencia">3. Resiliência</a></li>
-      <li class="sub"><a href="#guardrails">4. Guardrails</a></li>
-      <li class="sub"><a href="#observabilidade">5. Observabilidade</a></li>
-      <li><a href="#separar-harness">Separar harness do grafo</a></li>
-      <li><a href="#componentes">Componentes do código</a></li>
-      <li><a href="#harness-agentcore">Harness × AgentCore</a></li>
-      <li class="sub"><a href="#ping-contrato">Contrato do /ping</a></li>
-      <li class="sub"><a href="#warmup-sentinel">__warmup__ sentinel</a></li>
-      <li class="sub"><a href="#diferencas-agentcore">Diferenças AgentCore</a></li>
-      <li class="sub"><a href="#limitacao-breaker">Limitação: breaker por microVM</a></li>
-      <li><a href="#extensao">Pontos de extensão</a></li>
-    </ul>
+<aside class="sidebar">
+  <a href="../../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">AGT</span>
+    <span class="doc-title">Mediator Harness</span>
+  </a>
+  <nav>
+    <div class="nav-section">Guia</div>
+    <a href="#visao-geral">Visão geral</a>
+    <a href="#o-que-e-harness">O que é harness</a>
+    <a href="#ciclo-de-vida">1. Ciclo de vida</a>
+    <a href="#controle-de-execucao">2. Controle de execução</a>
+    <a href="#resiliencia">3. Resiliência</a>
+    <a href="#guardrails">4. Guardrails</a>
+    <a href="#observabilidade">5. Observabilidade</a>
+    <a href="#separar-harness">Separar harness do grafo</a>
+    <a href="#componentes">Componentes do código</a>
+    <a href="#harness-agentcore">Harness × AgentCore</a>
+    <a href="#ping-contrato">Contrato do /ping</a>
+    <a href="#warmup-sentinel">__warmup__ sentinel</a>
+    <a href="#diferencas-agentcore">Diferenças AgentCore</a>
+    <a href="#limitacao-breaker">Limitação: breaker por microVM</a>
+    <a href="#extensao">Pontos de extensão</a>
   </nav>
+</aside>
 
-  <main>
-    <h1>Agente Mediador com Harness</h1>
-    <p class="subtitle">LangChain · LangGraph · MCP · AWS Bedrock AgentCore</p>
+<div class="main">
+<div class="wrapper">
 
-    <h2 id="visao-geral">Visão geral</h2>
+  <div class="doc-header">
+    <div class="doc-num">// Documentação Técnica</div>
+    <h1>Agente Mediador com <em>Harness</em></h1>
+    <p class="doc-lead">LangChain · LangGraph · MCP · AWS Bedrock AgentCore</p>
+  </div>
+
+  <section class="section" id="visao-geral">
+    <h2>Visão geral</h2>
 
     <div class="table-wrap">
       <table>
         <thead><tr><th>Arquivo</th><th>Descrição</th></tr></thead>
         <tbody>
-          <tr><td><span class="file-chip">mediator_harness.py</span></td><td>Versão standalone (roda em qualquer runtime: local, ECS, FastAPI)</td></tr>
-          <tr><td><span class="file-chip">mediator_harness_agentcore.py</span></td><td>Versão adaptada para <strong>AWS Bedrock AgentCore Runtime</strong></td></tr>
+          <tr><td><code>mediator_harness.py</code></td><td>Versão standalone (roda em qualquer runtime: local, ECS, FastAPI)</td></tr>
+          <tr><td><code>mediator_harness_agentcore.py</code></td><td>Versão adaptada para <strong>AWS Bedrock AgentCore Runtime</strong></td></tr>
         </tbody>
       </table>
     </div>
@@ -392,14 +73,14 @@
       <li>Executa tudo isso dentro de um <strong>harness</strong> — uma camada de infraestrutura que controla ciclo de vida, resiliência, limites e observabilidade da execução.</li>
     </ol>
 
-    <div class="callout info">
+    <div class="callout blue">
       <span class="callout-label">Princípio central</span>
       O grafo (LangGraph) resolve <em>o que fazer</em>. O harness resolve <em>como, quando e sob quais limites</em> isso é executado. Essa separação é o ponto central do design.
     </div>
+  </section>
 
-    <hr>
-
-    <h2 id="o-que-e-harness">O que é "harness" (harnessing)</h2>
+  <section class="section" id="o-que-e-harness">
+    <h2>O que é "harness" (harnessing)</h2>
 
     <p>Em sistemas de agentes, <strong>harness</strong> é o termo usado para a camada que "arreia" (do inglês <em>to harness</em> = arrear, controlar) a execução de um modelo ou grafo de agentes. É a diferença entre:</p>
     <ul>
@@ -408,53 +89,63 @@
     </ul>
     <p>Isso existe porque um LLM, por mais bem promptado que esteja, é um componente <strong>não determinístico e falível</strong>: pode alucinar uma rota inexistente, pode demorar mais que o esperado, pode chamar uma tool que está fora do ar. O harness é a fronteira de confiança entre o "raciocínio" do agente e o resto do sistema de produção.</p>
     <p>Na prática, um harness normalmente cobre cinco frentes:</p>
+  </section>
 
-    <h3 id="ciclo-de-vida">1. Ciclo de vida (lifecycle)</h3>
+  <section class="section" id="ciclo-de-vida">
+    <h3>1. Ciclo de vida (lifecycle)</h3>
     <p>Controla o que acontece <strong>antes</strong> da primeira requisição e <strong>depois</strong> da última — não é o request/response em si, é a borda do processo.</p>
     <ul>
       <li><code>startup()</code>: conecta ao MCP, faz <em>warmup</em> de tools, aquece conexões (o mesmo racional do <code>__warmup__</code> sentinel no AgentCore).</li>
       <li><code>shutdown()</code>: fecha conexões de forma limpa, loga métricas finais.</li>
       <li>No código, isso é exposto como um <code>@asynccontextmanager</code> (<code>lifespan</code>) justamente para plugar direto no lifespan do FastAPI/AgentCore — o harness não deveria ser algo que o desenvolvedor precisa lembrar de chamar manualmente em cada rota.</li>
     </ul>
+  </section>
 
-    <h3 id="controle-de-execucao">2. Controle de execução (execution control)</h3>
+  <section class="section" id="controle-de-execucao">
+    <h3>2. Controle de execução (execution control)</h3>
     <p>O LLM não tem noção de "budget". O harness impõe isso de fora:</p>
     <ul>
       <li><strong>Timeout em cascata</strong>: <code>total_timeout_s</code> (budget da requisição inteira) sempre maior que <code>specialist_timeout_s</code> (budget por chamada individual) — se cada especialista pudesse consumir o timeout total, uma cadeia de 2-3 chamadas estouraria o SLA.</li>
       <li><strong>Limite de iterações</strong> (<code>max_iterations</code>): protege contra loops no grafo (ex.: classify → specialist → classify de novo por decisão errada do LLM). Esse limite é verificado no <em>edge condicional</em> (<code>_route_after_classify</code>), não dentro do nó — ou seja, é o harness controlando o grafo de fora, não o grafo se autolimitando.</li>
     </ul>
+  </section>
 
-    <h3 id="resiliencia">3. Resiliência</h3>
+  <section class="section" id="resiliencia">
+    <h3>3. Resiliência</h3>
     <p>O harness assume que <strong>toda chamada externa vai falhar em algum momento</strong> e projeta para isso:</p>
     <ul>
       <li><strong>Retry com backoff exponencial + jitter</strong>: <code>delay = base * 2^attempt + jitter</code>. O jitter evita <em>thundering herd</em> quando múltiplas instâncias do mediador retentam ao mesmo tempo contra um especialista que acabou de cair.</li>
       <li><strong>Circuit breaker por rota</strong>: cada especialista tem seu próprio breaker (<code>CLOSED</code> → <code>OPEN</code> → <code>HALF_OPEN</code>). Isso isola falhas — um especialista de billing degradado não deve consumir retries indefinidamente nem afetar a rota de RAG. É o mesmo princípio de <em>bulkhead isolation</em> aplicado no stack ECS.</li>
       <li><strong>Fallback gracioso</strong>: quando o breaker está <code>OPEN</code> ou os retries se esgotam, a requisição não quebra — ela degrada para uma resposta genérica do LLM roteador, sem tools.</li>
     </ul>
+  </section>
 
-    <h3 id="guardrails">4. Guardrails</h3>
+  <section class="section" id="guardrails">
+    <h3>4. Guardrails</h3>
     <p>O harness não confia cegamente na saída do LLM:</p>
     <ul>
       <li><strong>Allowlist de rotas</strong>: mesmo que o classificador de intenção "alucine" uma rota que não existe (<code>route: "cancelamento_de_universo"</code>), o harness reescreve para <code>fallback</code> antes de qualquer chamada real acontecer.</li>
       <li><strong>Threshold de confiança</strong>: <code>confidence &lt; 0.5</code> força fallback, independente da rota escolhida — isso captura casos em que o modelo está "chutando".</li>
       <li><strong>Validação de entrada</strong>: tamanho máximo de payload, string vazia — barato de fazer, evita chamadas desperdiçadas ao LLM.</li>
     </ul>
-    <div class="callout info">
+    <div class="callout blue">
       <span class="callout-label">LLM firewall</span>
       Essa camada é o que normalmente se chama de <em>LLM firewall</em>: valida entrada e saída do modelo como se ele fosse um componente não confiável — porque é.
     </div>
+  </section>
 
-    <h3 id="observabilidade">5. Observabilidade</h3>
+  <section class="section" id="observabilidade">
+    <h3>5. Observabilidade</h3>
     <p>Tudo que passa pelo harness é medível de forma centralizada, em vez de espalhado pelos nós do grafo:</p>
     <ul>
       <li><code>_metrics</code> agrega contadores (<code>requests</code>, <code>retries</code>, <code>fallbacks</code>) num único lugar.</li>
       <li><code>thread_id</code> é propagado desde a entrada (<code>run()</code>) até o checkpointer do LangGraph — o mesmo padrão de correlação usado com OpenTelemetry (<code>thread_id</code> como correlation ID entre spans).</li>
       <li><code>latency_ms</code> é medido no envelope externo (<code>run()</code>), não dentro dos nós — isso garante que o número reportado reflita o tempo real percebido pelo chamador, incluindo overhead do harness, não só o tempo de LLM.</li>
     </ul>
+  </section>
 
-    <hr>
-
-    <h2 id="separar-harness">Por que separar harness do grafo (e não colocar tudo em nós)</h2>
+  <section class="section" id="separar-harness">
+    <h2>Por que separar harness do grafo (e não colocar tudo em nós)</h2>
 
     <p>Uma alternativa seria colocar retry/timeout/circuit breaker <em>dentro</em> dos próprios nós do LangGraph. O motivo para não fazer isso:</p>
     <ul>
@@ -463,10 +154,10 @@
       <li><strong>Camada de confiança única</strong>: toda decisão de "isso é seguro executar?" fica em um lugar, auditável, em vez de espalhada entre nós do grafo escritos por pessoas diferentes.</li>
       <li><strong>Grafo = raciocínio; harness = política operacional.</strong> Misturar os dois torna o grafo difícil de ler (é raciocínio de negócio ou é engenharia de confiabilidade?) e dificulta ajustar SLAs sem tocar na lógica de roteamento.</li>
     </ul>
+  </section>
 
-    <hr>
-
-    <h2 id="componentes">Componentes do código</h2>
+  <section class="section" id="componentes">
+    <h2>Componentes do código</h2>
 
     <div class="table-wrap">
       <table>
@@ -487,10 +178,10 @@
         </tbody>
       </table>
     </div>
+  </section>
 
-    <hr>
-
-    <h2 id="harness-agentcore">Harness × AWS Bedrock AgentCore</h2>
+  <section class="section" id="harness-agentcore">
+    <h2>Harness × AWS Bedrock AgentCore</h2>
 
     <p>O AgentCore Runtime já entrega <strong>parte</strong> do harness como serviço gerenciado. O mapeamento por camada define o que delegar à plataforma e o que continua no seu código:</p>
 
@@ -500,39 +191,41 @@
         <tbody>
           <tr>
             <td>Ciclo de vida</td>
-            <td><span class="badge partial">PARCIAL</span></td>
+            <td><span class="pill amber">PARCIAL</span></td>
             <td>Idle timeout (default 15 min) e max lifetime (default 8h) por sessão, configuráveis via <code>LifecycleConfiguration</code> (CDK). O contrato de <code>/ping</code> é seu.</td>
           </tr>
           <tr>
             <td>Isolamento</td>
-            <td><span class="badge yes">SIM</span></td>
+            <td><span class="pill green">SIM</span></td>
             <td>MicroVM por sessão: CPU, memória e filesystem isolados. Blast radius entre <strong>usuários</strong> — não substitui o breaker entre <strong>especialistas</strong>.</td>
           </tr>
           <tr>
             <td>Controle de execução</td>
-            <td><span class="badge no">NÃO</span></td>
+            <td><span class="pill red">NÃO</span></td>
             <td>Timeout budget em cascata, <code>max_iterations</code> — lógica de aplicação, roda no seu container.</td>
           </tr>
           <tr>
             <td>Resiliência</td>
-            <td><span class="badge no">NÃO</span></td>
+            <td><span class="pill red">NÃO</span></td>
             <td>Circuit breaker, retry + backoff + jitter — por sua conta.</td>
           </tr>
           <tr>
             <td>Guardrails</td>
-            <td><span class="badge partial">PARCIAL</span></td>
+            <td><span class="pill amber">PARCIAL</span></td>
             <td>AgentCore Identity (M2M OAuth2/JWT) e Gateway (auth por target) reduzem a superfície. Allowlist de rotas continua como defesa em profundidade.</td>
           </tr>
           <tr>
             <td>Observabilidade</td>
-            <td><span class="badge partial">PARCIAL</span></td>
+            <td><span class="pill amber">PARCIAL</span></td>
             <td><code>ActiveSessionCount</code> no namespace <code>AWS/Bedrock-AgentCore</code>; logs em <code>/aws/bedrock-agentcore/runtimes/...</code>. Correlação por <code>session_id</code> até o grafo é sua.</td>
           </tr>
         </tbody>
       </table>
     </div>
+  </section>
 
-    <h3 id="ping-contrato">O contrato de /ping (armadilha crítica)</h3>
+  <section class="section" id="ping-contrato">
+    <h3>O contrato de /ping (armadilha crítica)</h3>
 
     <p>O Runtime decide o idle timeout com base no status reportado pelo handler de <code>/ping</code> (<code>Healthy</code> / <code>HealthyBusy</code>) e no campo <code>time_of_last_update</code>, que deve refletir <strong>quando o status mudou pela última vez</strong> — não o instante do ping.</p>
 
@@ -541,25 +234,41 @@
       Se o handler atualizar <code>time_of_last_update</code> a cada ping, o tempo ocioso reportado nunca avança, o idle timeout nunca dispara, e as sessões vivem até o <code>MaxLifetime</code> (8h) — esgotando a cota de sessões da conta silenciosamente sob carga.
     </div>
 
-    <div class="callout ok">
+    <div class="callout green">
       <span class="callout-label">Solução no código</span>
       <code>ping_status()</code> deriva o status de um contador de requisições em andamento (<code>_busy_sessions</code>), incrementado/decrementado dentro de <code>run()</code> com <code>finally</code>. As transições de status acontecem apenas quando o trabalho real começa e termina.
     </div>
 
-    <pre><code class="language-python">def ping_status(self) -> PingStatus:
-    return (
-        PingStatus.HEALTHY_BUSY if self._busy_sessions > 0 else PingStatus.HEALTHY
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span class="code-lang">PYTHON</span></div>
+      </div>
+      <pre><code><span class="kw">def</span> <span class="fn">ping_status</span>(self) <span class="op">-></span> <span class="tp">PingStatus</span>:
+    <span class="kw">return</span> (
+        <span class="tp">PingStatus</span>.HEALTHY_BUSY <span class="kw">if</span> self._busy_sessions <span class="op">></span> <span class="nb">0</span> <span class="kw">else</span> <span class="tp">PingStatus</span>.HEALTHY
     )</code></pre>
+    </div>
+  </section>
 
-    <h3 id="warmup-sentinel">O __warmup__ sentinel</h3>
+  <section class="section" id="warmup-sentinel">
+    <h3>O __warmup__ sentinel</h3>
 
     <p>Padrão para eliminar cold start: um valor sentinela (<code>"__warmup__"</code>) que nunca aparece em input real é enviado como invocação fake logo após o container subir. O entrypoint checa esse valor como <strong>primeira instrução</strong> (fast-path, custo de uma comparação de string) e dispara todo o custo de inicialização — conexão MCP, carregamento de tools, obtenção de token — antes da primeira requisição de usuário. O <code>warmup()</code> é idempotente, e há um aquecimento defensivo inline caso o tráfego real chegue antes do sentinel.</p>
 
-    <pre><code class="language-python">if user_input == WARMUP_SENTINEL:
-    await harness.warmup()
-    return {"status": "warmed"}</code></pre>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span class="code-lang">PYTHON</span></div>
+      </div>
+      <pre><code><span class="kw">if</span> user_input <span class="op">==</span> <span class="nb">WARMUP_SENTINEL</span>:
+    <span class="kw">await</span> harness.<span class="fn">warmup</span>()
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"warmed"</span>}</code></pre>
+    </div>
+  </section>
 
-    <h3 id="diferencas-agentcore">Diferenças da versão AgentCore</h3>
+  <section class="section" id="diferencas-agentcore">
+    <h3>Diferenças da versão AgentCore</h3>
 
     <ol>
       <li><strong><code>BedrockAgentCoreApp</code></strong> substitui o servidor genérico — porta 8080, decorators <code>@app.entrypoint</code> e <code>@app.ping</code>, contrato do Runtime.</li>
@@ -568,17 +277,19 @@
       <li><strong>AgentCore Gateway como único endpoint MCP</strong> — em vez de N servers no <code>MultiServerMCPClient</code>, um único URL do Gateway com bearer token (<code>GatewayTokenProvider</code> com cache e lock). O Gateway mantém sessões MCP com estado (<code>Mcp-Session-Id</code>) e SSE, eliminando reconexão manual por especialista. O agrupamento de tools por prefixo de rota (<code>billing__get_invoice</code>) permanece.</li>
       <li><strong><code>StopRuntimeSession</code> como cleanup explícito</strong> — payload com <code>end_session: true</code> termina a sessão imediatamente via boto3 em vez de esperar o idle timeout, liberando cota. Requer IAM <code>bedrock-agentcore:StopRuntimeSession</code>; a chamada é idempotente.</li>
     </ol>
+  </section>
 
-    <h3 id="limitacao-breaker">Limitação conhecida: estado do breaker por microVM</h3>
+  <section class="section" id="limitacao-breaker">
+    <h3>Limitação conhecida: estado do breaker por microVM</h3>
 
     <div class="callout warn">
       <span class="callout-label">Atenção em produção</span>
       Como cada sessão roda em sua própria microVM, o estado do <code>CircuitBreaker</code> é <strong>por instância</strong>: uma falha detectada numa sessão não protege as demais. Em volume alto, externalize o estado do breaker para Redis ou DynamoDB (mesmo padrão de distributed locks com <code>SET NX</code>), transformando-o num breaker distribuído por rota.
     </div>
+  </section>
 
-    <hr>
-
-    <h2 id="extensao">Pontos de extensão para produção</h2>
+  <section class="section" id="extensao">
+    <h2>Pontos de extensão para produção</h2>
 
     <ul>
       <li>Trocar <code>MemorySaver</code> por <code>RedisSaver</code> (persistência entre processos, mesmo padrão dos 3 clusters Redis do stack). Na versão AgentCore, combinar com AgentCore Memory para memória de longo prazo.</li>
@@ -588,27 +299,28 @@
       <li>Mover <code>_tools_by_route</code> para um cache com TTL, permitindo reconexão a servidores MCP que ficaram fora do ar sem precisar reiniciar o processo.</li>
       <li>Expor <code>_metrics</code> como métricas EMF/CloudWatch em vez de contadores em memória, complementando o <code>ActiveSessionCount</code> nativo do Runtime.</li>
     </ul>
+  </section>
 
-  </main>
+  <div class="doc-footer">
+    <a href="../../index.html">← Voltar para DevDocs</a>
+    <span>Mediator Harness</span>
+  </div>
+
+</div>
 </div>
 
 <script>
-  hljs.highlightAll();
-
-  // Scrollspy simples para destacar o item ativo da sidebar
-  const sections = document.querySelectorAll('main h2[id], main h3[id]');
-  const links = document.querySelectorAll('nav.sidebar a');
-
-  const setActive = (id) => {
-    links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
-  };
-
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) setActive(entry.target.id);
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
     });
-  }, { rootMargin: '-15% 0px -75% 0px' });
-
+  }, { threshold: 0.3 });
   sections.forEach(s => observer.observe(s));
 </script>
 
