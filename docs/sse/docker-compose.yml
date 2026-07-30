@@ -1,0 +1,69 @@
+services:
+
+  localstack:
+    image: localstack/localstack:3.8
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs
+      - DEBUG=0
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - "./localstack-init:/etc/localstack/init/ready.d"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/conversation-history.fifo
+      - STREAM_SIGNING_KEY=local-dev-secret
+      - LOCAL_AUTH_BYPASS=true
+      - AGENT_MODE=mock
+      - ALLOWED_ORIGINS=*
+    volumes:
+      - "./sse_handler.py:/app/sse_handler.py"
+    depends_on:
+      localstack:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: ["python", "worker.py"]
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/conversation-history.fifo
+      - ENABLE_DYNAMODB_WRITE=false
+    volumes:
+      - "./worker.py:/app/worker.py"
+    depends_on:
+      localstack:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

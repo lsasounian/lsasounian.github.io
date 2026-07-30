@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Front local — Agente Mediador (SSE)</title>
+<style>
+  :root{
+    --bg:#0d1117; --surface:#161b22; --surface-2:#1c2128; --border:#30363d;
+    --text:#e6edf3; --text-dim:#8b949e; --accent:#58a6ff; --danger:#f85149; --good:#3fb950;
+    --mono:'IBM Plex Mono','SFMono-Regular',monospace;
+    --sans:-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); height:100vh; display:flex; flex-direction:column;}
+
+  header{
+    padding:12px 20px; border-bottom:1px solid var(--border); background:var(--surface);
+    display:flex; align-items:center; gap:16px; font-family:var(--mono); font-size:12.5px; flex-wrap:wrap;
+  }
+  header .field{display:flex; align-items:center; gap:6px; color:var(--text-dim);}
+  header input{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px; width:120px;
+  }
+  #status{display:flex; align-items:center; gap:6px; margin-left:auto;}
+  #status .dot{width:8px; height:8px; border-radius:50%; background:var(--danger);}
+  #status.connected .dot{background:var(--good);}
+  #status.connecting .dot{background:#d29922; animation:pulse 1s infinite;}
+  @keyframes pulse{50%{opacity:0.3;}}
+
+  #chat{flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:14px; max-width:760px; margin:0 auto; width:100%;}
+  .msg{max-width:75%; padding:10px 14px; border-radius:10px; line-height:1.5; font-size:14.5px; white-space:pre-wrap;}
+  .msg.user{align-self:flex-end; background:var(--accent); color:#04101f;}
+  .msg.assistant{align-self:flex-start; background:var(--surface); border:1px solid var(--border);}
+  .msg.assistant.pending::after{content:"▍"; animation:pulse 0.8s infinite;}
+  .msg .feedback{display:flex; gap:8px; margin-top:8px; font-family:var(--mono);}
+  .msg .feedback button{
+    background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:4px;
+    padding:2px 8px; font-size:12px; cursor:pointer;
+  }
+  .msg .feedback button:hover{color:var(--text); border-color:var(--accent);}
+  .msg .feedback button.active-up{color:var(--good); border-color:var(--good);}
+  .msg .feedback button.active-down{color:var(--danger); border-color:var(--danger);}
+
+  footer{border-top:1px solid var(--border); background:var(--surface); padding:16px 24px;}
+  #composer{max-width:760px; margin:0 auto; display:flex; gap:10px;}
+  #prompt{
+    flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:12px 14px; border-radius:8px; font-family:var(--sans); font-size:14.5px; resize:none;
+  }
+  #send{
+    background:var(--accent); color:#04101f; border:none; border-radius:8px; padding:0 20px;
+    font-weight:600; cursor:pointer; font-size:14px;
+  }
+  #send:disabled{opacity:0.5; cursor:not-allowed;}
+  #log{font-family:var(--mono); font-size:10.5px; color:var(--text-dim); max-width:760px; margin:8px auto 0; min-height:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="field">API <input id="apiBase" value="http://localhost:8000"></div>
+  <div class="field">session_id <input id="sessionId"></div>
+  <div class="field">client_id <input id="clientId" value="dev-client-01"></div>
+  <div class="field">operator_id <input id="operatorId" value="dev-operator-01"></div>
+  <div id="status" class="connecting"><span class="dot"></span><span id="statusText">conectando…</span></div>
+</header>
+
+<div id="chat"></div>
+
+<footer>
+  <div id="composer">
+    <textarea id="prompt" rows="1" placeholder="Digite uma mensagem e Enter…"></textarea>
+    <button id="send">Enviar</button>
+  </div>
+  <div id="log"></div>
+</footer>
+
+<script>
+// -----------------------------------------------------------------------
+// Config / estado
+// -----------------------------------------------------------------------
+const $ = (id) => document.getElementById(id);
+const sessionIdFromUrl = new URLSearchParams(location.search).get("session_id");
+$("sessionId").value = sessionIdFromUrl || crypto.randomUUID();
+
+let apiBase = $("apiBase").value;
+let sessionId = $("sessionId").value;
+let streamToken = null;
+let es = null;
+let pendingAssistantEl = null;
+let pendingAssistantId = null;
+let pendingText = "";
+
+const chatEl = $("chat");
+const statusEl = $("status");
+const statusTextEl = $("statusText");
+const logEl = $("log");
+
+function log(msg) {
+  logEl.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  console.log(msg);
+}
+
+function setStatus(state, text) {
+  statusEl.className = state;
+  statusTextEl.textContent = text;
+}
+
+// -----------------------------------------------------------------------
+// Render de mensagens
+// -----------------------------------------------------------------------
+function renderMessage({ role, content, message_id, pending }) {
+  const el = document.createElement("div");
+  el.className = `msg ${role}` + (pending ? " pending" : "");
+  el.dataset.messageId = message_id || "";
+
+  const textEl = document.createElement("div");
+  textEl.className = "text";
+  textEl.textContent = content;
+  el.appendChild(textEl);
+
+  if (role === "assistant" && message_id) {
+    const fb = document.createElement("div");
+    fb.className = "feedback";
+    const up = document.createElement("button");
+    up.textContent = "👍";
+    const down = document.createElement("button");
+    down.textContent = "👎";
+
+    const sendFeedback = (liked, btn, otherBtn) => {
+      const comment = liked ? "" : (prompt("Comentário (opcional):") || "");
+      fetch(`${apiBase}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, message_id, liked, comment }),
+      }).then(() => log(`feedback enviado: ${liked ? "like" : "dislike"} — ${message_id}`));
+      btn.classList.add(liked ? "active-up" : "active-down");
+      otherBtn.classList.remove(liked ? "active-down" : "active-up");
+    };
+
+    up.onclick = () => sendFeedback(true, up, down);
+    down.onclick = () => sendFeedback(false, down, up);
+    fb.appendChild(up);
+    fb.appendChild(down);
+    el.appendChild(fb);
+  }
+
+  chatEl.appendChild(el);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  return el;
+}
+
+// -----------------------------------------------------------------------
+// Bootstrap: token exchange -> abre SSE -> warmup -> carrega histórico
+// -----------------------------------------------------------------------
+async function getStreamToken() {
+  const res = await fetch(`${apiBase}/stream/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer dev-local" },
+    body: JSON.stringify({
+      session_id: sessionId,
+      client_id: $("clientId").value,
+      operator_id: $("operatorId").value,
+    }),
+  });
+  if (!res.ok) throw new Error(`token exchange falhou: ${res.status}`);
+  const data = await res.json();
+  return data.token;
+}
+
+async function loadHistory() {
+  const res = await fetch(`${apiBase}/session/${sessionId}`);
+  const data = await res.json();
+  data.messages.forEach((m) => renderMessage({ role: m.role, content: m.content, message_id: m.message_id }));
+  log(`histórico carregado: ${data.messages.length} mensagens`);
+}
+
+async function warmup() {
+  await fetch(`${apiBase}/warmup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+  log("warmup disparado");
+}
+
+function connectStream() {
+  setStatus("connecting", "conectando…");
+  const url = `${apiBase}/stream?session_id=${sessionId}&token=${streamToken}`;
+  es = new EventSource(url);
+
+  es.onopen = () => setStatus("connected", "conectado");
+
+  es.addEventListener("ready", () => {
+    log("agente pronto (warmup concluído)");
+  });
+
+  es.addEventListener("token", (ev) => {
+    const data = JSON.parse(ev.data);
+    if (pendingAssistantId !== data.message_id) {
+      pendingAssistantId = data.message_id;
+      pendingText = "";
+      pendingAssistantEl = renderMessage({ role: "assistant", content: "", message_id: data.message_id, pending: true });
+    }
+    pendingText += data.chunk;
+    pendingAssistantEl.querySelector(".text").textContent = pendingText;
+    chatEl.scrollTop = chatEl.scrollHeight;
+  });
+
+  es.addEventListener("done", () => {
+    if (pendingAssistantEl) {
+      pendingAssistantEl.classList.remove("pending");
+      // re-render pra anexar os botões de feedback (não existiam no bubble "pending")
+      const finished = { role: "assistant", content: pendingText, message_id: pendingAssistantId };
+      pendingAssistantEl.remove();
+      renderMessage(finished);
+    }
+    pendingAssistantEl = null;
+    pendingAssistantId = null;
+    pendingText = "";
+    $("send").disabled = false;
+  });
+
+  es.addEventListener("reconnect", async () => {
+    log("servidor sinalizou reconexão (deploy) — reabrindo");
+    es.close();
+    await bootstrap();
+  });
+
+  es.onerror = () => {
+    setStatus("connecting", "reconectando…");
+  };
+}
+
+async function bootstrap() {
+  apiBase = $("apiBase").value;
+  sessionId = $("sessionId").value;
+
+  streamToken = await getStreamToken();
+  connectStream();       // 1. abre a conexão primeiro
+  await warmup();         // 2. dispara o warmup depois — nunca em paralelo
+  await loadHistory();
+}
+
+// -----------------------------------------------------------------------
+// Envio de mensagem
+// -----------------------------------------------------------------------
+async function sendMessage() {
+  const promptEl = $("prompt");
+  const text = promptEl.value.trim();
+  if (!text) return;
+
+  renderMessage({ role: "user", content: text });
+  promptEl.value = "";
+  $("send").disabled = true;
+
+  await fetch(`${apiBase}/message`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, prompt: text }),
+  });
+}
+
+$("send").onclick = sendMessage;
+$("prompt").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+bootstrap().catch((err) => {
+  log(`erro no bootstrap: ${err.message}`);
+  setStatus("connecting", "erro — veja o console");
+});
+</script>
+</body>
+</html>
