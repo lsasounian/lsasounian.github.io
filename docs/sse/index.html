@@ -4,12 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Front local — Agente Mediador (SSE)</title>
+<link rel="stylesheet" href="../../assets/css/theme.css" />
 <style>
   :root{
-    --bg:#0d1117; --surface:#161b22; --surface-2:#1c2128; --border:#30363d;
-    --text:#e6edf3; --text-dim:#8b949e; --accent:#58a6ff; --danger:#f85149; --good:#3fb950;
-    --mono:'IBM Plex Mono','SFMono-Regular',monospace;
-    --sans:-apple-system,'Segoe UI',sans-serif;
+    --surface-2: var(--card);
+    --text-dim: var(--muted);
+    --danger: var(--red);
+    --good: var(--green);
   }
   *{box-sizing:border-box;}
   body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); height:100vh; display:flex; flex-direction:column;}
