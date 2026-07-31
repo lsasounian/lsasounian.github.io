@@ -3,665 +3,382 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Redis & Valkey — Armazenamento de Dados e CRUD</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/night-owl.min.css">
+<title>Redis &amp; Valkey — Armazenamento de Dados e CRUD</title>
+<link rel="stylesheet" href="../assets/css/theme.css" />
 <style>
-:root {
-  --bg: #0d1117;
-  --bg-sidebar: #010409;
-  --bg-elevated: #161b22;
-  --border: #21262d;
-  --border-strong: #30363d;
-  --text: #c9d1d9;
-  --text-dim: #8b949e;
-  --text-bright: #f0f6fc;
-  --accent: #58a6ff;
-  --accent-dim: #1f6feb;
-  --mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+:root { --accent: var(--purple); --accent-dim: var(--purple-dim); }
 
-  --info-bg: rgba(56, 139, 253, 0.08);   --info-border: #1f6feb;  --info-text: #79c0ff;
-  --warn-bg: rgba(210, 153, 34, 0.08);   --warn-border: #9e6a03;  --warn-text: #d29922;
-  --danger-bg: rgba(248, 81, 73, 0.08);  --danger-border: #b62324; --danger-text: #f85149;
-  --ok-bg: rgba(63, 185, 80, 0.08);      --ok-border: #2ea043;    --ok-text: #3fb950;
-}
-
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 16px;
-  line-height: 1.7;
-}
-
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: #3a4552; }
-
-/* ---------- Progress bar ---------- */
-#progress {
-  position: fixed;
-  top: 0; left: 0;
-  height: 3px;
-  width: 0%;
-  background: linear-gradient(90deg, var(--accent), #79c0ff);
-  z-index: 100;
-  transition: width 0.1s ease-out;
-}
-
-/* ---------- Layout ---------- */
-.layout { display: grid; grid-template-columns: 300px 1fr; min-height: 100vh; }
-
-.sidebar {
-  position: fixed;
-  top: 0; left: 0;
-  width: 300px;
-  height: 100vh;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  padding: 28px 0 40px;
-  z-index: 10;
-}
-
-.brand {
-  padding: 0 24px 20px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
-}
-.brand .tag {
-  display: inline-block;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: var(--info-bg);
-  border: 1px solid var(--info-border);
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-.brand strong {
-  display: block;
-  font-size: 16px;
-  color: var(--text-bright);
-  font-weight: 600;
-}
-.brand span.sub {
-  display: block;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text-dim);
-  margin-top: 4px;
-}
-
-.sidebar ul { list-style: none; margin: 0; padding: 0 12px; }
-.sidebar li { margin: 1px 0; }
-.sidebar a {
-  display: block;
-  padding: 7px 12px;
-  border-radius: 6px;
-  color: var(--text-dim);
-  text-decoration: none;
-  font-size: 13.5px;
-  border-left: 2px solid transparent;
-  transition: all 0.12s ease;
-}
-.sidebar a:hover { color: var(--text-bright); background: var(--bg-elevated); }
-.sidebar a.active {
-  color: var(--accent);
-  background: var(--info-bg);
-  border-left: 2px solid var(--accent);
-  font-weight: 500;
-}
-
-main {
-  grid-column: 2;
-  margin-left: 300px;
-  padding: 56px 48px 100px;
-  max-width: 880px;
-}
-
-/* ---------- Hero ---------- */
-.hero { margin-bottom: 56px; }
-.eyebrow {
-  font-family: var(--mono);
-  font-size: 12.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-.hero h1 {
-  font-size: 38px;
-  font-weight: 700;
-  color: var(--text-bright);
-  margin: 0 0 14px;
-  letter-spacing: -0.01em;
-}
-.hero .lede {
-  font-size: 17px;
-  color: var(--text-dim);
-  max-width: 680px;
-  margin: 0;
-}
-
-/* ---------- Sections ---------- */
-section { margin-bottom: 64px; scroll-margin-top: 24px; }
-section h2 {
-  font-size: 24px;
-  color: var(--text-bright);
-  font-weight: 600;
-  margin: 0 0 8px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
-section h3 {
-  font-size: 17px;
-  color: var(--text-bright);
-  font-weight: 600;
-  margin: 32px 0 12px;
-}
-p { margin: 0 0 16px; color: var(--text); }
-strong { color: var(--text-bright); font-weight: 600; }
-code:not(pre code) {
-  font-family: var(--mono);
-  font-size: 0.88em;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  padding: 1px 6px;
-  border-radius: 4px;
-  color: #79c0ff;
-}
-ul, ol { padding-left: 22px; margin: 0 0 16px; }
-li { margin-bottom: 6px; }
-
-/* ---------- Code blocks ---------- */
-.code-block {
-  background: #011019;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  margin: 18px 0 22px;
-  overflow: hidden;
-}
-.code-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 14px;
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border-strong);
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text-dim);
-}
-.code-header .lang { letter-spacing: 0.04em; text-transform: uppercase; }
-.copy-btn {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--text-dim);
-  background: transparent;
-  border: 1px solid var(--border-strong);
-  border-radius: 5px;
-  padding: 3px 10px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.copy-btn:hover { color: var(--text-bright); border-color: var(--accent); }
-.copy-btn.copied { color: var(--ok-text); border-color: var(--ok-border); }
-pre { margin: 0; padding: 16px 18px; overflow-x: auto; }
-pre code {
-  font-family: var(--mono);
-  font-size: 13.5px;
-  line-height: 1.6;
-  background: transparent !important;
-}
-
-/* ---------- Callouts ---------- */
-.callout {
-  border-radius: 8px;
-  border: 1px solid;
-  padding: 14px 16px;
-  margin: 20px 0;
-  font-size: 14.5px;
-}
-.callout-label {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-  display: block;
-}
-.callout p:last-child { margin-bottom: 0; }
-.callout.info { background: var(--info-bg); border-color: var(--info-border); }
-.callout.info .callout-label { color: var(--info-text); }
-.callout.warn { background: var(--warn-bg); border-color: var(--warn-border); }
-.callout.warn .callout-label { color: var(--warn-text); }
-.callout.danger { background: var(--danger-bg); border-color: var(--danger-border); }
-.callout.danger .callout-label { color: var(--danger-text); }
-.callout.ok { background: var(--ok-bg); border-color: var(--ok-border); }
-.callout.ok .callout-label { color: var(--ok-text); }
-
-/* ---------- Tables ---------- */
-.table-wrap { overflow-x: auto; margin: 20px 0; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
-th {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border-strong);
-}
-td { color: var(--text); }
-td code { white-space: nowrap; }
-tr:last-child td { border-bottom: none; }
-
-/* ---------- Menu toggle (mobile) ---------- */
-#menuToggle {
-  display: none;
-  position: fixed;
-  top: 14px; left: 14px;
-  z-index: 20;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  color: var(--text-bright);
-  border-radius: 6px;
-  width: 38px; height: 38px;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-@media (max-width: 900px) {
-  .sidebar { transform: translateX(-100%); transition: transform 0.2s ease; }
-  .sidebar.open { transform: translateX(0); }
-  main { margin-left: 0; padding: 80px 22px 80px; }
-  #menuToggle { display: block; }
-}
+.callout-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+.callout.blue .callout-label   { color: var(--blue); }
+.callout.green .callout-label  { color: var(--green); }
+.callout.warn .callout-label   { color: var(--amber); }
+.callout.danger .callout-label { color: var(--red); }
+.callout.purple .callout-label { color: var(--purple); }
 </style>
 </head>
 <body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
 
-<div id="progress"></div>
-<button id="menuToggle">☰</button>
-
-<div class="layout">
-  <nav class="sidebar" id="sidebar">
-    <div class="brand">
-      <span class="tag">Data Store</span>
-      <strong>Redis & Valkey</strong>
-      <span class="sub">armazenamento · CRUD</span>
-    </div>
-    <ul>
-      <li><a href="#visao-geral" class="nav-link" data-id="visao-geral">Visão geral</a></li>
-      <li><a href="#armazenamento-interno" class="nav-link" data-id="armazenamento-interno">Armazenamento interno</a></li>
-      <li><a href="#persistencia" class="nav-link" data-id="persistencia">Persistência</a></li>
-      <li><a href="#ttl-eviction" class="nav-link" data-id="ttl-eviction">TTL e eviction</a></li>
-      <li><a href="#select-explicado" class="nav-link" data-id="select-explicado">O "SELECT" explicado</a></li>
-      <li><a href="#crud-strings" class="nav-link" data-id="crud-strings">CRUD — strings</a></li>
-      <li><a href="#crud-estruturas" class="nav-link" data-id="crud-estruturas">CRUD — estruturas ricas</a></li>
-      <li><a href="#python-redis-py" class="nav-link" data-id="python-redis-py">Python (redis-py)</a></li>
-      <li><a href="#redis-vs-valkey" class="nav-link" data-id="redis-vs-valkey">Redis vs. Valkey</a></li>
-      <li><a href="#aplicando-contexto" class="nav-link" data-id="aplicando-contexto">Aplicando ao seu contexto</a></li>
-      <li><a href="#proximos-passos" class="nav-link" data-id="proximos-passos">Próximos passos</a></li>
-    </ul>
+<aside class="sidebar">
+  <a href="../index.html" class="back-link">← DevDocs</a>
+  <a href="#" class="sidebar-logo">
+    <span class="doc-tag">KV</span>
+    <span class="doc-title">Redis &amp; Valkey</span>
+  </a>
+  <nav>
+    <div class="nav-section">Índice</div>
+    <a href="#visao-geral">Visão geral</a>
+    <a href="#armazenamento-interno">Armazenamento interno</a>
+    <a href="#persistencia">Persistência</a>
+    <a href="#ttl-eviction">TTL e eviction</a>
+    <a href="#select-explicado">O "SELECT" explicado</a>
+    <a href="#crud-strings">CRUD — strings</a>
+    <a href="#crud-estruturas">CRUD — estruturas ricas</a>
+    <a href="#python-redis-py">Python (redis-py)</a>
+    <a href="#redis-vs-valkey">Redis vs. Valkey</a>
+    <a href="#aplicando-contexto">Aplicando ao seu contexto</a>
+    <a href="#proximos-passos">Próximos passos</a>
   </nav>
+</aside>
 
-  <main>
-    <div class="hero">
-      <div class="eyebrow">Referência técnica — Redis / Valkey</div>
-      <h1>Armazenamento de Dados e Operações CRUD</h1>
-      <p class="lede">Como o keyspace é estruturado internamente, o que acontece em memória por trás de cada tipo de dado, e os comandos práticos de CRUD — em Redis, com Valkey como alvo de produção.</p>
+<div class="main">
+<div class="wrapper">
+
+  <div class="doc-header">
+    <div class="doc-num">Referência técnica — Redis / Valkey</div>
+    <h1>Armazenamento de Dados e Operações <em>CRUD</em></h1>
+    <p class="doc-lead">Como o keyspace é estruturado internamente, o que acontece em memória por trás de cada tipo de dado, e os comandos práticos de CRUD — em Redis, com Valkey como alvo de produção.</p>
+  </div>
+
+  <section class="section" id="visao-geral">
+    <h2>1. Modelo mental</h2>
+    <p>Redis (e Valkey, seu fork compatível) não é um banco relacional. É um <strong>key-value store in-memory</strong> com estruturas de dados ricas por trás de cada chave. Não existe schema, não existe <code>SELECT</code> no sentido SQL, e a "query" que você conhece de Postgres/MySQL não existe aqui — você troca expressividade de consulta por latência de sub-milissegundo.</p>
+    <p>Isso muda como você pensa em modelagem: em vez de normalizar em tabelas, você desenha o <strong>access pattern</strong> primeiro (que chave, que tipo, que TTL) e a estrutura de dados segue o padrão de leitura/escrita que você já vai fazer — o mesmo raciocínio de chave que você já aplica no DynamoDB.</p>
+  </section>
+
+  <section class="section" id="armazenamento-interno">
+    <h2>2. Como o dado é armazenado internamente</h2>
+
+    <h3>2.1 O keyspace é um dicionário</h3>
+    <p>Cada database é, internamente, uma <strong>hash table global</strong> (<code>dict</code>) mapeando <code>key → redisObject</code>. Array de buckets, resolução de colisão por chaining, e rehashing incremental quando o load factor cresce — para não travar o event loop com um rehash gigante de uma vez só.</p>
+
+    <h3>2.2 redisObject: tipo declarado vs. encoding físico</h3>
+    <p>Toda chave aponta para um <code>redisObject</code> com dois atributos: <strong>type</strong> (o que você vê em <code>TYPE key</code> — string/hash/list/set/zset/stream) e <strong>encoding</strong> (como está fisicamente representado — visível via <code>OBJECT ENCODING key</code>).</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tipo</th><th>Encoding compacto</th><th>Encoding promovido</th></tr></thead>
+        <tbody>
+          <tr><td>string</td><td><code>int</code> / <code>embstr</code> (≤44 bytes)</td><td><code>raw</code> (SDS heap)</td></tr>
+          <tr><td>hash</td><td><code>listpack</code></td><td><code>hashtable</code></td></tr>
+          <tr><td>list</td><td><code>listpack</code></td><td><code>quicklist</code></td></tr>
+          <tr><td>set</td><td><code>intset</code> / <code>listpack</code></td><td><code>hashtable</code></td></tr>
+          <tr><td>zset</td><td><code>listpack</code></td><td><code>skiplist</code> + <code>hashtable</code></td></tr>
+        </tbody>
+      </table>
     </div>
 
-    <section id="visao-geral">
-      <h2>1. Modelo mental</h2>
-      <p>Redis (e Valkey, seu fork compatível) não é um banco relacional. É um <strong>key-value store in-memory</strong> com estruturas de dados ricas por trás de cada chave. Não existe schema, não existe <code>SELECT</code> no sentido SQL, e a "query" que você conhece de Postgres/MySQL não existe aqui — você troca expressividade de consulta por latência de sub-milissegundo.</p>
-      <p>Isso muda como você pensa em modelagem: em vez de normalizar em tabelas, você desenha o <strong>access pattern</strong> primeiro (que chave, que tipo, que TTL) e a estrutura de dados segue o padrão de leitura/escrita que você já vai fazer — o mesmo raciocínio de chave que você já aplica no DynamoDB.</p>
-    </section>
+    <div class="callout warn">
+      <div class="callout-label">Produção</div>
+      <p>Os thresholds de promoção (<code>hash-max-listpack-entries</code>, <code>hash-max-listpack-value</code>, <code>set-max-intset-entries</code>) controlam quando uma estrutura compacta vira uma estrutura O(1)/O(log n) com overhead de ponteiros por elemento. Num cluster com milhões de hashes pequenos, manter tudo em <code>listpack</code> pode ser a diferença entre caber em <code>cache.r7g.large</code> ou precisar de duas classes de instância a mais.</p>
+    </div>
 
-    <section id="armazenamento-interno">
-      <h2>2. Como o dado é armazenado internamente</h2>
-
-      <h3>2.1 O keyspace é um dicionário</h3>
-      <p>Cada database é, internamente, uma <strong>hash table global</strong> (<code>dict</code>) mapeando <code>key → redisObject</code>. Array de buckets, resolução de colisão por chaining, e rehashing incremental quando o load factor cresce — para não travar o event loop com um rehash gigante de uma vez só.</p>
-
-      <h3>2.2 redisObject: tipo declarado vs. encoding físico</h3>
-      <p>Toda chave aponta para um <code>redisObject</code> com dois atributos: <strong>type</strong> (o que você vê em <code>TYPE key</code> — string/hash/list/set/zset/stream) e <strong>encoding</strong> (como está fisicamente representado — visível via <code>OBJECT ENCODING key</code>).</p>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Tipo</th><th>Encoding compacto</th><th>Encoding promovido</th></tr></thead>
-          <tbody>
-            <tr><td>string</td><td><code>int</code> / <code>embstr</code> (≤44 bytes)</td><td><code>raw</code> (SDS heap)</td></tr>
-            <tr><td>hash</td><td><code>listpack</code></td><td><code>hashtable</code></td></tr>
-            <tr><td>list</td><td><code>listpack</code></td><td><code>quicklist</code></td></tr>
-            <tr><td>set</td><td><code>intset</code> / <code>listpack</code></td><td><code>hashtable</code></td></tr>
-            <tr><td>zset</td><td><code>listpack</code></td><td><code>skiplist</code> + <code>hashtable</code></td></tr>
-          </tbody>
-        </table>
+    <h3>2.3 SDS — a string interna do Redis</h3>
+    <p>Strings não são C-strings terminadas em <code>\0</code>. São <strong>SDS (Simple Dynamic Strings)</strong>: <code>strlen</code> em O(1), binary-safety (guarda bytes <code>\0</code> no meio), crescimento amortizado.</p>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">C</span>
       </div>
-
-      <div class="callout warn">
-        <span class="callout-label">Produção</span>
-        <p>Os thresholds de promoção (<code>hash-max-listpack-entries</code>, <code>hash-max-listpack-value</code>, <code>set-max-intset-entries</code>) controlam quando uma estrutura compacta vira uma estrutura O(1)/O(log n) com overhead de ponteiros por elemento. Num cluster com milhões de hashes pequenos, manter tudo em <code>listpack</code> pode ser a diferença entre caber em <code>cache.r7g.large</code> ou precisar de duas classes de instância a mais.</p>
-      </div>
-
-      <h3>2.3 SDS — a string interna do Redis</h3>
-      <p>Strings não são C-strings terminadas em <code>\0</code>. São <strong>SDS (Simple Dynamic Strings)</strong>: <code>strlen</code> em O(1), binary-safety (guarda bytes <code>\0</code> no meio), crescimento amortizado.</p>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">c</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-c">struct sdshdr {
-    uint64_t len;      // tamanho atual
-    uint64_t alloc;    // capacidade alocada
-    unsigned char flags;
-    char buf[];        // dado real
+      <pre><code><span class="kw">struct</span> <span class="tp">sdshdr</span> {
+    <span class="tp">uint64_t</span> len;      <span class="cm">// tamanho atual</span>
+    <span class="tp">uint64_t</span> alloc;    <span class="cm">// capacidade alocada</span>
+    <span class="kw">unsigned</span> <span class="tp">char</span> flags;
+    <span class="tp">char</span> buf[];        <span class="cm">// dado real</span>
 };</code></pre>
+    </div>
+  </section>
+
+  <section class="section" id="persistencia">
+    <h2>3. Persistência — o que sobrevive a um restart</h2>
+    <p><strong>RDB (snapshot):</strong> <code>fork()</code> + copy-on-write, escreve um binário compacto do dataset num ponto no tempo. Rápido de restaurar, mas perde tudo desde o último snapshot.</p>
+
+    <div class="callout danger">
+      <div class="callout-label">Armadilha de produção</div>
+      <p>O <code>fork()</code> do RDB pode causar pico de latência e, em datasets grandes com alta escrita, pico temporário de memória (copy-on-write duplicando páginas sujas). Em instâncias com pouca margem livre, isso já derrubou processo por OOM no meio de um snapshot.</p>
+    </div>
+
+    <p><strong>AOF (append-only file):</strong> log de cada comando de escrita, replay no restart. Configurável via <code>appendfsync</code>:</p>
+    <ul>
+      <li><code>always</code> — fsync a cada escrita (mais seguro, mais lento)</li>
+      <li><code>everysec</code> — fsync 1x/segundo (default — até 1s de perda em crash)</li>
+      <li><code>no</code> — deixa o SO decidir (mais rápido, risco maior)</li>
+    </ul>
+    <p>Desde Redis 4+/Valkey, o padrão é <strong>RDB + AOF híbrido</strong>: o AOF usa preamble RDB pra reduzir o tamanho do rewrite.</p>
+
+    <div class="callout blue">
+      <div class="callout-label">No seu caso</div>
+      <p>Persistência não é backup — é durabilidade de curto prazo pro próprio processo. Seu padrão de backup 90 dias pra DynamoDB/S3 Parquet continua sendo a fonte de verdade de longo prazo. RDB/AOF resolve "o processo caiu e voltou", não "preciso reconstruir o estado de 3 meses atrás".</p>
+    </div>
+  </section>
+
+  <section class="section" id="ttl-eviction">
+    <h2>4. TTL e eviction</h2>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">BASH</span>
       </div>
-    </section>
+      <pre><code><span class="fn">EXPIRE</span> key <span class="nb">3600</span>        <span class="cm"># expira em 3600s</span>
+<span class="fn">PEXPIRE</span> key <span class="nb">3600000</span>    <span class="cm"># mesma coisa em ms</span>
+<span class="fn">TTL</span> key                <span class="cm"># segundos restantes (-1 = sem TTL, -2 = não existe)</span>
+<span class="fn">PERSIST</span> key            <span class="cm"># remove o TTL</span></code></pre>
+    </div>
+    <p>Expiração acontece de duas formas simultâneas: <strong>passiva</strong> (deleta ao tentar ler chave expirada) e <strong>ativa</strong> (ciclo de background varre amostras do keyspace). Em replicação, o <strong>replica não expira por conta própria</strong> — espera o <code>DEL</code> explícito do master, evitando inconsistência por clock skew.</p>
 
-    <section id="persistencia">
-      <h2>3. Persistência — o que sobrevive a um restart</h2>
-      <p><strong>RDB (snapshot):</strong> <code>fork()</code> + copy-on-write, escreve um binário compacto do dataset num ponto no tempo. Rápido de restaurar, mas perde tudo desde o último snapshot.</p>
+    <h3>Eviction — quando a memória enche</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Policy</th><th>Comportamento</th></tr></thead>
+        <tbody>
+          <tr><td><code>noeviction</code></td><td>Recusa escritas com erro ao bater o limite (leituras continuam)</td></tr>
+          <tr><td><code>allkeys-lru</code> / <code>volatile-lru</code></td><td>Remove a menos recentemente usada</td></tr>
+          <tr><td><code>allkeys-lfu</code> / <code>volatile-lfu</code></td><td>Remove a menos frequentemente usada</td></tr>
+          <tr><td><code>volatile-ttl</code></td><td>Remove a que está mais perto de expirar</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout danger">
+      <div class="callout-label">Crítico pro seu ElastiCache</div>
+      <p>Se você usa Redis/Valkey como <strong>fonte de estado</strong> (checkpoints LangGraph, locks distribuídos com <code>SET NX</code>) e não como cache descartável, <code>noeviction</code> é praticamente obrigatório — qualquer eviction policy ali pode apagar um checkpoint ou lock ativo silenciosamente sob pressão de memória. Cache de resposta de LLM, por outro lado, é candidato natural a <code>allkeys-lru</code>.</p>
+    </div>
+  </section>
 
-      <div class="callout danger">
-        <span class="callout-label">Armadilha de produção</span>
-        <p>O <code>fork()</code> do RDB pode causar pico de latência e, em datasets grandes com alta escrita, pico temporário de memória (copy-on-write duplicando páginas sujas). Em instâncias com pouca margem livre, isso já derrubou processo por OOM no meio de um snapshot.</p>
+  <section class="section" id="select-explicado">
+    <h2>5. Sobre o "SELECT" — provável fonte de confusão</h2>
+    <p>Em Redis/Valkey, <code>SELECT</code> <strong>não é uma query</strong>. É a troca de <strong>database lógico</strong> dentro da mesma instância:</p>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">BASH</span>
       </div>
+      <pre><code><span class="fn">SELECT</span> <span class="nb">1</span>   <span class="cm"># muda pro database índice 1 (default: 0-15 databases)</span></code></pre>
+    </div>
+    <p>É um namespace bruto por índice numérico, sem nome, sem isolamento de permissão. Duas pegadinhas de produção:</p>
+    <div class="callout warn">
+      <div class="callout-label">Cluster mode</div>
+      <p>Não suporta múltiplos databases — só existe o DB 0. Se seu cluster ElastiCache/Valkey está em modo cluster (o que você provavelmente quer pra sharding automático), <code>SELECT</code> nem está disponível.</p>
+    </div>
+    <p>Não confunda com "consulta filtrada" — não existe <code>WHERE</code>. Algo tipo query é resolvido por <strong>desenho de chave</strong> (<code>SCAN MATCH pattern*</code>, O(n), não rodar em produção sob carga) ou por Sorted Set (<code>ZRANGEBYSCORE</code>) quando o acesso é por range.</p>
+  </section>
 
-      <p><strong>AOF (append-only file):</strong> log de cada comando de escrita, replay no restart. Configurável via <code>appendfsync</code>:</p>
-      <ul>
-        <li><code>always</code> — fsync a cada escrita (mais seguro, mais lento)</li>
-        <li><code>everysec</code> — fsync 1x/segundo (default — até 1s de perda em crash)</li>
-        <li><code>no</code> — deixa o SO decidir (mais rápido, risco maior)</li>
-      </ul>
-      <p>Desde Redis 4+/Valkey, o padrão é <strong>RDB + AOF híbrido</strong>: o AOF usa preamble RDB pra reduzir o tamanho do rewrite.</p>
-
-      <div class="callout info">
-        <span class="callout-label">No seu caso</span>
-        <p>Persistência não é backup — é durabilidade de curto prazo pro próprio processo. Seu padrão de backup 90 dias pra DynamoDB/S3 Parquet continua sendo a fonte de verdade de longo prazo. RDB/AOF resolve "o processo caiu e voltou", não "preciso reconstruir o estado de 3 meses atrás".</p>
+  <section class="section" id="crud-strings">
+    <h2>6. CRUD — Strings</h2>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">BASH</span>
       </div>
-    </section>
+      <pre><code><span class="fn">SET</span> user:123:name <span class="st">"Leo"</span>
+<span class="fn">SET</span> session:abc <span class="st">"token_data"</span> <span class="kw">EX</span> <span class="nb">3600</span>        <span class="cm"># com TTL, expira em 1h</span>
+<span class="fn">SET</span> lock:job:42 <span class="st">"1"</span> <span class="kw">NX</span> <span class="kw">EX</span> <span class="nb">30</span>                 <span class="cm"># só seta se não existir (lock atômico)</span>
 
-    <section id="ttl-eviction">
-      <h2>4. TTL e eviction</h2>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-bash">EXPIRE key 3600        # expira em 3600s
-PEXPIRE key 3600000    # mesma coisa em ms
-TTL key                # segundos restantes (-1 = sem TTL, -2 = não existe)
-PERSIST key            # remove o TTL</code></pre>
+<span class="fn">GET</span> user:123:name
+<span class="fn">MGET</span> user:123:name user:123:email            <span class="cm"># múltiplas chaves, 1 round-trip</span>
+
+<span class="fn">DEL</span> user:123:name
+<span class="fn">EXISTS</span> user:123:name                         <span class="cm"># retorna 0 ou 1</span>
+
+<span class="fn">INCR</span> counter:requests                        <span class="cm"># atômico, útil pra contadores/rate limit</span></code></pre>
+    </div>
+    <div class="callout green">
+      <div class="callout-label">Padrão correto</div>
+      <p><code>SET key value NX EX ttl</code> é o padrão certo pra lock distribuído — atômico em uma única operação. O anti-padrão antigo (<code>SETNX</code> + <code>EXPIRE</code> como dois comandos) tem janela de race condition: um crash entre os dois deixa a chave sem TTL, travada pra sempre. Pelo que você já usa <code>SET NX</code> + Lua nos seus nodes idempotentes, você já está no caminho certo — o Lua entra quando o check-then-act precisa de mais de uma leitura/escrita atômica que um único comando não cobre.</p>
+    </div>
+  </section>
+
+  <section class="section" id="crud-estruturas">
+    <h2>7. CRUD — Estruturas ricas</h2>
+    <p>Isso substitui "SELECT" na prática — cada tipo tem sua própria forma de consulta.</p>
+
+    <h3>Hash — objeto com campos</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">BASH</span>
       </div>
-      <p>Expiração acontece de duas formas simultâneas: <strong>passiva</strong> (deleta ao tentar ler chave expirada) e <strong>ativa</strong> (ciclo de background varre amostras do keyspace). Em replicação, o <strong>replica não expira por conta própria</strong> — espera o <code>DEL</code> explícito do master, evitando inconsistência por clock skew.</p>
+      <pre><code><span class="fn">HSET</span> user:123 name <span class="st">"Leo"</span> role <span class="st">"engineer"</span> active <span class="st">"1"</span>
+<span class="fn">HGET</span> user:123 name
+<span class="fn">HGETALL</span> user:123          <span class="cm"># todos os campos — cuidado: O(n) no tamanho do hash</span>
+<span class="fn">HMGET</span> user:123 name role  <span class="cm"># só os campos que você precisa</span>
+<span class="fn">HDEL</span> user:123 active
+<span class="fn">HINCRBY</span> user:123 login_count <span class="nb">1</span></code></pre>
+    </div>
+    <p>Use hash em vez de serializar um JSON inteiro numa string quando você precisa <strong>atualizar ou ler campos individuais</strong> sem reescrever o objeto inteiro — evita race condition de read-modify-write no cliente.</p>
 
-      <h3>Eviction — quando a memória enche</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Policy</th><th>Comportamento</th></tr></thead>
-          <tbody>
-            <tr><td><code>noeviction</code></td><td>Recusa escritas com erro ao bater o limite (leituras continuam)</td></tr>
-            <tr><td><code>allkeys-lru</code> / <code>volatile-lru</code></td><td>Remove a menos recentemente usada</td></tr>
-            <tr><td><code>allkeys-lfu</code> / <code>volatile-lfu</code></td><td>Remove a menos frequentemente usada</td></tr>
-            <tr><td><code>volatile-ttl</code></td><td>Remove a que está mais perto de expirar</td></tr>
-          </tbody>
-        </table>
+    <h3>List — fila/pilha, ordem de inserção</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">BASH</span>
       </div>
-      <div class="callout danger">
-        <span class="callout-label">Crítico pro seu ElastiCache</span>
-        <p>Se você usa Redis/Valkey como <strong>fonte de estado</strong> (checkpoints LangGraph, locks distribuídos com <code>SET NX</code>) e não como cache descartável, <code>noeviction</code> é praticamente obrigatório — qualquer eviction policy ali pode apagar um checkpoint ou lock ativo silenciosamente sob pressão de memória. Cache de resposta de LLM, por outro lado, é candidato natural a <code>allkeys-lru</code>.</p>
+      <pre><code><span class="fn">LPUSH</span> queue:tasks <span class="st">"task1"</span>      <span class="cm"># insere na cabeça</span>
+<span class="fn">RPUSH</span> queue:tasks <span class="st">"task2"</span>      <span class="cm"># insere na cauda</span>
+<span class="fn">LRANGE</span> queue:tasks <span class="nb">0</span> <span class="nb">-1</span>        <span class="cm"># lista tudo</span>
+<span class="fn">LPOP</span> queue:tasks               <span class="cm"># remove e retorna da cabeça</span>
+<span class="fn">BRPOP</span> queue:tasks <span class="nb">5</span>            <span class="cm"># pop bloqueante, timeout 5s</span></code></pre>
+    </div>
+
+    <h3>Set — associação sem ordem, sem duplicata</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">BASH</span>
       </div>
-    </section>
+      <pre><code><span class="fn">SADD</span> tags:article:1 <span class="st">"ai"</span> <span class="st">"aws"</span> <span class="st">"python"</span>
+<span class="fn">SMEMBERS</span> tags:article:1
+<span class="fn">SISMEMBER</span> tags:article:1 <span class="st">"ai"</span>    <span class="cm"># O(1), checagem de pertencimento</span>
+<span class="fn">SREM</span> tags:article:1 <span class="st">"python"</span></code></pre>
+    </div>
 
-    <section id="select-explicado">
-      <h2>5. Sobre o "SELECT" — provável fonte de confusão</h2>
-      <p>Em Redis/Valkey, <code>SELECT</code> <strong>não é uma query</strong>. É a troca de <strong>database lógico</strong> dentro da mesma instância:</p>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-bash">SELECT 1   # muda pro database índice 1 (default: 0-15 databases)</code></pre>
+    <h3>Sorted Set (ZSET) — a estrutura mais subestimada</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">BASH</span>
       </div>
-      <p>É um namespace bruto por índice numérico, sem nome, sem isolamento de permissão. Duas pegadinhas de produção:</p>
-      <div class="callout warn">
-        <span class="callout-label">Cluster mode</span>
-        <p>Não suporta múltiplos databases — só existe o DB 0. Se seu cluster ElastiCache/Valkey está em modo cluster (o que você provavelmente quer pra sharding automático), <code>SELECT</code> nem está disponível.</p>
+      <pre><code><span class="fn">ZADD</span> leaderboard <span class="nb">100</span> <span class="st">"player1"</span> <span class="nb">200</span> <span class="st">"player2"</span>
+<span class="fn">ZRANGE</span> leaderboard <span class="nb">0</span> <span class="nb">-1</span> <span class="kw">WITHSCORES</span>           <span class="cm"># ordenado por score</span>
+<span class="fn">ZRANGEBYSCORE</span> leaderboard <span class="nb">150</span> <span class="nb">300</span>            <span class="cm"># range query real</span>
+<span class="fn">ZSCORE</span> leaderboard <span class="st">"player1"</span>
+<span class="fn">ZINCRBY</span> leaderboard <span class="nb">10</span> <span class="st">"player1"</span></code></pre>
+    </div>
+    <p>Score pode ser um timestamp — ZSET vira <strong>índice ordenado por tempo</strong> (ex.: mensagens de um <code>thread_id</code>, eventos de um trace). "Me dê os últimos N eventos entre timestamp X e Y" é <code>ZRANGEBYSCORE</code>, não <code>SCAN</code>.</p>
+  </section>
+
+  <section class="section" id="python-redis-py">
+    <h2>8. Python (redis-py) na prática</h2>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+        <span class="code-lang">PYTHON</span>
       </div>
-      <p>Não confunda com "consulta filtrada" — não existe <code>WHERE</code>. Algo tipo query é resolvido por <strong>desenho de chave</strong> (<code>SCAN MATCH pattern*</code>, O(n), não rodar em produção sob carga) ou por Sorted Set (<code>ZRANGEBYSCORE</code>) quando o acesso é por range.</p>
-    </section>
+      <pre><code><span class="kw">import</span> redis
 
-    <section id="crud-strings">
-      <h2>6. CRUD — Strings</h2>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-bash">SET user:123:name "Leo"
-SET session:abc "token_data" EX 3600        # com TTL, expira em 1h
-SET lock:job:42 "1" NX EX 30                 # só seta se não existir (lock atômico)
-
-GET user:123:name
-MGET user:123:name user:123:email            # múltiplas chaves, 1 round-trip
-
-DEL user:123:name
-EXISTS user:123:name                         # retorna 0 ou 1
-
-INCR counter:requests                        # atômico, útil pra contadores/rate limit</code></pre>
-      </div>
-      <div class="callout ok">
-        <span class="callout-label">Padrão correto</span>
-        <p><code>SET key value NX EX ttl</code> é o padrão certo pra lock distribuído — atômico em uma única operação. O anti-padrão antigo (<code>SETNX</code> + <code>EXPIRE</code> como dois comandos) tem janela de race condition: um crash entre os dois deixa a chave sem TTL, travada pra sempre. Pelo que você já usa <code>SET NX</code> + Lua nos seus nodes idempotentes, você já está no caminho certo — o Lua entra quando o check-then-act precisa de mais de uma leitura/escrita atômica que um único comando não cobre.</p>
-      </div>
-    </section>
-
-    <section id="crud-estruturas">
-      <h2>7. CRUD — Estruturas ricas</h2>
-      <p>Isso substitui "SELECT" na prática — cada tipo tem sua própria forma de consulta.</p>
-
-      <h3>Hash — objeto com campos</h3>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-bash">HSET user:123 name "Leo" role "engineer" active "1"
-HGET user:123 name
-HGETALL user:123          # todos os campos — cuidado: O(n) no tamanho do hash
-HMGET user:123 name role  # só os campos que você precisa
-HDEL user:123 active
-HINCRBY user:123 login_count 1</code></pre>
-      </div>
-      <p>Use hash em vez de serializar um JSON inteiro numa string quando você precisa <strong>atualizar ou ler campos individuais</strong> sem reescrever o objeto inteiro — evita race condition de read-modify-write no cliente.</p>
-
-      <h3>List — fila/pilha, ordem de inserção</h3>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-bash">LPUSH queue:tasks "task1"      # insere na cabeça
-RPUSH queue:tasks "task2"      # insere na cauda
-LRANGE queue:tasks 0 -1        # lista tudo
-LPOP queue:tasks               # remove e retorna da cabeça
-BRPOP queue:tasks 5            # pop bloqueante, timeout 5s</code></pre>
-      </div>
-
-      <h3>Set — associação sem ordem, sem duplicata</h3>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-bash">SADD tags:article:1 "ai" "aws" "python"
-SMEMBERS tags:article:1
-SISMEMBER tags:article:1 "ai"    # O(1), checagem de pertencimento
-SREM tags:article:1 "python"</code></pre>
-      </div>
-
-      <h3>Sorted Set (ZSET) — a estrutura mais subestimada</h3>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-bash">ZADD leaderboard 100 "player1" 200 "player2"
-ZRANGE leaderboard 0 -1 WITHSCORES           # ordenado por score
-ZRANGEBYSCORE leaderboard 150 300            # range query real
-ZSCORE leaderboard "player1"
-ZINCRBY leaderboard 10 "player1"</code></pre>
-      </div>
-      <p>Score pode ser um timestamp — ZSET vira <strong>índice ordenado por tempo</strong> (ex.: mensagens de um <code>thread_id</code>, eventos de um trace). "Me dê os últimos N eventos entre timestamp X e Y" é <code>ZRANGEBYSCORE</code>, não <code>SCAN</code>.</p>
-    </section>
-
-    <section id="python-redis-py">
-      <h2>8. Python (redis-py) na prática</h2>
-      <div class="code-block">
-        <div class="code-header"><span class="lang">python</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
-        <pre><code class="language-python">import redis
-
-# Connection pool — crítico em ECS/Fargate: NÃO crie uma conexão nova por invocação,
-# reusar pool evita esgotar conexões do ElastiCache sob concorrência de múltiplas tasks
-pool = redis.ConnectionPool(
-    host="seu-cluster.cache.amazonaws.com",
-    port=6379,
-    max_connections=50,
-    decode_responses=True,
+<span class="cm"># Connection pool — crítico em ECS/Fargate: NÃO crie uma conexão nova por invocação,</span>
+<span class="cm"># reusar pool evita esgotar conexões do ElastiCache sob concorrência de múltiplas tasks</span>
+pool <span class="op">=</span> redis.<span class="fn">ConnectionPool</span>(
+    host<span class="op">=</span><span class="st">"seu-cluster.cache.amazonaws.com"</span>,
+    port<span class="op">=</span><span class="nb">6379</span>,
+    max_connections<span class="op">=</span><span class="nb">50</span>,
+    decode_responses<span class="op">=</span><span class="kw">True</span>,
 )
-r = redis.Redis(connection_pool=pool)
+r <span class="op">=</span> redis.<span class="fn">Redis</span>(connection_pool<span class="op">=</span>pool)
 
-# CRUD básico
-r.set("session:abc", "token_data", ex=3600)
-val = r.get("session:abc")
-r.delete("session:abc")
-r.exists("session:abc")
+<span class="cm"># CRUD básico</span>
+r.<span class="fn">set</span>(<span class="st">"session:abc"</span>, <span class="st">"token_data"</span>, ex<span class="op">=</span><span class="nb">3600</span>)
+val <span class="op">=</span> r.<span class="fn">get</span>(<span class="st">"session:abc"</span>)
+r.<span class="fn">delete</span>(<span class="st">"session:abc"</span>)
+r.<span class="fn">exists</span>(<span class="st">"session:abc"</span>)
 
-# Hash
-r.hset("user:123", mapping={"name": "Leo", "role": "engineer"})
-user = r.hgetall("user:123")
+<span class="cm"># Hash</span>
+r.<span class="fn">hset</span>(<span class="st">"user:123"</span>, mapping<span class="op">=</span>{<span class="st">"name"</span>: <span class="st">"Leo"</span>, <span class="st">"role"</span>: <span class="st">"engineer"</span>})
+user <span class="op">=</span> r.<span class="fn">hgetall</span>(<span class="st">"user:123"</span>)
 
-# Pipeline — agrupa comandos em 1 round-trip (não é atômico por padrão)
-pipe = r.pipeline(transaction=False)
-pipe.set("a", "1")
-pipe.set("b", "2")
-pipe.execute()
+<span class="cm"># Pipeline — agrupa comandos em 1 round-trip (não é atômico por padrão)</span>
+pipe <span class="op">=</span> r.<span class="fn">pipeline</span>(transaction<span class="op">=</span><span class="kw">False</span>)
+pipe.<span class="fn">set</span>(<span class="st">"a"</span>, <span class="st">"1"</span>)
+pipe.<span class="fn">set</span>(<span class="st">"b"</span>, <span class="st">"2"</span>)
+pipe.<span class="fn">execute</span>()
 
-# Transação real (MULTI/EXEC) — atômica, sem leitura condicional no meio
-with r.pipeline(transaction=True) as pipe:
-    pipe.multi()
-    pipe.incr("counter")
-    pipe.expire("counter", 60)
-    pipe.execute()
+<span class="cm"># Transação real (MULTI/EXEC) — atômica, sem leitura condicional no meio</span>
+<span class="kw">with</span> r.<span class="fn">pipeline</span>(transaction<span class="op">=</span><span class="kw">True</span>) <span class="kw">as</span> pipe:
+    pipe.<span class="fn">multi</span>()
+    pipe.<span class="fn">incr</span>(<span class="st">"counter"</span>)
+    pipe.<span class="fn">expire</span>(<span class="st">"counter"</span>, <span class="nb">60</span>)
+    pipe.<span class="fn">execute</span>()
 
-# Lua script — check-and-act atômico (padrão que você já usa nos nodes idempotentes)
-release_lock = r.register_script("""
+<span class="cm"># Lua script — check-and-act atômico (padrão que você já usa nos nodes idempotentes)</span>
+release_lock <span class="op">=</span> r.<span class="fn">register_script</span>(<span class="st">"""
     if redis.call("GET", KEYS[1]) == ARGV[1] then
         return redis.call("DEL", KEYS[1])
     else
         return 0
     end
-""")
-release_lock(keys=["lock:job:42"], args=["owner_id_123"])</code></pre>
-      </div>
-    </section>
+"""</span>)
+release_lock(keys<span class="op">=</span>[<span class="st">"lock:job:42"</span>], args<span class="op">=</span>[<span class="st">"owner_id_123"</span>])</code></pre>
+    </div>
+  </section>
 
-    <section id="redis-vs-valkey">
-      <h2>9. Redis vs. Valkey — o que realmente mudou</h2>
-      <p>O fork não foi cosmético — foi consequência direta de licenciamento, e as duas linhas divergiram desde então.</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th></th><th>Redis</th><th>Valkey</th></tr></thead>
-          <tbody>
-            <tr><td>Licença</td><td>Tri-license: AGPLv3 (desde Redis 8, mai/2025) ou SSPLv1/RSALv2</td><td>BSD-3-Clause puro, sem copyleft</td></tr>
-            <tr><td>Mantenedor</td><td>Redis Ltd. (empresa)</td><td>Linux Foundation (AWS, Google, Oracle, Ericsson)</td></tr>
-            <tr><td>Compatibilidade</td><td colspan="2">~90% de paridade de comandos em 2026 — não mais 100% intercambiável às cegas</td></tr>
-            <tr><td>Diferencial técnico</td><td>Vector Sets nativo, Redis Query Engine mais maduro</td><td>I/O multithreaded (ganhos de throughput em benchmarks da AWS)</td></tr>
-            <tr><td>Default AWS</td><td>Opcional</td><td>ElastiCache e MemoryDB usam como default em clusters novos</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="callout info">
-        <span class="callout-label">Timeline de licenciamento</span>
-        <p>Até Redis 7.2.4 era BSD. De Redis 8.0 (maio/2025) em diante, Redis passou a oferecer AGPLv3 como opção open-source ao lado das licenças source-available. O fork Valkey nasceu quando grandes provedores de nuvem responderam à mudança original forkando o Redis 7.2 sob a Linux Foundation.</p>
-      </div>
-      <div class="callout warn">
-        <span class="callout-label">Não assuma paridade total</span>
-        <p>Por volta de 2026, os dois projetos já divergiram de forma real — ~90% compatíveis no nível de comandos, mas o suficiente pra escolha não ser mais só inércia. Ao migrar código Redis pra Valkey, teste — principalmente em módulos como vetorial/search, onde a divergência é maior.</p>
-      </div>
-      <p><strong>Pra sua decisão</strong> (Valkey em produção, Redis como referência de conceitos/código): é a escolha pragmática correta — os comandos do dia a dia (<code>GET</code>/<code>SET</code>/<code>HSET</code>/<code>ZADD</code>/Lua) são idênticos, <code>redis-py</code> funciona sem alteração contra Valkey, e você ganha licença BSD sem risco de copyleft de rede.</p>
-    </section>
+  <section class="section" id="redis-vs-valkey">
+    <h2>9. Redis vs. Valkey — o que realmente mudou</h2>
+    <p>O fork não foi cosmético — foi consequência direta de licenciamento, e as duas linhas divergiram desde então.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>Redis</th><th>Valkey</th></tr></thead>
+        <tbody>
+          <tr><td>Licença</td><td>Tri-license: AGPLv3 (desde Redis 8, mai/2025) ou SSPLv1/RSALv2</td><td>BSD-3-Clause puro, sem copyleft</td></tr>
+          <tr><td>Mantenedor</td><td>Redis Ltd. (empresa)</td><td>Linux Foundation (AWS, Google, Oracle, Ericsson)</td></tr>
+          <tr><td>Compatibilidade</td><td colspan="2">~90% de paridade de comandos em 2026 — não mais 100% intercambiável às cegas</td></tr>
+          <tr><td>Diferencial técnico</td><td>Vector Sets nativo, Redis Query Engine mais maduro</td><td>I/O multithreaded (ganhos de throughput em benchmarks da AWS)</td></tr>
+          <tr><td>Default AWS</td><td>Opcional</td><td>ElastiCache e MemoryDB usam como default em clusters novos</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout blue">
+      <div class="callout-label">Timeline de licenciamento</div>
+      <p>Até Redis 7.2.4 era BSD. De Redis 8.0 (maio/2025) em diante, Redis passou a oferecer AGPLv3 como opção open-source ao lado das licenças source-available. O fork Valkey nasceu quando grandes provedores de nuvem responderam à mudança original forkando o Redis 7.2 sob a Linux Foundation.</p>
+    </div>
+    <div class="callout warn">
+      <div class="callout-label">Não assuma paridade total</div>
+      <p>Por volta de 2026, os dois projetos já divergiram de forma real — ~90% compatíveis no nível de comandos, mas o suficiente pra escolha não ser mais só inércia. Ao migrar código Redis pra Valkey, teste — principalmente em módulos como vetorial/search, onde a divergência é maior.</p>
+    </div>
+    <p><strong>Pra sua decisão</strong> (Valkey em produção, Redis como referência de conceitos/código): é a escolha pragmática correta — os comandos do dia a dia (<code>GET</code>/<code>SET</code>/<code>HSET</code>/<code>ZADD</code>/Lua) são idênticos, <code>redis-py</code> funciona sem alteração contra Valkey, e você ganha licença BSD sem risco de copyleft de rede.</p>
+  </section>
 
-    <section id="aplicando-contexto">
-      <h2>10. Aplicando ao seu contexto</h2>
-      <ul>
-        <li><strong><code>SET key value NX</code></strong> → o primitivo por trás do seu padrão de lock distribuído pra nodes idempotentes</li>
-        <li><strong>Lua scripts</strong> → entram quando o lock/estado precisa de check-and-act atômico que um único comando não resolve sozinho (ex.: "libera o lock só se eu ainda sou o dono")</li>
-        <li><strong><code>PK=USER#{user_id}</code></strong> → forma natural de simular "tabelas" num keyspace plano — particionamento lógico, já que não existe schema nem SELECT</li>
-        <li><strong>TTL em memória de curto prazo</strong> → <code>EXPIRE</code> é o mecanismo natural pra sessões/checkpoints de vida curta, complementando o backup de 90 dias no DynamoDB/S3 como long-term store</li>
-      </ul>
-    </section>
+  <section class="section" id="aplicando-contexto">
+    <h2>10. Aplicando ao seu contexto</h2>
+    <ul>
+      <li><strong><code>SET key value NX</code></strong> → o primitivo por trás do seu padrão de lock distribuído pra nodes idempotentes</li>
+      <li><strong>Lua scripts</strong> → entram quando o lock/estado precisa de check-and-act atômico que um único comando não resolve sozinho (ex.: "libera o lock só se eu ainda sou o dono")</li>
+      <li><strong><code>PK=USER#{user_id}</code></strong> → forma natural de simular "tabelas" num keyspace plano — particionamento lógico, já que não existe schema nem SELECT</li>
+      <li><strong>TTL em memória de curto prazo</strong> → <code>EXPIRE</code> é o mecanismo natural pra sessões/checkpoints de vida curta, complementando o backup de 90 dias no DynamoDB/S3 como long-term store</li>
+    </ul>
+  </section>
 
-    <section id="proximos-passos">
-      <h2>Próximos passos</h2>
-      <ul>
-        <li><code>OBJECT ENCODING key</code> — inspecionar o encoding real de qualquer chave em produção</li>
-        <li><code>INFO memory</code> — ver fragmentação, uso real vs. <code>maxmemory</code></li>
-        <li><code>redis-cli --bigkeys</code> — achar chaves grandes distorcendo o encoding sem necessidade</li>
-        <li><code>MEMORY USAGE key</code> — custo de memória de uma chave específica</li>
-      </ul>
-    </section>
+  <section class="section" id="proximos-passos">
+    <h2>Próximos passos</h2>
+    <ul>
+      <li><code>OBJECT ENCODING key</code> — inspecionar o encoding real de qualquer chave em produção</li>
+      <li><code>INFO memory</code> — ver fragmentação, uso real vs. <code>maxmemory</code></li>
+      <li><code>redis-cli --bigkeys</code> — achar chaves grandes distorcendo o encoding sem necessidade</li>
+      <li><code>MEMORY USAGE key</code> — custo de memória de uma chave específica</li>
+    </ul>
+  </section>
 
-  </main>
+  <div class="doc-footer">
+    <a href="../index.html">← Voltar para DevDocs</a>
+    <span>Redis &amp; Valkey</span>
+  </div>
+
+</div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
 <script>
-  hljs.highlightAll();
-
-  // Progress bar
-  window.addEventListener('scroll', () => {
-    const total = document.body.scrollHeight - window.innerHeight;
-    const pct = (window.scrollY / total) * 100;
-    document.getElementById('progress').style.width = pct + '%';
-  });
-
-  // Sidebar toggle (mobile)
-  const sidebar = document.getElementById('sidebar');
-  const toggle = document.getElementById('menuToggle');
-  toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-  document.querySelectorAll('.sidebar a').forEach(a => {
-    a.addEventListener('click', () => sidebar.classList.remove('open'));
-  });
-
-  // Scrollspy
-  const links = document.querySelectorAll('.nav-link');
-  const targets = Array.from(links).map(l => document.getElementById(l.dataset.id)).filter(Boolean);
-
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      const id = entry.target.id;
-      const link = document.querySelector(`.nav-link[data-id="${id}"]`);
-      if (!link) return;
       if (entry.isIntersecting) {
-        links.forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
       }
     });
-  }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
-
-  targets.forEach(t => observer.observe(t));
-
-  // Copy buttons
-  function copyCode(btn) {
-    const pre = btn.closest('.code-block').querySelector('pre');
-    const text = pre.innerText;
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'Copiado!';
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.textContent = 'Copiar';
-        btn.classList.remove('copied');
-      }, 2000);
-    });
-  }
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
 </script>
+
 </body>
 </html>

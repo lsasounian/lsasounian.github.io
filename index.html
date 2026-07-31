@@ -148,11 +148,11 @@
 
     <div class="hero-stats">
       <div class="stat">
-        <div class="stat-num" id="docCount">23</div>
+        <div class="stat-num" id="docCount">26</div>
         <div class="stat-label">Documentos</div>
       </div>
       <div class="stat">
-        <div class="stat-num">10</div>
+        <div class="stat-num">11</div>
         <div class="stat-label">Categorias</div>
       </div>
       <div class="stat">
@@ -353,6 +353,22 @@
       <span class="topic-arrow">→</span>
     </a>
 
+    <a href="docs/redis-valkey-armazenamento-crud.html" class="topic-card card-purple" data-tags="redis valkey crud keyspace sds ttl eviction data store">
+      <div class="card-top" style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div class="topic-icon">🗃️</div>
+        <span class="topic-status">Completo</span>
+      </div>
+      <span class="topic-title">Redis & Valkey — Armazenamento e CRUD</span>
+      <p class="topic-desc">Como o keyspace é estruturado internamente, o que acontece em memória por trás de cada tipo de dado, e os comandos práticos de CRUD — em Redis, com Valkey como alvo de produção.</p>
+      <div class="topic-tags">
+        <span class="tag">Redis</span>
+        <span class="tag">Valkey</span>
+        <span class="tag">TTL</span>
+        <span class="tag">CRUD</span>
+      </div>
+      <span class="topic-arrow">→</span>
+    </a>
+
   </div>
 
   <!-- LLM SELF-HOSTED -->
@@ -453,6 +469,43 @@
         <span class="tag">Goroutines</span>
         <span class="tag">MySQL</span>
         <span class="tag">DynamoDB</span>
+      </div>
+      <span class="topic-arrow">→</span>
+    </a>
+
+  </div>
+
+  <!-- STREAMING & TEMPO REAL -->
+  <div class="section-label">Streaming & Tempo Real</div>
+  <div class="topics-grid">
+
+    <a href="docs/sse/architecture.html" class="topic-card card-blue" data-tags="sse server-sent events streaming redis sqs fifo dynamodb ecs api gateway">
+      <div class="card-top" style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div class="topic-icon">📡</div>
+        <span class="topic-status">Completo</span>
+      </div>
+      <span class="topic-title">Agente Mediador via SSE</span>
+      <p class="topic-desc">Migração de WebSocket para Server-Sent Events: streaming de tokens, histórico em Redis Streams com dual-write em DynamoDB, e SQS FIFO como espinha dorsal assíncrona.</p>
+      <div class="topic-tags">
+        <span class="tag">SSE</span>
+        <span class="tag">Redis Streams</span>
+        <span class="tag">SQS FIFO</span>
+        <span class="tag">DynamoDB</span>
+      </div>
+      <span class="topic-arrow">→</span>
+    </a>
+
+    <a href="docs/sse/index.html" class="topic-card card-cyan" data-tags="sse demo chat front local mediador streaming">
+      <div class="card-top" style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div class="topic-icon">💬</div>
+        <span class="topic-status">Demo</span>
+      </div>
+      <span class="topic-title">Front local — Agente Mediador (SSE)</span>
+      <p class="topic-desc">Cliente de chat mínimo para testar o agente mediador via SSE contra uma API local — token exchange, streaming de tokens e feedback por mensagem.</p>
+      <div class="topic-tags">
+        <span class="tag">SSE</span>
+        <span class="tag">EventSource</span>
+        <span class="tag">Demo</span>
       </div>
       <span class="topic-arrow">→</span>
     </a>
