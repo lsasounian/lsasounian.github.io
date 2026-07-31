@@ -1,0 +1,7 @@
+bedrock-agentcore
+langgraph>=0.2
+langchain-core
+langchain-mcp-adapters
+langchain-openai
+httpx
+boto3
