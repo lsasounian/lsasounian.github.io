@@ -1,0 +1,8 @@
+bedrock-agentcore
+langgraph>=0.2
+langchain-core>=0.3
+langchain-mcp-adapters
+langchain-openai
+pydantic>=2
+opentelemetry-sdk
+opentelemetry-exporter-otlp-proto-grpc
